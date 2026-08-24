@@ -1,0 +1,42 @@
+{
+  "name": "Celys Care — Wellness Companion",
+  "short_name": "Celys Care",
+  "description": "Your safe space. Your support. Your journey. Mindful meditation, affirmations, AI companion, and sensory coping games.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d0a1e",
+  "theme_color": "#0d0a1e",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["health", "lifestyle", "medical"],
+  "shortcuts": [
+    {
+      "name": "Daily Check-In",
+      "url": "/?screen=mood",
+      "description": "Record your mood reflection"
+    },
+    {
+      "name": "AI Companion",
+      "url": "/?screen=chat",
+      "description": "Speak with Celys companion"
+    },
+    {
+      "name": "Mindful Breath",
+      "url": "/?screen=breathing",
+      "description": "Box & 4-7-8 breathing exercise"
+    }
+  ]
+}

@@ -1,0 +1,267 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  displayName  String    @default("Beautiful Soul")
+  avatarUrl    String?
+  role         String    @default("USER")
+  isVerified   Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  profile             Profile?
+  moodCheckins        MoodCheckin[]
+  journalEntries      JournalEntry[]
+  chatMessages        ChatMessage[]
+  likedAffirmations   LikedAffirmation[]
+  customAffirmations  CustomAffirmation[]
+  meditationSessions  MeditationSession[]
+  soulMapStars        SoulMapStar[]
+  completedActivities CompletedActivity[]
+  oracleCards         OracleCard[]
+  subscription        Subscription?
+  syncQueue           OfflineSyncQueue[]
+  passwordResetTokens PasswordResetToken[]
+  paymentTransactions PaymentTransaction[]
+  crisisEvents        CrisisEvent[]
+  auditLogs           AuditLog[]
+
+  @@index([email])
+}
+
+model Profile {
+  id               String    @id @default(uuid())
+  userId           String    @unique
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio              String?
+  dailyGoal        Int       @default(3)
+  reminderTime     String?   @default("09:00")
+  streakCount      Int       @default(1)
+  lastCheckInDate  DateTime?
+  themePreferences String?   @default("cosmic-dark")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model MoodCheckin {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mood      String
+  label     String
+  color     String
+  intensity Int      @default(3)
+  tags      String?  @default("")
+  note      String?  @default("")
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model JournalEntry {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String?  @default("Mindful Reflection")
+  content     String
+  prompt      String?  @default("")
+  moodTag     String?  @default("")
+  isEncrypted Boolean  @default(false)
+  encryptionIv String? // Base64 12-byte IV for AES-256-GCM
+  authTag     String?  // Base64 16-byte Auth Tag for AES-256-GCM
+  tags        String?  @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId, createdAt])
+}
+
+model ChatMessage {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId     String?  @default("default")
+  fromUser      Boolean
+  content       String
+  emotionalTone String?  @default("compassionate")
+  createdAt     DateTime @default(now())
+
+  @@index([userId, sessionId, createdAt])
+}
+
+model LikedAffirmation {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  affirmationIndex Int
+  affirmationText  String
+  category         String   @default("General")
+  createdAt        DateTime @default(now())
+
+  @@unique([userId, affirmationIndex])
+  @@index([userId])
+}
+
+model CustomAffirmation {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  text      String
+  category  String   @default("Self-Love")
+  author    String   @default("My Soul")
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model MeditationSession {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionTitle    String
+  category        String   @default("Mindfulness")
+  durationSeconds Int
+  completedAt     DateTime @default(now())
+
+  @@index([userId, completedAt])
+}
+
+model SoulMapStar {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  x         Float
+  y         Float
+  color     String
+  emoji     String
+  label     String
+  category  String   @default("Reflection")
+  magnitude Float    @default(1.0)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model CompletedActivity {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activityId    String
+  activityTitle String
+  category      String   @default("Ritual")
+  streakCount   Int      @default(1)
+  completedAt   DateTime @default(now())
+
+  @@index([userId, completedAt])
+}
+
+model OracleCard {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cardTitle      String
+  cardSymbol     String
+  cardWisdom     String
+  interpretation String?
+  pulledAt       DateTime @default(now())
+
+  @@index([userId, pulledAt])
+}
+
+model Subscription {
+  id                  String    @id @default(uuid())
+  userId              String    @unique
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan                String    @default("free") // "free" | "blossom" | "luminary"
+  status              String    @default("active") // "active" | "trialing" | "canceled" | "past_due"
+  stripeCustomerId    String?
+  stripeSubId         String?
+  trialStart          DateTime?
+  trialEnd            DateTime?
+  startedAt           DateTime  @default(now())
+  expiresAt           DateTime?
+  updatedAt           DateTime  @default(now()) @updatedAt
+
+  @@index([userId])
+  @@index([stripeCustomerId])
+}
+
+model PaymentTransaction {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId       String?  @unique
+  paymentIntentId String?
+  amountCents     Int
+  currency        String   @default("usd")
+  plan            String   // "blossom" | "luminary"
+  status          String   @default("completed") // "pending" | "completed" | "failed"
+  createdAt       DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId, expiresAt])
+}
+
+model CrisisEvent {
+  id                String   @id @default(uuid())
+  userId            String?
+  user              User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  triggeredKeywords String
+  helplineOffered   String   @default("988 Lifeline & Crisis Text Line 741741")
+  sessionId         String?
+  ipHash            String?
+  createdAt         DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  ipHash    String?
+  userAgent String?
+  metadata  String?  // JSON string
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+}
+
+model OfflineSyncQueue {
+  id              String    @id @default(uuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entityType      String    // "mood" | "journal" | "chat" | "activity" | "star" | "oracle" | "affirmation"
+  action          String    // "CREATE" | "UPDATE" | "DELETE"
+  payload         String    // JSON string of entity data
+  idempotencyKey  String?   @unique
+  clientTimestamp DateTime
+  status          String    @default("PENDING") // "PENDING" | "SYNCED" | "FAILED"
+  retryCount      Int       @default(0)
+  error           String?
+  syncedAt        DateTime?
+
+  @@index([userId, status])
+}

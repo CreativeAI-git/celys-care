@@ -1,0 +1,96 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 246 45% 8%; /* #0d0a1e */
+    --foreground: 260 60% 95%; /* #f0e8ff */
+
+    --card: 250 40% 12%; /* #17112c */
+    --card-foreground: 260 60% 95%;
+
+    --popover: 250 40% 12%;
+    --popover-foreground: 260 60% 95%;
+
+    --primary: 268 85% 65%; /* #7c3aed */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 295 52% 61%; /* #c96ccc */
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 250 30% 20%;
+    --muted-foreground: 260 30% 70%;
+
+    --accent: 45 70% 47%; /* #c9a227 */
+    --accent-foreground: 246 45% 8%;
+
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 270 50% 30% / 0.35;
+    --input: 270 50% 30% / 0.4;
+    --ring: 268 85% 65%;
+
+    --radius: 1rem;
+  }
+}
+
+body {
+  background-color: #0d0a1e;
+  color: #f0e8ff;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(13, 10, 30, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(180, 120, 255, 0.25);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(201, 108, 204, 0.5);
+}
+
+/* Cosmic glass effects */
+.cosmic-glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(180, 120, 255, 0.18);
+}
+
+.cosmic-glass-active {
+  background: rgba(124, 58, 237, 0.2);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(201, 108, 204, 0.45);
+}
+
+.gold-gradient-text {
+  background: linear-gradient(135deg, #f5d76e 0%, #c9a227 50%, #e6c65c 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.purple-gradient-btn {
+  background: linear-gradient(135deg, #c96ccc 0%, #7c3aed 100%);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.purple-gradient-btn:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 0 25px rgba(201, 108, 204, 0.5);
+}
