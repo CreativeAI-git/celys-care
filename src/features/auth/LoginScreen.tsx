@@ -2,12 +2,10 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { Mail, Lock, Eye, EyeOff, User, Sparkles } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, User } from "lucide-react";
 import { useAuth } from "@/app/providers";
 import { toast } from "sonner";
 import { CelysLogo } from "@/components/branding/CelysLogo";
-import { StarField } from "@/components/branding/StarField";
-import { LotusCorners } from "@/components/branding/LotusCorners";
 
 interface LoginScreenProps {
   onSuccess?: () => void;
@@ -27,19 +25,52 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess }) => {
     e.preventDefault();
     setError("");
 
-    if (!email.trim() || !password.trim()) {
-      setError("Please fill in all required fields.");
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+
+    if (!trimmedEmail) {
+      setError("Please enter your email address.");
+      toast.error("Please enter your email address.");
+      return;
+    }
+
+    // Basic email format check
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setError("Please enter a valid email address.");
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+
+    if (!trimmedPassword) {
+      setError("Please enter your password.");
+      toast.error("Please enter your password.");
+      return;
+    }
+
+    if (mode === "signup" && trimmedPassword.length < 6) {
+      setError("Password must be at least 6 characters.");
+      toast.error("Password must be at least 6 characters.");
       return;
     }
 
     setLoading(true);
     try {
+      const emailPrefix = trimmedEmail.split("@")[0];
+      const fallbackName = emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1);
+
       if (mode === "signup") {
-        await register(email.trim(), password, displayName.trim() || "Beautiful Soul");
-        toast.success("Welcome to Celys Care Sanctuary! ✨");
+        const userGreeting = displayName.trim() || fallbackName;
+        const registeredUser = await register(
+          trimmedEmail,
+          trimmedPassword,
+          userGreeting
+        );
+        const finalName = registeredUser?.displayName || userGreeting;
+        toast.success(`Welcome to Celys Care Sanctuary, ${finalName}! ✨`);
       } else {
-        await login(email.trim(), password);
-        toast.success("Welcome back, beautiful soul! 🌸");
+        const loggedInUser = await login(trimmedEmail, trimmedPassword);
+        const finalName = loggedInUser?.displayName || fallbackName;
+        toast.success(`Welcome back, ${finalName}! 🌸`);
       }
       if (onSuccess) onSuccess();
     } catch (err: any) {
@@ -50,28 +81,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess }) => {
     }
   };
 
-  const handleDemoLogin = async () => {
-    setError("");
-    setLoading(true);
-    try {
-      await login("demo@celyscare.com", "wellness123");
-      toast.success("Entered Sanctuary as Demo Soul ✨");
-      if (onSuccess) onSuccess();
-    } catch (err: any) {
-      setError(err.message || "Demo login failed.");
-      toast.error("Demo login failed.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
-    <div className="relative min-h-full flex flex-col items-center justify-between overflow-hidden">
-      <StarField count={45} />
-      <LotusCorners />
-
+    <div className="relative w-full flex flex-col items-center justify-start overflow-hidden select-none">
       {/* Top Lion Hero Banner (Figma Exact Match) */}
-      <div className="relative w-full h-[220px] sm:h-[260px] overflow-hidden -mx-4">
+      <div className="relative w-full h-[220px] sm:h-[240px] overflow-hidden rounded-3xl shadow-2xl">
         <Image
           src="/images/lion-hero-hq.jpg"
           alt="Celys Care Celestial Lion"
@@ -84,44 +97,44 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess }) => {
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(to bottom, rgba(13,10,30,0.1) 0%, rgba(13,10,30,0.4) 50%, #0d0a1e 100%)",
+              "linear-gradient(to bottom, rgba(13,10,30,0.1) 0%, rgba(13,10,30,0.3) 60%, #0d0a1e 100%)",
           }}
         />
       </div>
 
       {/* Auth Card Content */}
-      <div className="relative z-10 w-full max-w-sm px-5 pb-8 -mt-10 flex flex-col items-center">
+      <div className="relative z-10 w-full max-w-sm px-4 pb-4 -mt-10 flex flex-col items-center">
         {/* Floating Lion Emblem Badge */}
-        <div className="mb-2">
-          <CelysLogo size={76} />
+        <div className="mb-2 transition-transform hover:scale-105 duration-300">
+          <CelysLogo size={68} />
         </div>
 
         {/* Title */}
         <h1
-          className="font-serif text-3xl font-bold tracking-wide mt-1"
+          className="font-serif text-3xl sm:text-4xl font-bold tracking-wide mt-1"
           style={{
             background: "linear-gradient(135deg, #f5d76e 0%, #c9a227 100%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
+            textShadow: "0 0 24px rgba(245, 215, 110, 0.2)",
           }}
         >
           Celys Care
         </h1>
 
-        {/* Subtitle */}
-        <p
-          className="text-[11px] font-medium tracking-[0.2em] mb-4 mt-0.5"
-          style={{ color: "rgba(240,232,255,0.55)" }}
-        >
-          ✦ WELLNESS COMPANION ✦
-        </p>
+        {/* Subtitle — Exact Figma Match */}
+        <div className="flex items-center gap-2 mt-1 mb-3 text-[10px] font-bold tracking-[0.25em] text-purple-200/60 uppercase select-none">
+          <span>✦</span>
+          <span>Wellness Companion</span>
+          <span>✦</span>
+        </div>
 
-        {/* Mode Switcher Pill */}
+        {/* Mode Switcher Pill — Figma Exact Match */}
         <div
           className="flex rounded-full p-1 mb-4 w-full"
           style={{
-            background: "rgba(255,255,255,0.06)",
-            border: "1px solid rgba(180,120,255,0.2)",
+            background: "rgba(255, 255, 255, 0.05)",
+            border: "1px solid rgba(180, 120, 255, 0.2)",
           }}
         >
           <button
@@ -134,11 +147,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess }) => {
             style={{
               background:
                 mode === "login"
-                  ? "linear-gradient(135deg, #c96ccc, #7c3aed)"
+                  ? "linear-gradient(135deg, #b04be6 0%, #7c3aed 100%)"
                   : "transparent",
-              color: mode === "login" ? "#ffffff" : "rgba(240,232,255,0.55)",
+              color: mode === "login" ? "#ffffff" : "rgba(240, 232, 255, 0.6)",
               boxShadow:
-                mode === "login" ? "0 2px 12px rgba(201,108,204,0.4)" : "none",
+                mode === "login" ? "0 2px 12px rgba(168, 85, 247, 0.45)" : "none",
             }}
           >
             Log In
@@ -153,80 +166,78 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess }) => {
             style={{
               background:
                 mode === "signup"
-                  ? "linear-gradient(135deg, #c96ccc, #7c3aed)"
+                  ? "linear-gradient(135deg, #b04be6 0%, #7c3aed 100%)"
                   : "transparent",
-              color: mode === "signup" ? "#ffffff" : "rgba(240,232,255,0.55)",
+              color: mode === "signup" ? "#ffffff" : "rgba(240, 232, 255, 0.6)",
               boxShadow:
-                mode === "signup" ? "0 2px 12px rgba(201,108,204,0.4)" : "none",
+                mode === "signup" ? "0 2px 12px rgba(168, 85, 247, 0.45)" : "none",
             }}
           >
             Sign Up
           </button>
         </div>
 
-        {/* Form Fields */}
-        <form onSubmit={handleSubmit} className="w-full flex flex-col gap-2.5 mb-3">
+        {/* Form Fields — Figma Exact Match */}
+        <form onSubmit={handleSubmit} className="w-full flex flex-col gap-3">
           {mode === "signup" && (
             <div
-              className="flex items-center gap-3 rounded-2xl px-3.5 py-3 transition-all focus-within:border-[#c96ccc]"
+              className="flex items-center gap-3 rounded-full px-4 py-3 transition-all focus-within:border-[#c96ccc]"
               style={{
-                background: "rgba(255,255,255,0.07)",
-                border: "1px solid rgba(180,120,255,0.25)",
+                background: "rgba(255, 255, 255, 0.05)",
+                border: "1px solid rgba(180, 120, 255, 0.22)",
               }}
             >
-              <User size={15} style={{ color: "rgba(180,120,255,0.6)" }} />
+              <User size={16} style={{ color: "rgba(180, 120, 255, 0.6)" }} />
               <input
                 type="text"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="Your name (e.g. Celeste)"
-                className="flex-1 bg-transparent outline-none text-xs text-[#f0e8ff] placeholder:text-purple-200/35"
+                className="flex-1 bg-transparent outline-none text-xs text-[#f0e8ff] placeholder:text-purple-200/40"
               />
             </div>
           )}
 
           {/* Email Field */}
           <div
-            className="flex items-center gap-3 rounded-2xl px-3.5 py-3 transition-all focus-within:border-[#c96ccc]"
+            className="flex items-center gap-3 rounded-full px-4 py-3 transition-all focus-within:border-[#c96ccc]"
             style={{
-              background: "rgba(255,255,255,0.07)",
-              border: "1px solid rgba(180,120,255,0.25)",
+              background: "rgba(255, 255, 255, 0.05)",
+              border: "1px solid rgba(180, 120, 255, 0.22)",
             }}
           >
-            <Mail size={15} style={{ color: "rgba(180,120,255,0.6)" }} />
+            <Mail size={16} style={{ color: "rgba(180, 120, 255, 0.6)" }} />
             <input
               type="email"
-              required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email address"
-              className="flex-1 bg-transparent outline-none text-xs text-[#f0e8ff] placeholder:text-purple-200/35"
+              className="flex-1 bg-transparent outline-none text-xs text-[#f0e8ff] placeholder:text-purple-200/40"
             />
           </div>
 
           {/* Password Field */}
           <div
-            className="flex items-center gap-3 rounded-2xl px-3.5 py-3 transition-all focus-within:border-[#c96ccc]"
+            className="flex items-center gap-3 rounded-full px-4 py-3 transition-all focus-within:border-[#c96ccc]"
             style={{
-              background: "rgba(255,255,255,0.07)",
-              border: "1px solid rgba(180,120,255,0.25)",
+              background: "rgba(255, 255, 255, 0.05)",
+              border: "1px solid rgba(180, 120, 255, 0.22)",
             }}
           >
-            <Lock size={15} style={{ color: "rgba(180,120,255,0.6)" }} />
+            <Lock size={16} style={{ color: "rgba(180, 120, 255, 0.6)" }} />
             <input
               type={showPassword ? "text" : "password"}
-              required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
-              className="flex-1 bg-transparent outline-none text-xs text-[#f0e8ff] placeholder:text-purple-200/35"
+              className="flex-1 bg-transparent outline-none text-xs text-[#f0e8ff] placeholder:text-purple-200/40"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="text-purple-300/50 hover:text-purple-200 transition-colors"
             >
-              {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+              {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
           </div>
 
@@ -237,81 +248,40 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess }) => {
             </p>
           )}
 
-          {/* Main Action Button */}
+          {/* Main Action Button — Figma Exact Match */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-full py-3.5 mt-1 font-semibold text-xs text-white tracking-wide transition-all hover:opacity-95 active:scale-[0.98] disabled:opacity-50"
+            className="w-full rounded-full py-3.5 mt-1 font-semibold text-xs text-white tracking-wide transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-1.5"
             style={{
-              background: "linear-gradient(135deg, #c96ccc 0%, #8b3fc8 50%, #7c3aed 100%)",
-              boxShadow: "0 4px 20px rgba(201,108,204,0.4)",
+              background: "linear-gradient(135deg, #b04be6 0%, #7c3aed 100%)",
+              boxShadow: "0 4px 20px rgba(168, 85, 247, 0.45)",
             }}
           >
-            {loading
-              ? "Connecting..."
-              : mode === "login"
-              ? "Log In ✦"
-              : "Create Sanctuary Account ✦"}
+            {loading ? (
+              "Connecting..."
+            ) : mode === "login" ? (
+              <>
+                <span>Log In</span>
+                <span>✦</span>
+              </>
+            ) : (
+              <>
+                <span>Create Account</span>
+                <span>✦</span>
+              </>
+            )}
           </button>
+
+          {/* Bottom Tagline — Exact Figma Match */}
+          <p className="text-[11px] text-purple-200/50 text-center mt-2 mb-1 tracking-wide font-normal">
+            Your safe space. Your support. Your journey. ♡
+          </p>
         </form>
-
-        {/* 1-Click Demo Login Button */}
-        <button
-          type="button"
-          onClick={handleDemoLogin}
-          disabled={loading}
-          className="w-full rounded-full py-3 mb-4 font-semibold text-xs text-[#160533] tracking-wide transition-all hover:brightness-105 active:scale-[0.98] flex items-center justify-center gap-2"
-          style={{
-            background: "linear-gradient(135deg, #f5d76e 0%, #c9a227 100%)",
-            boxShadow: "0 4px 18px rgba(245,215,110,0.3)",
-          }}
-        >
-          <Sparkles size={14} className="text-[#160533]" />
-          Explore with Demo Account (Instant)
-        </button>
-
-        {/* Divider */}
-        <div className="w-full flex items-center gap-2 mb-3">
-          <div className="flex-1 h-px bg-purple-400/20" />
-          <span className="text-[9px] uppercase tracking-widest text-purple-200/40">
-            Or Continue With
-          </span>
-          <div className="flex-1 h-px bg-purple-400/20" />
-        </div>
-
-        {/* Social Auth Buttons */}
-        <div className="grid grid-cols-2 gap-2.5 w-full mb-4">
-          <button
-            type="button"
-            onClick={() => handleDemoLogin()}
-            className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-2xl text-xs font-medium text-purple-100/90 transition-all hover:bg-white/10"
-            style={{
-              background: "rgba(255,255,255,0.06)",
-              border: "1px solid rgba(180,120,255,0.2)",
-            }}
-          >
-            <span className="text-sm">🌐</span> Google
-          </button>
-          <button
-            type="button"
-            onClick={() => handleDemoLogin()}
-            className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-2xl text-xs font-medium text-purple-100/90 transition-all hover:bg-white/10"
-            style={{
-              background: "rgba(255,255,255,0.06)",
-              border: "1px solid rgba(180,120,255,0.2)",
-            }}
-          >
-            <span className="text-sm">🍎</span> Apple
-          </button>
-        </div>
-
-        {/* Tagline */}
-        <p className="text-[11px] text-center text-purple-200/35 font-light">
-          Your safe space. Your support. Your journey. ♡
-        </p>
       </div>
     </div>
   );
 };
 
 export default LoginScreen;
+

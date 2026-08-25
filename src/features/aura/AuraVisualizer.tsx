@@ -2,39 +2,47 @@
 
 import React, { useState } from "react";
 import { CelysLogo } from "@/components/branding/CelysLogo";
+import { SparkleDivider } from "@/components/branding/SparkleDivider";
+import { audioSynth } from "@/lib/audio-synth";
 
 const AURA_MOODS = [
   {
+    id: "radiant",
     label: "Radiant",
     emoji: "☀️",
     rings: ["#f5d76e", "#fb923c", "#fde68a"],
     meaning: "Your energy is expansive and magnetic. You are in your power.",
   },
   {
+    id: "serene",
     label: "Serene",
     emoji: "🌊",
     rings: ["#60a5fa", "#7ec8a0", "#a5f3fc"],
     meaning: "Deep calm surrounds you. Trust the flow of your inner wisdom.",
   },
   {
+    id: "mystical",
     label: "Mystical",
     emoji: "🌙",
     rings: ["#a78bfa", "#c084fc", "#e879f9"],
     meaning: "Your intuition is heightened. Spiritual insights are near.",
   },
   {
+    id: "grounded",
     label: "Grounded",
     emoji: "🌿",
     rings: ["#86efac", "#6ee7b7", "#34d399"],
     meaning: "Rooted and steady. Your healing energy nurtures those around you.",
   },
   {
+    id: "passionate",
     label: "Passionate",
     emoji: "🔥",
     rings: ["#f87171", "#fb923c", "#fbbf24"],
     meaning: "Fierce and alive. Your drive is unstoppable right now.",
   },
   {
+    id: "ethereal",
     label: "Ethereal",
     emoji: "🌸",
     rings: ["#f9a8d4", "#c084fc", "#818cf8"],
@@ -43,7 +51,15 @@ const AURA_MOODS = [
 ];
 
 export const AuraVisualizer: React.FC = () => {
-  const [chosen, setChosen] = useState<(typeof AURA_MOODS)[0] | null>(AURA_MOODS[0]);
+  const [chosen, setChosen] = useState<(typeof AURA_MOODS)[0]>(AURA_MOODS[0]);
+
+  // Handle clicking on an aura mood: sets chosen aura and rings the exact Tibetan Bowl sound from reference project
+  const handleSelectMood = (mood: (typeof AURA_MOODS)[0]) => {
+    setChosen(mood);
+    if (audioSynth) {
+      audioSynth.playTibetanBowl(432);
+    }
+  };
 
   return (
     <div className="flex flex-col items-center px-5 pt-4 pb-6 text-center w-full max-w-sm mx-auto">
@@ -63,9 +79,10 @@ export const AuraVisualizer: React.FC = () => {
       >
         Aura Visualizer
       </h2>
-      <p className="text-xs text-purple-200/60 mb-2 mt-0.5">
-        See your energy field come alive
+      <p className="text-xs text-purple-200/60 mt-0.5">
+        See your energy field & tap to ring your aura bell
       </p>
+      <SparkleDivider className="my-2" />
 
       {/* Concentric Aura Rings Graphic */}
       <div
@@ -137,7 +154,7 @@ export const AuraVisualizer: React.FC = () => {
         >
           <p
             className="text-xs leading-relaxed"
-            style={{ color: "rgba(240,232,255,0.85)" }}
+            style={{ color: "rgba(240,232,255,0.9)" }}
           >
             {chosen.meaning}
           </p>
@@ -149,7 +166,7 @@ export const AuraVisualizer: React.FC = () => {
         {AURA_MOODS.map((m) => (
           <button
             key={m.label}
-            onClick={() => setChosen(m)}
+            onClick={() => handleSelectMood(m)}
             className="flex flex-col items-center gap-1.5 py-2.5 rounded-xl transition-all active:scale-95 hover:bg-white/10"
             style={{
               background:
@@ -162,17 +179,18 @@ export const AuraVisualizer: React.FC = () => {
                   : "rgba(180,120,255,0.18)"
               }`,
               boxShadow:
-                chosen?.label === m.label ? `0 0 12px ${m.rings[0]}44` : "none",
+                chosen?.label === m.label ? `0 0 14px ${m.rings[0]}44` : "none",
             }}
           >
-            <span style={{ fontSize: 20 }}>{m.emoji}</span>
+            <span style={{ fontSize: 22 }}>{m.emoji}</span>
             <span
               className="text-[11px] font-medium"
               style={{
                 color:
                   chosen?.label === m.label
                     ? m.rings[0]
-                    : "rgba(240,232,255,0.6)",
+                    : "rgba(240,232,255,0.7)",
+                fontWeight: chosen?.label === m.label ? 600 : 500,
               }}
             >
               {m.label}

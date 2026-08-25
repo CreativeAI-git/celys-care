@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { RefreshCw } from "lucide-react";
 import { CelysLogo } from "@/components/branding/CelysLogo";
+import { SparkleDivider } from "@/components/branding/SparkleDivider";
 import { useAuth } from "@/app/providers";
 import { offlineSync } from "@/lib/offline-sync";
 import { toast } from "sonner";
@@ -91,9 +92,10 @@ export const JournalScreen: React.FC = () => {
       >
         Journal
       </h2>
-      <p className="text-xs text-purple-200/60 mb-4 mt-0.5">
+      <p className="text-xs text-purple-200/60 mt-0.5">
         Reflect, release, and grow
       </p>
+      <SparkleDivider className="my-2 mb-3.5" />
 
       {/* Prompt Card */}
       <div

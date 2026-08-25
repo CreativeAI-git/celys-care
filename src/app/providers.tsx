@@ -15,12 +15,12 @@ interface User {
   subscription?: any;
 }
 
-interface AuthContextType {
+export interface AuthContextType {
   user: User | null;
-  setUser: (u: User | null) => void;
+  setUser: (user: User | null) => void;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, displayName?: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
+  register: (email: string, password: string, displayName?: string) => Promise<User>;
   loginDemo: () => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -52,8 +52,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const { isOnline, pendingCount } = useOnlineStatus();
 
   const refreshUser = async () => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
     try {
-      const res = await fetch("/api/auth/me");
+      const res = await fetch("/api/auth/me", { signal: controller.signal });
       if (res.ok) {
         const data = await res.json();
         setUser(data.user);
@@ -61,6 +63,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     } catch {
       // ignore
     } finally {
+      clearTimeout(timeoutId);
       setIsLoading(false);
     }
   };
@@ -69,7 +72,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     refreshUser();
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<User> => {
     const res = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -80,9 +83,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
       throw new Error(data.error || "Login failed");
     }
     setUser(data.user);
+    return data.user;
   };
 
-  const register = async (email: string, password: string, displayName?: string) => {
+  const register = async (email: string, password: string, displayName?: string): Promise<User> => {
     const res = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -93,6 +97,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       throw new Error(data.error || "Registration failed");
     }
     setUser(data.user);
+    return data.user;
   };
 
   const loginDemo = async () => {

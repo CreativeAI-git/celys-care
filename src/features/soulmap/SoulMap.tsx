@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { CelysLogo } from "@/components/branding/CelysLogo";
+import { SparkleDivider } from "@/components/branding/SparkleDivider";
 import { useAuth } from "@/app/providers";
 
 const BG_STARS = Array.from({ length: 28 }, (_, i) => ({
@@ -105,9 +106,10 @@ export const SoulMap: React.FC = () => {
       >
         Soul Map
       </h2>
-      <p className="text-xs text-purple-200/60 mb-2 mt-0.5">
+      <p className="text-xs text-purple-200/60 mt-0.5">
         Your journey, written in stars
       </p>
+      <SparkleDivider className="my-2" />
 
       {/* Star Canvas */}
       <div

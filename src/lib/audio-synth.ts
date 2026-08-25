@@ -98,6 +98,42 @@ class AudioSynthesizer {
     }
   }
 
+  // Tibetan Bell / Singing Bowl Chime (Exact reference engine)
+  public playTibetanBowl(freq: number = 432) {
+    try {
+      const ctx = this.getContext();
+      const now = ctx.currentTime;
+      const harmonics = [1, 2.76, 5.4, 8.9];
+      const gains = [0.35 * this.volume, 0.15 * this.volume, 0.08 * this.volume, 0.03 * this.volume];
+
+      harmonics.forEach((h, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq * h, now);
+
+        gain.gain.setValueAtTime(gains[i], now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 4.5);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 4.6);
+
+        setTimeout(() => {
+          try {
+            osc.disconnect();
+            gain.disconnect();
+          } catch {}
+        }, 4700);
+      });
+    } catch {
+      // ignore
+    }
+  }
+
   public startSoundscape(trackId: string) {
     this.stopSoundscape();
     const ctx = this.getContext();

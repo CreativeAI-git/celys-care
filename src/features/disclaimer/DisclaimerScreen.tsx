@@ -3,6 +3,7 @@
 import React from "react";
 import { Info, Check, Phone } from "lucide-react";
 import { CelysLogo } from "@/components/branding/CelysLogo";
+import { SparkleDivider } from "@/components/branding/SparkleDivider";
 
 const RESOURCES = [
   {
@@ -56,9 +57,10 @@ export const DisclaimerScreen: React.FC = () => {
       >
         Important Notice
       </h2>
-      <p className="text-xs text-purple-200/60 mb-3.5 mt-0.5">
+      <p className="text-xs text-purple-200/60 mt-0.5">
         Please read before using Celys Care
       </p>
+      <SparkleDivider className="my-2 mb-3.5" />
 
       {/* Warning Box */}
       <div

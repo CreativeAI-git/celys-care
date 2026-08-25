@@ -1,4 +1,4 @@
-const CACHE_NAME = "celys-care-v1";
+const CACHE_NAME = "celys-care-v2";
 const STATIC_ASSETS = [
   "/",
   "/manifest.json",
@@ -33,8 +33,10 @@ self.addEventListener("fetch", (event) => {
   // Only handle GET requests
   if (event.request.method !== "GET") return;
 
+  const url = new URL(event.request.url);
+
   // Don't cache API dynamic routes to avoid stale auth data
-  if (event.request.url.includes("/api/")) {
+  if (url.pathname.startsWith("/api/")) {
     event.respondWith(
       fetch(event.request).catch(() => {
         return new Response(
@@ -46,11 +48,30 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Cache-first / Stale-while-revalidate for static UI
+  // HTML navigation requests: Network-first, fallback to cache when offline
+  if (event.request.mode === "navigate") {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          }
+          return response;
+        })
+        .catch(() => {
+          return caches.match(event.request).then((cached) => {
+            return cached || caches.match("/");
+          });
+        })
+    );
+    return;
+  }
+
+  // Static Assets (_next/static, images, fonts): Cache-first with network revalidation
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
-        // Fetch background update
         fetch(event.request)
           .then((networkResponse) => {
             if (networkResponse && networkResponse.status === 200) {
@@ -61,21 +82,20 @@ self.addEventListener("fetch", (event) => {
         return cachedResponse;
       }
 
-      return fetch(event.request).then((networkResponse) => {
-        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== "basic") {
+      return fetch(event.request)
+        .then((networkResponse) => {
+          if (!networkResponse || networkResponse.status !== 200) {
+            return networkResponse;
+          }
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
           return networkResponse;
-        }
-
-        const responseToCache = networkResponse.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
+        })
+        .catch(() => {
+          return caches.match(event.request);
         });
-
-        return networkResponse;
-      }).catch(() => {
-        // Offline fallback
-        return caches.match("/");
-      });
     })
   );
 });

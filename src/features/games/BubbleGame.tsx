@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { CelysLogo } from "@/components/branding/CelysLogo";
+import { SparkleDivider } from "@/components/branding/SparkleDivider";
 
 const BUBBLE_COLORS = ["#c96ccc", "#7c3aed", "#60a5fa", "#a78bfa", "#f5d76e", "#7ec8a0"];
 
@@ -89,9 +90,10 @@ export const BubbleGame: React.FC = () => {
       >
         Bubble Breathing
       </h2>
-      <p className="text-xs text-purple-200/60 mb-3 mt-0.5">
+      <p className="text-xs text-purple-200/60 mt-0.5">
         Inhale… then exhale to pop the bubbles
       </p>
+      <SparkleDivider className="my-2 mb-3.5" />
 
       {/* Bubble Tank Viewport */}
       <div

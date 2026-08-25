@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { CelysLogo } from "@/components/branding/CelysLogo";
+import { SparkleDivider } from "@/components/branding/SparkleDivider";
 
 export const QuietRoom: React.FC = () => {
   const [active, setActive] = useState(false);
@@ -84,9 +85,10 @@ export const QuietRoom: React.FC = () => {
       >
         The Quiet Room
       </h2>
-      <p className="text-xs text-purple-200/60 mb-2 mt-0.5">
+      <p className="text-xs text-purple-200/60 mt-0.5">
         A place with no noise, just you
       </p>
+      <SparkleDivider className="my-2" />
 
       {/* Description Card */}
       <div

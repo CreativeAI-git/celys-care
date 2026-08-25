@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Play, Pause, SkipBack, SkipForward, Volume2 } from "lucide-react";
 import { CelysLogo } from "@/components/branding/CelysLogo";
+import { SparkleDivider } from "@/components/branding/SparkleDivider";
 
 const TRACKS = [
   { title: "Ocean Waves", artist: "Nature Sounds", duration: "∞", emoji: "🌊", type: "ocean" },
@@ -200,9 +201,10 @@ export const RelaxationMusic: React.FC = () => {
       >
         Relaxation Music
       </h2>
-      <p className="text-xs text-purple-200/60 mb-4 mt-0.5">
+      <p className="text-xs text-purple-200/60 mt-0.5">
         Sounds to soothe and restore your soul
       </p>
+      <SparkleDivider className="my-2 mb-3.5" />
 
       {/* Active Music Player Card */}
       {playing !== null && (

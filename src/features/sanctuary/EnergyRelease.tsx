@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { CelysLogo } from "@/components/branding/CelysLogo";
+import { SparkleDivider } from "@/components/branding/SparkleDivider";
 
 const N_PARTICLES = 22;
 type Particle = { id: number; x: number; y: number; vx: number; vy: number; color: string; size: number };
@@ -84,9 +85,10 @@ export const EnergyRelease: React.FC = () => {
       >
         Energy Release
       </h2>
-      <p className="text-xs text-purple-200/60 mb-2 mt-0.5">
+      <p className="text-xs text-purple-200/60 mt-0.5">
         Shake out what no longer serves you
       </p>
+      <SparkleDivider className="my-2" />
 
       {/* Interactive Somatic Particle Silhouette Canvas */}
       <div

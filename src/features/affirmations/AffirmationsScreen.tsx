@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Heart, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import { CelysLogo } from "@/components/branding/CelysLogo";
+import { SparkleDivider } from "@/components/branding/SparkleDivider";
 import { useAuth } from "@/app/providers";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
@@ -103,9 +104,10 @@ export const AffirmationsScreen: React.FC = () => {
       >
         Affirmations
       </h2>
-      <p className="text-xs text-purple-200/60 mb-4 mt-0.5">
+      <p className="text-xs text-purple-200/60 mt-0.5">
         Words that lift, heal, and empower you
       </p>
+      <SparkleDivider className="my-2 mb-3.5" />
 
       {/* Category Pills */}
       <div className="flex gap-1.5 mb-4 flex-wrap justify-center w-full">

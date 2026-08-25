@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Heart } from "lucide-react";
 import { CelysLogo } from "@/components/branding/CelysLogo";
+import { SparkleDivider } from "@/components/branding/SparkleDivider";
 import { useAuth } from "@/app/providers";
 import { offlineSync } from "@/lib/offline-sync";
 import { toast } from "sonner";
@@ -16,6 +17,20 @@ const MOODS = [
   { emoji: "😵", label: "Overwhelmed", color: "#f87171", msg: "One breath at a time. You have survived 100% of your hard days." },
   { emoji: "⭐", label: "Confident", color: "#fbbf24", msg: "You are unstoppable. Own your power today." },
 ];
+
+const getPersonalizedMoodMessage = (msg: string, user: any) => {
+  const userName =
+    user?.displayName && user.displayName.trim() && user.displayName.toLowerCase() !== "beautiful soul"
+      ? user.displayName.trim()
+      : user?.email
+        ? user.email.split("@")[0].charAt(0).toUpperCase() + user.email.split("@")[0].slice(1)
+        : "";
+
+  if (userName) {
+    return msg.replace(/beautiful soul/gi, userName);
+  }
+  return msg;
+};
 
 export const MoodCheckIn: React.FC = () => {
   const { user } = useAuth();
@@ -42,6 +57,7 @@ export const MoodCheckIn: React.FC = () => {
   const saveMood = async (i: number) => {
     setSelected(i);
     const m = MOODS[i];
+    const personalizedMsg = getPersonalizedMoodMessage(m.msg, user);
 
     confetti({
       particleCount: 40,
@@ -55,7 +71,7 @@ export const MoodCheckIn: React.FC = () => {
       label: m.label,
       color: m.color,
       intensity: 5,
-      note: m.msg,
+      note: personalizedMsg,
     };
 
     try {
@@ -96,9 +112,10 @@ export const MoodCheckIn: React.FC = () => {
       >
         Mood Check-In
       </h2>
-      <p className="text-xs text-purple-200/60 mb-5 mt-0.5">
+      <p className="text-xs text-purple-200/60 mt-0.5">
         How are you feeling right now?
       </p>
+      <SparkleDivider className="my-2 mb-4" />
 
       {/* 3x2 Grid of Moods (Figma Exact Match) */}
       <div className="grid grid-cols-3 gap-3 w-full mb-4">
@@ -151,7 +168,7 @@ export const MoodCheckIn: React.FC = () => {
             className="text-xs sm:text-sm leading-relaxed"
             style={{ color: "#f0e8ff" }}
           >
-            {MOODS[selected].msg}
+            {getPersonalizedMoodMessage(MOODS[selected].msg, user)}
           </p>
           {saved && (
             <p className="text-[11px] mt-2 font-medium" style={{ color: "#7ec8a0" }}>

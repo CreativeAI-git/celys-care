@@ -13,6 +13,7 @@ import {
   Check,
 } from "lucide-react";
 import { CelysLogo } from "@/components/branding/CelysLogo";
+import { SparkleDivider } from "@/components/branding/SparkleDivider";
 import { useAuth } from "@/app/providers";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
@@ -109,9 +110,10 @@ export const SubscriptionScreen: React.FC = () => {
       >
         Celys Care Premium
       </h2>
-      <p className="text-xs text-purple-200/60 mb-3 mt-0.5">
+      <p className="text-xs text-purple-200/60 mt-0.5">
         Understand. Support. Empower. You.
       </p>
+      <SparkleDivider className="my-2" />
 
       {/* Star Rating */}
       <div className="flex items-center gap-1 mb-3">

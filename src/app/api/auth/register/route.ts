@@ -38,6 +38,8 @@ export async function POST(req: NextRequest) {
     }
 
     const passwordHash = await hashPassword(password);
+    const nameFromEmail = normalizedEmail.split("@")[0].replace(/[._-]/g, " ");
+    const defaultName = nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1);
 
     // Create user and profile in transaction
     const newUser = await prisma.$transaction(async (tx) => {
@@ -45,7 +47,7 @@ export async function POST(req: NextRequest) {
         data: {
           email: normalizedEmail,
           passwordHash,
-          displayName: displayName || "Beautiful Soul",
+          displayName: displayName && displayName.trim() ? displayName.trim() : defaultName,
           role: "USER",
         },
       });

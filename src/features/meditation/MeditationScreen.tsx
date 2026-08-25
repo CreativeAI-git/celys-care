@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Play, Pause, RefreshCw } from "lucide-react";
 import { CelysLogo } from "@/components/branding/CelysLogo";
+import { SparkleDivider } from "@/components/branding/SparkleDivider";
 import { useAuth } from "@/app/providers";
 
 const MED_SESSIONS = [
@@ -90,9 +91,10 @@ export const MeditationScreen: React.FC = () => {
       >
         Meditation
       </h2>
-      <p className="text-xs text-purple-200/60 mb-3 mt-0.5">
+      <p className="text-xs text-purple-200/60 mt-0.5">
         Quiet the mind. Open the heart.
       </p>
+      <SparkleDivider className="my-2 mb-3.5" />
 
       {sessionCount > 0 && (
         <div

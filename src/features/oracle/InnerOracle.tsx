@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { CelysLogo } from "@/components/branding/CelysLogo";
+import { SparkleDivider } from "@/components/branding/SparkleDivider";
 import { useAuth } from "@/app/providers";
 
 const ORACLE_CARDS = [
@@ -109,9 +110,10 @@ export const InnerOracle: React.FC = () => {
       >
         Inner Oracle
       </h2>
-      <p className="text-xs text-purple-200/60 mb-2 mt-0.5">
+      <p className="text-xs text-purple-200/60 mt-0.5">
         A message from your higher self
       </p>
+      <SparkleDivider className="my-2" />
 
       {/* Oracle Card Box */}
       <div className="relative mt-4 mb-2" style={{ width: 220, height: 290 }}>
