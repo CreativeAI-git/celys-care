@@ -5,6 +5,10 @@ import { JournalEntrySchema } from "@/validations/wellness";
 import { encryptJournalText } from "@/lib/encryption";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
+export function generateStaticParams() {
+  return [{ id: "dummy" }];
+}
+
 export async function PUT(
   req: NextRequest,
   { params }: { params: { id: string } }

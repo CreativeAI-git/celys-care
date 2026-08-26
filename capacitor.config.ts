@@ -6,9 +6,17 @@ const config: CapacitorConfig = {
   webDir: "public",
   backgroundColor: "#0d0a1e",
   server: {
-    url: process.env.CAPACITOR_SERVER_URL || "https://celyscare.com",
+    // 1. For Android Emulator local testing:
+    url: process.env.CAPACITOR_SERVER_URL || "http://10.0.2.2:3000",
+    
+    // 2. For Real Mobile Phone on same Wi-Fi (Replace with your laptop IP):
+    // url: "http://192.168.1.5:3000",
+    
+    // 3. For Deployed Server (Vercel/Render):
+    // url: "https://your-deployed-app.vercel.app",
+    
     cleartext: true,
-    androidScheme: "https",
+    androidScheme: "http",
   },
   plugins: {
     SplashScreen: {
