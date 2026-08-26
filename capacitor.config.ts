@@ -6,15 +6,8 @@ const config: CapacitorConfig = {
   webDir: "public",
   backgroundColor: "#0d0a1e",
   server: {
-    // 1. For Android Emulator local testing:
-    url: process.env.CAPACITOR_SERVER_URL || "http://10.0.2.2:3000",
-    
-    // 2. For Real Mobile Phone on same Wi-Fi (Replace with your laptop IP):
-    // url: "http://192.168.1.5:3000",
-    
-    // 3. For Deployed Server (Vercel/Render):
-    // url: "https://your-deployed-app.vercel.app",
-    
+    // Local IP address of your dev machine on Wi-Fi (opens Image 1 on your mobile phone):
+    url: process.env.CAPACITOR_SERVER_URL || "http://192.168.1.50:3000",
     cleartext: true,
     androidScheme: "http",
   },
