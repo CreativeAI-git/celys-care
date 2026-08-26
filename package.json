@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "build:mobile": "set NEXT_PUBLIC_IS_CAPACITOR_BUILD=true&& next build",
     "start": "next start",
     "lint": "next lint",
     "cap:sync": "cap sync",

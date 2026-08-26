@@ -3,11 +3,12 @@ import { CapacitorConfig } from "@capacitor/cli";
 const config: CapacitorConfig = {
   appId: "com.celyscare.app",
   appName: "Celys Care",
-  webDir: "out",
+  webDir: "public",
   backgroundColor: "#0d0a1e",
   server: {
+    url: process.env.CAPACITOR_SERVER_URL || "https://celyscare.com",
+    cleartext: true,
     androidScheme: "https",
-    cleartext: false,
   },
   plugins: {
     SplashScreen: {

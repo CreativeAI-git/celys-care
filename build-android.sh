@@ -6,8 +6,8 @@ echo "🌟 Building Celys Care Android Production Bundle..."
 # 1. Install dependencies
 npm install
 
-# 2. Build Next.js mobile export bundle
-npm run build:mobile
+# 2. Build Next.js server production bundle
+npm run build
 
 # 3. Add or sync Capacitor Android platform
 if [ ! -d "android" ]; then
