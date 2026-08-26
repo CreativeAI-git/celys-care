@@ -37,7 +37,7 @@ export const CelysLogo: React.FC<CelysLogoProps> = ({
         }}
       >
         <Image
-          src="/images/lion-emblem-hq.jpg"
+          src="/images/profile.jpg"
           alt="Celys Care Celestial Emblem"
           width={size}
           height={size}

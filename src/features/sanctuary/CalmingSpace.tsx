@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { CelysLogo } from "@/components/branding/CelysLogo";
+import { SparkleDivider } from "@/components/branding/SparkleDivider";
 
 const COLORS = ["#c96ccc", "#7ec8a0", "#60a5fa", "#f5d76e", "#f87171"];
 const SCENES = [
@@ -21,36 +22,41 @@ export const CalmingSpace: React.FC = () => {
 
   return (
     <div
-      className="flex flex-col items-center px-5 pt-4 pb-6 text-center w-full max-w-sm mx-auto"
+      className="flex flex-col items-center px-4 pt-1 pb-16 text-center w-full max-w-sm mx-auto select-none"
       style={{ fontSize: largeText ? "1.1rem" : "1rem" }}
     >
       {/* Centered Golden Logo */}
-      <div className="mb-2">
-        <CelysLogo size={80} />
+      <div className="mb-2 transition-transform hover:scale-105 duration-300">
+        <CelysLogo size={76} />
       </div>
 
       {/* Screen Title & Subtitle */}
-      <h2
-        className="font-serif text-2xl sm:text-3xl font-bold mt-1"
+      <h1
+        className="font-serif text-3xl font-bold mb-1 tracking-wide text-center"
         style={{
-          background: "linear-gradient(135deg, #f5d76e 0%, #c9a227 100%)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
+          color: "#f5d76e",
+          textShadow: "0 0 20px rgba(245, 215, 110, 0.4)",
         }}
       >
         Calming Space
-      </h2>
-      <p className="text-xs text-purple-200/60 mb-3 mt-0.5">
+      </h1>
+      <p className="text-xs text-purple-200/70 mb-2 mt-0.5">
         Designed for every mind and body
       </p>
 
+      {/* Sparkle Divider (Exact Figma Match) */}
+      <div className="w-full flex items-center justify-center my-2.5">
+        <SparkleDivider />
+      </div>
+
       {/* Scene Preview Card */}
       <div
-        className="w-full rounded-3xl p-5 mb-3 text-center relative overflow-hidden"
+        className="w-full rounded-3xl p-6 mb-4 text-center relative overflow-hidden shadow-xl"
         style={{
-          background: highContrast ? "#1a0035" : "rgba(255,255,255,0.05)",
-          border: `2px solid ${COLORS[activeColor]}55`,
-          minHeight: 100,
+          background: highContrast ? "#1a0035" : "rgba(255, 255, 255, 0.03)",
+          border: `1px solid ${COLORS[activeColor]}40`,
+          boxShadow: `0 8px 30px rgba(0, 0, 0, 0.35)`,
+          minHeight: 120,
         }}
       >
         <p style={{ fontSize: largeText ? "3rem" : "2.5rem" }}>

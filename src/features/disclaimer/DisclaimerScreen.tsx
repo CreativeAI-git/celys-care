@@ -196,8 +196,7 @@ export const DisclaimerScreen: React.FC = () => {
         className="text-[9px] text-center mt-4"
         style={{ color: "rgba(240,232,255,0.35)" }}
       >
-        © 2026 Celys Care · All wellness content is for informational purposes
-        only
+        © 2026 Celys Care · All wellness content is for informational purposes only · Privacy Policy · Terms of Service
       </p>
     </div>
   );
