@@ -4,7 +4,6 @@ const config: CapacitorConfig = {
   appId: "com.celyscare.app",
   appName: "Celys Care",
   webDir: "out",
-  bundledWebRuntime: false,
   backgroundColor: "#0d0a1e",
   server: {
     androidScheme: "https",

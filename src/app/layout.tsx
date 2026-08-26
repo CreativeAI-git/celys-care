@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Providers from "./providers";
+import PwaRegistrar from "@/components/pwa-registrar";
+import PwaInstallPrompt from "@/components/pwa-install-prompt";
 
 export const metadata: Metadata = {
   title: "Celys Care — Wellness Companion & Mindfulness Sanctuary",
@@ -64,7 +66,11 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
       <body className="min-h-screen bg-[#0d0a1e] text-[#f0e8ff] antialiased selection:bg-[#c96ccc]/30 selection:text-white">
-        <Providers>{children}</Providers>
+        <PwaRegistrar />
+        <Providers>
+          {children}
+          <PwaInstallPrompt />
+        </Providers>
       </body>
     </html>
   );

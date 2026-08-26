@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Celys Care</string>
+    <string name="title_activity_main">Celys Care</string>
+    <string name="package_name">com.celyscare.app</string>
+    <string name="custom_url_scheme">com.celyscare.app</string>
+</resources>
