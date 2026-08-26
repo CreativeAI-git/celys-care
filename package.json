@@ -4,7 +4,7 @@
   "private": true,
   "description": "Celys Care - Wellness & Mindfulness Companion Full-Stack Application",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -H 0.0.0.0",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
