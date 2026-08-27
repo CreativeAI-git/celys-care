@@ -20,18 +20,15 @@ export const CalmingSpace: React.FC = () => {
   } = useAccessibility();
 
   return (
-    <div
-      className="flex flex-col items-center px-4 pt-1 pb-16 text-center w-full max-w-sm mx-auto select-none"
-      style={{ fontSize: largeText ? "1.1rem" : "1rem" }}
-    >
+    <div className="flex flex-col items-center px-4 pt-1 pb-16 text-center w-full max-w-sm mx-auto select-none">
       {/* Centered Golden Logo */}
-      <div className="mb-2 transition-transform hover:scale-105 duration-300">
-        <CelysLogo size={76} />
+      <div className="mb-1.5 transition-transform hover:scale-105 duration-300">
+        <CelysLogo size={74} />
       </div>
 
       {/* Screen Title & Subtitle */}
       <h1
-        className="font-serif text-3xl font-bold mb-1 tracking-wide text-center"
+        className="font-serif text-3xl font-bold mb-0.5 tracking-wide text-center"
         style={{
           color: "#f5d76e",
           textShadow: "0 0 20px rgba(245, 215, 110, 0.4)",
@@ -39,33 +36,32 @@ export const CalmingSpace: React.FC = () => {
       >
         Calming Space
       </h1>
-      <p className="text-xs text-purple-200/70 mb-2 mt-0.5">
+      <p className="text-xs text-purple-200/70 mb-1">
         Designed for every mind and body
       </p>
 
       {/* Sparkle Divider (Exact Figma Match) */}
-      <div className="w-full flex items-center justify-center my-2.5">
+      <div className="w-full flex items-center justify-center my-1.5">
         <SparkleDivider />
       </div>
 
       {/* Scene Preview Card */}
       <div
-        className="w-full rounded-3xl p-6 mb-4 text-center relative overflow-hidden shadow-xl"
+        className="w-full rounded-2xl p-4 mb-3 text-center relative overflow-hidden shadow-xl"
         style={{
           background: highContrast ? "#1a0035" : "rgba(255, 255, 255, 0.03)",
           border: `1px solid ${CALMING_COLORS[activeColor]}40`,
           boxShadow: `0 8px 30px rgba(0, 0, 0, 0.35)`,
-          minHeight: 120,
+          minHeight: 96,
         }}
       >
-        <p style={{ fontSize: largeText ? "3rem" : "2.5rem" }}>
+        <p className="text-3xl">
           {CALMING_SCENES[scene].split(" ")[0]}
         </p>
         <p
           className="text-xs mt-1"
           style={{
             color: "rgba(240,232,255,0.7)",
-            fontSize: largeText ? "0.95rem" : "0.75rem",
           }}
         >
           {CALMING_SCENES[scene].split(" ").slice(1).join(" ")} — your calming scene
@@ -88,7 +84,6 @@ export const CalmingSpace: React.FC = () => {
                 scene === i ? CALMING_COLORS[activeColor] : "rgba(180,120,255,0.2)"
               }`,
               color: "#f0e8ff",
-              fontSize: largeText ? "0.85rem" : "0.75rem",
             }}
           >
             {s}

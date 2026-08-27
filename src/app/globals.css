@@ -136,19 +136,9 @@ html.high-contrast button:not(nav button) {
   border-color: rgba(245, 215, 110, 0.7) !important;
 }
 
-/* 2. Larger Text Scaling (Comprehensive Platform-Wide Scale) */
-html.large-text {
-  font-size: 116% !important;
-}
-
+/* 2. Larger Text Scaling (Scales typography cleanly without bloating container paddings/margins) */
 html.large-text p,
 html.large-text span:not(nav span),
-html.large-text h1,
-html.large-text h2,
-html.large-text h3,
-html.large-text h4,
-html.large-text h5,
-html.large-text h6,
 html.large-text a,
 html.large-text label,
 html.large-text input,
@@ -156,38 +146,37 @@ html.large-text textarea,
 html.large-text button:not(nav button),
 html.large-text li,
 html.large-text blockquote {
-  font-size: 114% !important;
-  line-height: 1.45 !important;
+  font-size: 1.14em !important;
 }
 
 /* Explicit scaling for arbitrary tailwind pixel utility classes */
 html.large-text [class*="text-[9px]"],
 html.large-text [class*="text-[10px]"]:not(nav span) {
-  font-size: 12px !important;
+  font-size: 13px !important;
 }
 
 html.large-text [class*="text-[11px]"]:not(nav span) {
-  font-size: 13.5px !important;
+  font-size: 14px !important;
 }
 
 html.large-text [class*="text-[12px]"],
 html.large-text .text-xs:not(nav span) {
-  font-size: 14.5px !important;
+  font-size: 15px !important;
 }
 
 html.large-text [class*="text-[13px]"] {
-  font-size: 15.5px !important;
+  font-size: 16px !important;
 }
 
 html.large-text [class*="text-[14px]"],
 html.large-text .text-sm {
-  font-size: 16.5px !important;
+  font-size: 17px !important;
 }
 
 html.large-text [class*="text-[15px]"],
 html.large-text [class*="text-[16px]"],
 html.large-text .text-base {
-  font-size: 18.5px !important;
+  font-size: 19px !important;
 }
 
 html.large-text .text-lg {
