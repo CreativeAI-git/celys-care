@@ -15,8 +15,7 @@ prisma/*.db-journal
 *.sqlite
 *.sqlite3
 
-# Environment files and secrets
-.env
+# Environment files and secrets (local secrets stay ignored)
 .env*.local
 .env.local
 .env.development.local
