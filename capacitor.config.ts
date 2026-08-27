@@ -6,8 +6,8 @@ const config: CapacitorConfig = {
   webDir: "public",
   backgroundColor: "#0d0a1e",
   server: {
-    // Other laptop local IP running Next.js dev server:
-    url: process.env.CAPACITOR_SERVER_URL || "http://192.168.29.180:3000",
+    // Local IP running Next.js dev server:
+    url: process.env.CAPACITOR_SERVER_URL || "http://192.168.1.24:3000",
     cleartext: true,
     androidScheme: "http",
   },

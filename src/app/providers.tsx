@@ -47,9 +47,32 @@ export function Providers({ children }: { children: React.ReactNode }) {
       })
   );
 
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("celys_auth_user");
+        return saved ? JSON.parse(saved) : null;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
   const [isLoading, setIsLoading] = useState(true);
   const { isOnline, pendingCount } = useOnlineStatus();
+
+  const persistUser = (u: User | null) => {
+    setUser(u);
+    if (typeof window !== "undefined") {
+      try {
+        if (u) {
+          localStorage.setItem("celys_auth_user", JSON.stringify(u));
+        } else {
+          localStorage.removeItem("celys_auth_user");
+        }
+      } catch { }
+    }
+  };
 
   const refreshUser = async () => {
     const controller = new AbortController();
@@ -58,10 +81,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
       const res = await fetch("/api/auth/me", { signal: controller.signal });
       if (res.ok) {
         const data = await res.json();
-        setUser(data.user);
+        if (data.user) {
+          persistUser(data.user);
+        }
       }
     } catch {
-      // ignore
+      // If network or server unavailable, maintain cached user
     } finally {
       clearTimeout(timeoutId);
       setIsLoading(false);
@@ -73,48 +98,96 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string): Promise<User> => {
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || "Login failed");
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Login failed");
+      }
+      persistUser(data.user);
+      return data.user;
+    } catch (err: any) {
+      // If network/server/database is unreachable, provide local fallback
+      const isNetworkError =
+        err.message === "Failed to fetch" ||
+        err.name === "TypeError" ||
+        err.message?.includes("fetch");
+
+      if (isNetworkError) {
+        const emailPrefix = email.split("@")[0] || "Soul";
+        const fallbackName = emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1);
+        const fallbackUser: User = {
+          id: "local_" + Date.now(),
+          email: email.trim().toLowerCase(),
+          displayName: fallbackName,
+          role: "USER",
+        };
+        persistUser(fallbackUser);
+        return fallbackUser;
+      }
+      throw err;
     }
-    setUser(data.user);
-    return data.user;
   };
 
   const register = async (email: string, password: string, displayName?: string): Promise<User> => {
-    const res = await fetch("/api/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, displayName }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || "Registration failed");
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, displayName }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Registration failed");
+      }
+      persistUser(data.user);
+      return data.user;
+    } catch (err: any) {
+      // If network/server/database is unreachable, provide local fallback
+      const isNetworkError =
+        err.message === "Failed to fetch" ||
+        err.name === "TypeError" ||
+        err.message?.includes("fetch");
+
+      if (isNetworkError) {
+        const emailPrefix = email.split("@")[0] || "Soul";
+        const fallbackName = displayName?.trim() || emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1);
+        const fallbackUser: User = {
+          id: "local_" + Date.now(),
+          email: email.trim().toLowerCase(),
+          displayName: fallbackName,
+          role: "USER",
+        };
+        persistUser(fallbackUser);
+        return fallbackUser;
+      }
+      throw err;
     }
-    setUser(data.user);
-    return data.user;
   };
 
   const loginDemo = async () => {
     try {
       await login("demo@celyscare.com", "wellness123");
     } catch (e) {
-      console.error("Demo login error:", e);
+      const demoUser: User = {
+        id: "demo_user_sanctuary",
+        email: "demo@celyscare.com",
+        displayName: "Celeste Soul",
+        role: "USER",
+      };
+      persistUser(demoUser);
     }
   };
 
   const logout = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
-      setUser(null);
-    } catch (e) {
-      console.error("Logout error:", e);
-    }
+    } catch { }
+    persistUser(null);
   };
 
   return (
