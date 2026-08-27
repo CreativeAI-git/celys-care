@@ -377,7 +377,8 @@ export const AIChat: React.FC = () => {
                   src="/images/profile.jpg"
                   alt="Celys"
                   fill
-                  className="object-cover"
+                  unoptimized
+                  className="object-cover rounded-full"
                 />
               </div>
             )}
@@ -420,10 +421,11 @@ export const AIChat: React.FC = () => {
               style={{ border: "1px solid rgba(201,162,39,0.5)" }}
             >
               <Image
-                src="/images/lion-emblem-hq.jpg"
+                src="/images/profile.jpg"
                 alt="Celys"
                 fill
-                className="object-cover"
+                unoptimized
+                className="object-cover rounded-full"
               />
             </div>
             <div
