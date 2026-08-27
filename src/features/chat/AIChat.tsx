@@ -65,9 +65,28 @@ export const AIChat: React.FC = () => {
     return false;
   });
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
+  const activeUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   const endRef = useRef<HTMLDivElement>(null);
   const promptScrollRef = useRef<HTMLDivElement>(null);
+
+  // Pre-load and cache voices for Android WebView & iOS WebKit
+  useEffect(() => {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      try {
+        window.speechSynthesis.getVoices();
+        window.speechSynthesis.onvoiceschanged = () => {
+          try {
+            window.speechSynthesis.getVoices();
+          } catch { }
+        };
+      } catch { }
+    }
+    return () => {
+      stopSpeaking();
+    };
+  }, []);
 
   // Drag to scroll handling for quick prompt slider
   const isDown = useRef(false);
@@ -133,34 +152,91 @@ export const AIChat: React.FC = () => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
-  // Clean up Web Speech on unmount
-  useEffect(() => {
-    return () => {
-      if (typeof window !== "undefined" && "speechSynthesis" in window) {
-        try {
-          window.speechSynthesis.cancel();
-        } catch { }
-      }
-    };
-  }, []);
+  const stopSpeaking = () => {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch { }
+    }
+    activeUtteranceRef.current = null;
+    if (typeof window !== "undefined") {
+      (window as any).__activeUtterance = null;
+    }
+    setIsSpeaking(false);
+    setSpeakingMessageId(null);
+  };
 
-  // Text-To-Speech function
-  const speakText = (text: string) => {
-    if (!voiceEnabled || typeof window === "undefined" || !("speechSynthesis" in window)) return;
+  // Robust Text-To-Speech function with Android WebView & iOS support
+  const speakText = (text: string, messageId?: string, forceSpeak: boolean = false) => {
+    if ((!voiceEnabled && !forceSpeak) || typeof window === "undefined" || !("speechSynthesis" in window)) {
+      return;
+    }
+
     try {
-      window.speechSynthesis.cancel();
+      const synth = window.speechSynthesis;
+      synth.cancel();
+
+      // Clean text of emojis & special formatting symbols for smooth natural speech
       const cleanText = text
-        .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}✦🌸💜🌿✨☀️🌊🦁]/gu, "")
+        .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}✦🌸💜🌿✨☀️🌊🦁·•—*_~`]/gu, " ")
+        .replace(/\s+/g, " ")
         .trim();
+
+      if (!cleanText) return;
+
       const utterance = new SpeechSynthesisUtterance(cleanText);
-      utterance.rate = 0.92;
+      utterance.rate = 0.95;
       utterance.pitch = 1.05;
-      utterance.onstart = () => setIsSpeaking(true);
-      utterance.onend = () => setIsSpeaking(false);
-      utterance.onerror = () => setIsSpeaking(false);
-      window.speechSynthesis.speak(utterance);
-    } catch {
+      utterance.volume = 1.0;
+      utterance.lang = "en-US";
+
+      // Select natural English voice if available on device
+      const voices = synth.getVoices();
+      if (voices && voices.length > 0) {
+        const preferredVoice =
+          voices.find((v) => v.lang.startsWith("en") && (v.name.includes("Female") || v.name.includes("Natural") || v.name.includes("Google") || v.name.includes("Samantha") || v.name.includes("Victoria") || v.name.includes("Zira"))) ||
+          voices.find((v) => v.lang.startsWith("en")) ||
+          voices[0];
+        if (preferredVoice) {
+          utterance.voice = preferredVoice;
+        }
+      }
+
+      utterance.onstart = () => {
+        setIsSpeaking(true);
+        if (messageId) setSpeakingMessageId(messageId);
+      };
+
+      utterance.onend = () => {
+        setIsSpeaking(false);
+        setSpeakingMessageId(null);
+        activeUtteranceRef.current = null;
+        if (typeof window !== "undefined") {
+          (window as any).__activeUtterance = null;
+        }
+      };
+
+      utterance.onerror = (e) => {
+        console.warn("Speech synthesis notice:", e);
+        setIsSpeaking(false);
+        setSpeakingMessageId(null);
+        activeUtteranceRef.current = null;
+        if (typeof window !== "undefined") {
+          (window as any).__activeUtterance = null;
+        }
+      };
+
+      // Crucial Android WebView fix: store in window to prevent garbage collection mid-speech
+      activeUtteranceRef.current = utterance;
+      (window as any).__activeUtterance = utterance;
+
+      // Wake up Android WebView speech audio subsystem
+      synth.resume();
+      synth.speak(utterance);
+    } catch (err) {
+      console.error("speakText error:", err);
       setIsSpeaking(false);
+      setSpeakingMessageId(null);
     }
   };
 
@@ -168,11 +244,14 @@ export const AIChat: React.FC = () => {
     const next = !voiceEnabled;
     setVoiceEnabled(next);
     localStorage.setItem("celys_voice_enabled", String(next));
-    if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      try {
-        window.speechSynthesis.cancel();
-      } catch { }
-      setIsSpeaking(false);
+    if (!next) {
+      stopSpeaking();
+    } else {
+      // Find latest celys message and speak it for instant audio confirmation
+      const lastCelysMsg = [...messages].reverse().find((m) => m.from === "celys");
+      if (lastCelysMsg) {
+        speakText(lastCelysMsg.text, lastCelysMsg.id, true);
+      }
     }
     audioSynth?.playPopSound(520);
   };
@@ -242,7 +321,6 @@ export const AIChat: React.FC = () => {
       } else {
         replyText = generateAIResponse(textToSend);
       }
-
       setTimeout(() => {
         const assistantMsg: Message = {
           id: "celys_" + Date.now(),
@@ -253,7 +331,7 @@ export const AIChat: React.FC = () => {
         setMessages((prev) => [...prev, assistantMsg]);
         setIsTyping(false);
         audioSynth?.playPopSound(720);
-        speakText(replyText);
+        speakText(replyText, assistantMsg.id);
       }, 700);
     } catch {
       setTimeout(() => {
@@ -267,18 +345,13 @@ export const AIChat: React.FC = () => {
         setMessages((prev) => [...prev, assistantMsg]);
         setIsTyping(false);
         audioSynth?.playPopSound(720);
-        speakText(fallbackText);
+        speakText(fallbackText, assistantMsg.id);
       }, 700);
     }
   };
 
   const clearChat = () => {
-    if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      try {
-        window.speechSynthesis.cancel();
-      } catch { }
-      setIsSpeaking(false);
-    }
+    stopSpeaking();
     setMessages(getInitialMessages(user));
     audioSynth?.playPopSound(380);
   };
@@ -293,20 +366,25 @@ export const AIChat: React.FC = () => {
             background: "linear-gradient(135deg, #f5d76e 0%, #c9a227 100%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
+            textShadow: "0 0 20px rgba(245, 215, 110, 0.25)",
           }}
         >
           Celys Care Chat
         </h2>
-        <p className="text-[11px] text-purple-200/60 font-medium mt-0.5">
+        <p className="text-[11px] text-purple-200/60 mt-0.5">
           Your judgment-free companion
         </p>
-
-        {/* Decorative Golden Sparkle Divider */}
-        <SparkleDivider className="my-1 opacity-75" />
+        <SparkleDivider className="my-1.5" />
       </div>
 
-      {/* Online Status & Voice Control Bar (Reference Figma & Code Match) */}
-      <div className="flex items-center justify-between px-1.5 py-1 mb-1.5 flex-shrink-0">
+      {/* Online Status & Audio Controls Banner */}
+      <div
+        className="flex items-center justify-between px-3 py-1.5 rounded-2xl mb-1 flex-shrink-0"
+        style={{
+          background: "rgba(255, 255, 255, 0.04)",
+          border: "1px solid rgba(180, 120, 255, 0.15)",
+        }}
+      >
         <div className="flex items-center gap-1.5">
           <span className={`w-2 h-2 rounded-full ${isSpeaking ? "bg-[#f5d76e] animate-ping" : "bg-emerald-400 animate-pulse"}`} />
           <span className="text-[11px] font-medium" style={{ color: isSpeaking ? "#f5d76e" : "rgba(240,232,255,0.7)" }}>
@@ -382,34 +460,69 @@ export const AIChat: React.FC = () => {
                 />
               </div>
             )}
-            <div className="flex flex-col max-w-[80%]">
+            <div className="flex flex-col max-w-[85%]">
               <div
-                className="px-3.5 py-2.5 rounded-2xl text-xs leading-relaxed break-words"
+                onClick={() => {
+                  if (m.from === "celys") {
+                    if (speakingMessageId === m.id) {
+                      stopSpeaking();
+                    } else {
+                      speakText(m.text, m.id, true);
+                    }
+                  }
+                }}
+                className={`px-3.5 py-2.5 rounded-2xl text-xs leading-relaxed break-words relative transition-all ${m.from === "celys" ? "cursor-pointer hover:brightness-105" : ""
+                  }`}
                 style={{
                   background:
                     m.from === "celys"
-                      ? "linear-gradient(135deg, rgba(124,58,237,0.35), rgba(76,29,149,0.35))"
+                      ? speakingMessageId === m.id
+                        ? "linear-gradient(135deg, rgba(124,58,237,0.5), rgba(76,29,149,0.5))"
+                        : "linear-gradient(135deg, rgba(124,58,237,0.35), rgba(76,29,149,0.35))"
                       : "linear-gradient(135deg, rgba(201,108,204,0.35), rgba(147,51,234,0.35))",
                   border: `1px solid ${m.from === "celys"
-                    ? "rgba(180,120,255,0.35)"
+                    ? speakingMessageId === m.id
+                      ? "rgba(245,215,110,0.6)"
+                      : "rgba(180,120,255,0.35)"
                     : "rgba(201,108,204,0.4)"
                     }`,
                   color: "#f0e8ff",
                   borderTopLeftRadius: m.from === "celys" ? 4 : 16,
                   borderTopRightRadius: m.from === "user" ? 4 : 16,
+                  boxShadow: speakingMessageId === m.id ? "0 0 16px rgba(245,215,110,0.25)" : "none",
                 }}
               >
-                {m.text}
+                <span>{m.text}</span>
               </div>
-              {m.timestamp && (
-                <span
-                  className={`text-[9px] mt-1 px-1 ${m.from === "user" ? "text-right" : "text-left"
-                    }`}
-                  style={{ color: "rgba(240,232,255,0.35)" }}
-                >
-                  {m.timestamp}
-                </span>
-              )}
+              <div className="flex items-center gap-2 mt-1 px-1">
+                {m.timestamp && (
+                  <span
+                    className={`text-[9px] ${m.from === "user" ? "ml-auto" : "mr-auto"}`}
+                    style={{ color: "rgba(240,232,255,0.35)" }}
+                  >
+                    {m.timestamp}
+                  </span>
+                )}
+                {m.from === "celys" && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (speakingMessageId === m.id) {
+                        stopSpeaking();
+                      } else {
+                        speakText(m.text, m.id, true);
+                      }
+                    }}
+                    className={`inline-flex items-center gap-1 text-[9px] font-medium px-2 py-0.5 rounded-full border transition-all cursor-pointer ${speakingMessageId === m.id
+                      ? "bg-[#f5d76e]/25 text-[#f5d76e] border-[#f5d76e]/50 animate-pulse"
+                      : "bg-white/5 text-purple-200/60 border-purple-300/20 hover:text-white hover:bg-white/10"
+                      }`}
+                  >
+                    <Volume2 size={10} className={speakingMessageId === m.id ? "text-[#f5d76e]" : ""} />
+                    <span>{speakingMessageId === m.id ? "Playing…" : "Read Aloud"}</span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         ))}
