@@ -229,4 +229,19 @@ html.reduce-motion *::after {
   scroll-behavior: auto !important;
 }
 
+/* 4. iOS / WebKit Safe Area & Tap Optimizations for IPA */
+.safe-area-bottom {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0.75rem)) !important;
+}
+
+.safe-area-top {
+  padding-top: max(0.5rem, env(safe-area-inset-top, 0.5rem)) !important;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+
 
