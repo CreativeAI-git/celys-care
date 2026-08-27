@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Play, Pause, SkipBack, SkipForward, Volume2 } from "lucide-react";
 import { CelysLogo } from "@/components/branding/CelysLogo";
 import { SparkleDivider } from "@/components/branding/SparkleDivider";
-import { audioSynth } from "@/lib/audio-synth";
+import { universalSoundscapes } from "@/lib/wav-soundscapes";
 
 const TRACKS = [
   { title: "Ocean Waves", artist: "Nature Sounds", duration: "∞", emoji: "🌊", type: "ocean" },
@@ -21,22 +21,21 @@ export const RelaxationMusic: React.FC = () => {
 
   const playTrack = (i: number) => {
     if (playing === i) {
-      audioSynth.stopSoundscape();
+      universalSoundscapes.stop();
       setPlaying(null);
       return;
     }
-    audioSynth.setVolume(volume / 100);
-    audioSynth.startSoundscape(TRACKS[i].type);
+    universalSoundscapes.play(TRACKS[i].type, volume / 100);
     setPlaying(i);
   };
 
   useEffect(() => {
-    audioSynth.setVolume(volume / 100);
+    universalSoundscapes.setVolume(volume / 100);
   }, [volume]);
 
   useEffect(() => {
     return () => {
-      audioSynth.stopSoundscape();
+      universalSoundscapes.stop();
     };
   }, []);
 
