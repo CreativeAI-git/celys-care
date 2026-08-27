@@ -84,9 +84,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess }) => {
   return (
     <div className="relative w-full flex flex-col items-center justify-start overflow-hidden select-none">
       {/* Top Lion Hero Banner (Figma Exact Match) */}
-      <div className="relative w-full h-[220px] sm:h-[240px] overflow-hidden rounded-3xl shadow-2xl">
+      <div style={{ aspectRatio: "4/3", height: "100%" }} className="relative w-full h-[100%] sm:h-[240px] overflow-hidden rounded-3xl shadow-2xl">
         <Image
-          src="/images/lion-hero-hq.jpg"
+          src="/images/lion-hero-hq3.jpg"
           alt="Celys Care Celestial Lion"
           fill
           priority
