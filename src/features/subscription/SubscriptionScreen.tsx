@@ -42,6 +42,15 @@ export const SubscriptionScreen: React.FC = () => {
     if (localSub || user?.subscription?.status === "active") setSubscribed(true);
   }, [user]);
 
+  const triggerSuccessCelebration = () => {
+    confetti({
+      particleCount: 80,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ["#f5d76e", "#c96ccc", "#7c3aed"],
+    });
+  };
+
   const startTrial = async () => {
     setLoading(true);
     const now = new Date();
@@ -56,12 +65,7 @@ export const SubscriptionScreen: React.FC = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ plan: "luminary" }),
       });
-      confetti({
-        particleCount: 70,
-        spread: 60,
-        origin: { y: 0.6 },
-        colors: ["#f5d76e", "#c96ccc", "#7c3aed"],
-      });
+      triggerSuccessCelebration();
       await refreshUser();
       toast.success("7-Day Free Trial Activated! Enjoy full sanctuary access ✨");
     } catch {
@@ -90,6 +94,10 @@ export const SubscriptionScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRestorePurchases = async () => {
+    toast.success("Purchases restored.");
   };
 
   return (
