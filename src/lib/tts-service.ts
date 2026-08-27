@@ -1,10 +1,20 @@
-import { Capacitor } from "@capacitor/core";
+/**
+ * Unified Text-To-Speech Service for Celys Care
+ * Compatible with Android System WebView, iOS WebKit (Safari), and Desktop Browsers
+ */
 
-let currentAudio: HTMLAudioElement | null = null;
-let currentUtterance: any = null;
+let activeUtterances: SpeechSynthesisUtterance[] = [];
+let speechQueue: string[] = [];
+let isSpeakingActive = false;
+let currentCallbacks: {
+  onStart?: () => void;
+  onEnd?: () => void;
+  onError?: (err: any) => void;
+} | null = null;
+let heartbeatInterval: any = null;
 
 /**
- * Clean text of emojis, markdown, symbols, and formatting before speaking
+ * Clean text of emojis, markdown asterisks, hashtags, and special symbols
  */
 export function sanitizeSpeechText(rawText: string): string {
   return rawText
@@ -14,68 +24,81 @@ export function sanitizeSpeechText(rawText: string): string {
 }
 
 /**
- * Stop any ongoing speech playback immediately
+ * Split text into short, natural sentences so mobile WebViews never freeze or cut off audio
+ */
+function splitIntoSentences(text: string): string[] {
+  const matches = text.match(/[^.!?]+[.!?]+|[^.!?]+$/g);
+  if (!matches || matches.length === 0) return [text];
+  
+  const results: string[] = [];
+  for (const part of matches) {
+    const trimmed = part.trim();
+    if (trimmed.length > 0) {
+      results.push(trimmed);
+    }
+  }
+  return results.length > 0 ? results : [text];
+}
+
+/**
+ * Find the best natural English voice available on device
+ */
+function getBestEnglishVoice(synth: SpeechSynthesis): SpeechSynthesisVoice | null {
+  const voices = synth.getVoices();
+  if (!voices || voices.length === 0) return null;
+
+  // 1. High quality natural English voices
+  const preferred = voices.find(
+    (v) =>
+      v.lang.startsWith("en") &&
+      (v.name.includes("Female") ||
+        v.name.includes("Natural") ||
+        v.name.includes("Google") ||
+        v.name.includes("Samantha") ||
+        v.name.includes("Victoria") ||
+        v.name.includes("Karen") ||
+        v.name.includes("Moira") ||
+        v.name.includes("Zira"))
+  );
+  if (preferred) return preferred;
+
+  // 2. Any English voice
+  const anyEnglish = voices.find((v) => v.lang.startsWith("en"));
+  if (anyEnglish) return anyEnglish;
+
+  return voices[0] || null;
+}
+
+/**
+ * Stop any active speech immediately
  */
 export async function stopCelysVoice(): Promise<void> {
-  // 1. Stop HTML5 Audio if playing
-  if (currentAudio) {
-    try {
-      currentAudio.pause();
-      currentAudio.src = "";
-      currentAudio.onended = null;
-      currentAudio.onerror = null;
-    } catch { }
-    currentAudio = null;
+  if (heartbeatInterval) {
+    clearInterval(heartbeatInterval);
+    heartbeatInterval = null;
   }
 
-  // 2. Stop Web Speech API
+  speechQueue = [];
+  isSpeakingActive = false;
+  activeUtterances = [];
+
   if (typeof window !== "undefined" && "speechSynthesis" in window) {
     try {
       window.speechSynthesis.cancel();
     } catch { }
     try {
-      (window as any).__activeUtterance = null;
+      (window as any).__celysActiveUtterance = null;
     } catch { }
   }
 
-  currentUtterance = null;
-}
-
-/**
- * Split text into chunks suitable for audio streaming (< 150 chars per chunk)
- */
-function splitTextIntoChunks(text: string): string[] {
-  const sentences = text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [text];
-  const chunks: string[] = [];
-
-  for (const sentence of sentences) {
-    const trimmed = sentence.trim();
-    if (!trimmed) continue;
-    if (trimmed.length <= 150) {
-      chunks.push(trimmed);
-    } else {
-      // Split long sentence by commas or spaces
-      const words = trimmed.split(" ");
-      let current = "";
-      for (const word of words) {
-        if ((current + " " + word).trim().length <= 150) {
-          current = (current + " " + word).trim();
-        } else {
-          if (current) chunks.push(current);
-          current = word;
-        }
-      }
-      if (current) chunks.push(current);
-    }
+  if (currentCallbacks?.onEnd) {
+    currentCallbacks.onEnd();
   }
-
-  return chunks.length > 0 ? chunks : [text];
+  currentCallbacks = null;
 }
 
 /**
- * Speak text reliably across Android APK, iOS, and Browser
- * Uses High-Quality Natural Audio Stream + Web Speech API Fallback
- * Zero extra npm package dependency required!
+ * Speak text smoothly and reliably on Android APK, iOS Safari, and Desktop
  */
 export async function speakCelysVoice(
   rawText: string,
@@ -85,125 +108,104 @@ export async function speakCelysVoice(
     onError?: (err: any) => void;
   }
 ): Promise<void> {
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+    callbacks?.onEnd?.();
+    return;
+  }
+
   const cleanText = sanitizeSpeechText(rawText);
   if (!cleanText) {
     callbacks?.onEnd?.();
     return;
   }
 
+  // Cancel any ongoing speech first
   await stopCelysVoice();
 
-  const chunks = splitTextIntoChunks(cleanText);
-  let chunkIndex = 0;
-  let hasStarted = false;
+  const synth = window.speechSynthesis;
+  currentCallbacks = callbacks || null;
+  speechQueue = splitIntoSentences(cleanText);
 
-  const playNextChunk = () => {
-    if (chunkIndex >= chunks.length) {
-      currentAudio = null;
-      callbacks?.onEnd?.();
+  // Resume audio subsystem (required on Android/iOS after gesture)
+  try {
+    synth.cancel();
+    synth.resume();
+  } catch { }
+
+  let hasNotifiedStart = false;
+
+  const playNextSentence = () => {
+    if (speechQueue.length === 0) {
+      if (heartbeatInterval) {
+        clearInterval(heartbeatInterval);
+        heartbeatInterval = null;
+      }
+      isSpeakingActive = false;
+      activeUtterances = [];
+      (window as any).__celysActiveUtterance = null;
+      currentCallbacks?.onEnd?.();
+      currentCallbacks = null;
       return;
     }
 
-    const chunk = chunks[chunkIndex++];
-    const encodedText = encodeURIComponent(chunk);
-    // Reliable, natural, high-definition TTS audio endpoint supported natively by all HTML5 browsers and Android WebViews
-    const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en&q=${encodedText}`;
-
-    try {
-      const audio = new Audio(audioUrl);
-      audio.crossOrigin = "anonymous";
-      audio.playbackRate = 0.96;
-      currentAudio = audio;
-
-      audio.onplay = () => {
-        if (!hasStarted) {
-          hasStarted = true;
-          callbacks?.onStart?.();
-        }
-      };
-
-      audio.onended = () => {
-        playNextChunk();
-      };
-
-      audio.onerror = () => {
-        // If audio stream fails (offline or blocked), fallback smoothly to Web Speech API
-        console.warn("Audio stream notice, attempting Web Speech API fallback...");
-        fallbackToWebSpeech(cleanText, callbacks);
-      };
-
-      const playPromise = audio.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(() => {
-          fallbackToWebSpeech(cleanText, callbacks);
-        });
-      }
-    } catch {
-      fallbackToWebSpeech(cleanText, callbacks);
+    const sentence = speechQueue.shift();
+    if (!sentence) {
+      playNextSentence();
+      return;
     }
-  };
 
-  playNextChunk();
-}
-
-/**
- * Offline/Device Fallback using Web Speech API
- */
-function fallbackToWebSpeech(
-  text: string,
-  callbacks?: {
-    onStart?: () => void;
-    onEnd?: () => void;
-    onError?: (err: any) => void;
-  }
-) {
-  if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-    callbacks?.onEnd?.();
-    return;
-  }
-
-  try {
-    const synth = window.speechSynthesis;
-    synth.cancel();
-
-    const utterance = new SpeechSynthesisUtterance(text);
+    const utterance = new SpeechSynthesisUtterance(sentence);
     utterance.lang = "en-US";
     utterance.rate = 0.95;
     utterance.pitch = 1.05;
     utterance.volume = 1.0;
 
-    const voices = synth.getVoices();
-    if (voices && voices.length > 0) {
-      const preferred =
-        voices.find((v) => v.lang.startsWith("en") && (v.name.includes("Female") || v.name.includes("Natural") || v.name.includes("Google") || v.name.includes("Samantha") || v.name.includes("Victoria") || v.name.includes("Zira"))) ||
-        voices.find((v) => v.lang.startsWith("en")) ||
-        voices[0];
-      if (preferred) {
-        utterance.voice = preferred;
-      }
+    const voice = getBestEnglishVoice(synth);
+    if (voice) {
+      utterance.voice = voice;
     }
 
     utterance.onstart = () => {
-      callbacks?.onStart?.();
+      if (!hasNotifiedStart) {
+        hasNotifiedStart = true;
+        isSpeakingActive = true;
+        currentCallbacks?.onStart?.();
+      }
     };
 
     utterance.onend = () => {
-      (window as any).__activeUtterance = null;
-      callbacks?.onEnd?.();
+      // Move to next sentence
+      playNextSentence();
     };
 
-    utterance.onerror = (e) => {
-      (window as any).__activeUtterance = null;
-      callbacks?.onError?.(e);
-      callbacks?.onEnd?.();
+    utterance.onerror = (event) => {
+      console.warn("Speech utterance event:", event);
+      playNextSentence();
     };
 
-    currentUtterance = utterance;
-    (window as any).__activeUtterance = utterance;
-    synth.resume();
-    synth.speak(utterance);
-  } catch (e) {
-    callbacks?.onError?.(e);
-    callbacks?.onEnd?.();
-  }
+    // Store reference on window to prevent Garbage Collector from silencing audio on Android
+    activeUtterances.push(utterance);
+    (window as any).__celysActiveUtterance = utterance;
+
+    try {
+      synth.resume();
+      synth.speak(utterance);
+    } catch (e) {
+      console.error("SpeechSynthesis speak error:", e);
+      playNextSentence();
+    }
+  };
+
+  // Start heartbeat interval to prevent Chrome/Android WebView 15-second speech pause bug
+  if (heartbeatInterval) clearInterval(heartbeatInterval);
+  heartbeatInterval = setInterval(() => {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.pause();
+        window.speechSynthesis.resume();
+      }
+    }
+  }, 10000);
+
+  playNextSentence();
 }

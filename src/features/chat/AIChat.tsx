@@ -62,13 +62,13 @@ export const AIChat: React.FC = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(() => {
     if (typeof window !== "undefined") {
-      return localStorage.getItem("celys_voice_enabled") === "true";
+      const saved = localStorage.getItem("celys_voice_enabled");
+      return saved === null ? true : saved === "true";
     }
-    return false;
+    return true;
   });
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
-  const activeUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   const endRef = useRef<HTMLDivElement>(null);
   const promptScrollRef = useRef<HTMLDivElement>(null);
@@ -236,6 +236,13 @@ export const AIChat: React.FC = () => {
     if (!textToSend || isTyping) return;
 
     if (!customText) setInput("");
+
+    // Audio gesture unlock for mobile WebViews
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      try {
+        window.speechSynthesis.resume();
+      } catch { }
+    }
 
     audioSynth?.playPopSound(600);
 
