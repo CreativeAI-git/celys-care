@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { Play, Pause, SkipBack, SkipForward, Volume2 } from "lucide-react";
 import { CelysLogo } from "@/components/branding/CelysLogo";
 import { SparkleDivider } from "@/components/branding/SparkleDivider";
+import { audioSynth } from "@/lib/audio-synth";
 
 const TRACKS = [
   { title: "Ocean Waves", artist: "Nature Sounds", duration: "∞", emoji: "🌊", type: "ocean" },
@@ -14,174 +15,30 @@ const TRACKS = [
   { title: "Healing Frequencies", artist: "528Hz Therapy", duration: "∞", emoji: "✨", type: "528hz" },
 ];
 
-type AudioNodes = { stop: () => void };
-
-function buildAudio(type: string, ctx: AudioContext): AudioNodes {
-  const gain = ctx.createGain();
-  gain.gain.setValueAtTime(0, ctx.currentTime);
-  gain.gain.linearRampToValueAtTime(0.35, ctx.currentTime + 1.5);
-  gain.connect(ctx.destination);
-
-  const nodes: AudioBufferSourceNode[] = [];
-  const oscs: OscillatorNode[] = [];
-
-  const makeNoise = (color: "white" | "brown" | "pink") => {
-    const len = ctx.sampleRate * 4;
-    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
-    const d = buf.getChannelData(0);
-    let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0, lastOut = 0;
-    for (let i = 0; i < len; i++) {
-      const w = Math.random() * 2 - 1;
-      if (color === "white") {
-        d[i] = w;
-      } else if (color === "brown") {
-        lastOut = (lastOut + 0.02 * w) / 1.02;
-        d[i] = lastOut * 3.5;
-      } else {
-        b0 = 0.99886 * b0 + w * 0.0555179;
-        b1 = 0.99332 * b1 + w * 0.0750759;
-        b2 = 0.969 * b2 + w * 0.153852;
-        b3 = 0.8665 * b3 + w * 0.3104856;
-        b4 = 0.55 * b4 + w * 0.5329522;
-        b5 = -0.7616 * b5 - w * 0.016898;
-        d[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + w * 0.5362) * 0.11;
-        b6 = w * 0.115926;
-      }
-    }
-    const src = ctx.createBufferSource();
-    src.buffer = buf;
-    src.loop = true;
-    return src;
-  };
-
-  const makeOsc = (freq: number, type: OscillatorType = "sine", vol = 0.3) => {
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.type = type;
-    o.frequency.value = freq;
-    g.gain.value = vol;
-    o.connect(g);
-    g.connect(gain);
-    o.start();
-    oscs.push(o);
-  };
-
-  if (type === "ocean") {
-    const noise = makeNoise("brown");
-    const filter = ctx.createBiquadFilter();
-    filter.type = "bandpass";
-    filter.frequency.value = 400;
-    filter.Q.value = 0.5;
-    noise.connect(filter);
-    filter.connect(gain);
-    noise.start();
-    nodes.push(noise);
-  } else if (type === "rain") {
-    const noise = makeNoise("white");
-    const filter = ctx.createBiquadFilter();
-    filter.type = "highpass";
-    filter.frequency.value = 1200;
-    noise.connect(filter);
-    filter.connect(gain);
-    noise.start();
-    nodes.push(noise);
-  } else if (type === "bowls") {
-    [[432, 0.3], [648, 0.15], [864, 0.08], [216, 0.1]].forEach(([f, v]) =>
-      makeOsc(f as number, "sine", v as number)
-    );
-  } else if (type === "piano") {
-    const melody = [261.63, 293.66, 329.63, 349.23, 392, 440, 493.88, 523.25];
-    let i = 0;
-    const playNote = () => {
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = "sine";
-      o.frequency.value = melody[i % melody.length];
-      g.gain.setValueAtTime(0.18, ctx.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.8);
-      o.connect(g);
-      g.connect(gain);
-      o.start();
-      o.stop(ctx.currentTime + 2);
-      i++;
-    };
-    playNote();
-    const id = setInterval(playNote, 2200);
-    return {
-      stop: () => {
-        clearInterval(id);
-        gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 1);
-        oscs.forEach((o) => {
-          try {
-            o.stop(ctx.currentTime + 1.5);
-          } catch {}
-        });
-      },
-    };
-  } else if (type === "white") {
-    const noise = makeNoise("white");
-    noise.connect(gain);
-    noise.start();
-    nodes.push(noise);
-  } else if (type === "528hz") {
-    makeOsc(528, "sine", 0.25);
-    makeOsc(530, "sine", 0.08);
-    makeOsc(264, "sine", 0.1);
-  }
-
-  return {
-    stop: () => {
-      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.5);
-      nodes.forEach((n) => {
-        try {
-          n.stop(ctx.currentTime + 2);
-        } catch {}
-      });
-      oscs.forEach((o) => {
-        try {
-          o.stop(ctx.currentTime + 2);
-        } catch {}
-      });
-    },
-  };
-}
-
 export const RelaxationMusic: React.FC = () => {
   const [playing, setPlaying] = useState<number | null>(null);
   const [volume, setVolume] = useState(70);
-  const ctxRef = useRef<AudioContext | null>(null);
-  const nodesRef = useRef<AudioNodes | null>(null);
-  const masterRef = useRef<GainNode | null>(null);
-
-  const stopCurrent = () => {
-    nodesRef.current?.stop();
-    nodesRef.current = null;
-  };
 
   const playTrack = (i: number) => {
-    stopCurrent();
     if (playing === i) {
+      audioSynth.stopSoundscape();
       setPlaying(null);
       return;
     }
-    if (!ctxRef.current || ctxRef.current.state === "closed") {
-      ctxRef.current = new AudioContext();
-    }
-    const ctx = ctxRef.current;
-    if (ctx.state === "suspended") ctx.resume();
-    const master = ctx.createGain();
-    master.gain.value = volume / 100;
-    master.connect(ctx.destination);
-    masterRef.current = master;
-    nodesRef.current = buildAudio(TRACKS[i].type, ctx);
+    audioSynth.setVolume(volume / 100);
+    audioSynth.startSoundscape(TRACKS[i].type);
     setPlaying(i);
   };
 
   useEffect(() => {
-    if (masterRef.current) masterRef.current.gain.value = volume / 100;
+    audioSynth.setVolume(volume / 100);
   }, [volume]);
 
-  useEffect(() => () => stopCurrent(), []);
+  useEffect(() => {
+    return () => {
+      audioSynth.stopSoundscape();
+    };
+  }, []);
 
   return (
     <div className="flex flex-col items-center px-5 pt-4 pb-6 text-center w-full max-w-sm mx-auto">

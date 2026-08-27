@@ -27,6 +27,12 @@ class AudioSynthesizer {
       if (ctx.state === "suspended") {
         ctx.resume();
       }
+      // iOS WebKit hardware audio unlock trick
+      const buffer = ctx.createBuffer(1, 1, 22050);
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(ctx.destination);
+      source.start(0);
     } catch {
       // ignore
     }
@@ -35,12 +41,15 @@ class AudioSynthesizer {
   public setVolume(val: number) {
     this.volume = Math.max(0, Math.min(1, val));
     if (this.masterGain && this.ctx) {
-      this.masterGain.gain.setValueAtTime(this.volume, this.ctx.currentTime);
+      try {
+        this.masterGain.gain.setValueAtTime(this.volume, this.ctx.currentTime);
+      } catch { }
     }
   }
 
   public playPopSound(pitch: number = 440) {
     try {
+      this.unlockAudio();
       const ctx = this.getContext();
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -71,6 +80,7 @@ class AudioSynthesizer {
 
   public playChime(note: number = 528) {
     try {
+      this.unlockAudio();
       const ctx = this.getContext();
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -101,6 +111,7 @@ class AudioSynthesizer {
   // Tibetan Bell / Singing Bowl Chime (Exact reference engine)
   public playTibetanBowl(freq: number = 432) {
     try {
+      this.unlockAudio();
       const ctx = this.getContext();
       const now = ctx.currentTime;
       const harmonics = [1, 2.76, 5.4, 8.9];
@@ -136,6 +147,7 @@ class AudioSynthesizer {
 
   public startSoundscape(trackId: string) {
     this.stopSoundscape();
+    this.unlockAudio();
     const ctx = this.getContext();
     this.currentTrack = trackId;
 
@@ -145,6 +157,7 @@ class AudioSynthesizer {
 
     switch (trackId) {
       case "rain":
+      case "white":
         this.createRainSound(ctx, this.masterGain);
         break;
       case "ocean":
@@ -154,8 +167,10 @@ class AudioSynthesizer {
         this.createTibetanBowls(ctx, this.masterGain);
         break;
       case "binaural":
+      case "528hz":
         this.createBinaural432(ctx, this.masterGain);
         break;
+      case "piano":
       case "celestial":
         this.createCelestialChords(ctx, this.masterGain);
         break;
