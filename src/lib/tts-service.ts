@@ -1,20 +1,19 @@
 /**
- * Unified Text-To-Speech Service for Celys Care
- * Compatible with Android System WebView, iOS WebKit (Safari), and Desktop Browsers
+ * High-Definition Unified Text-To-Speech Service for Celys Care
+ * Compatible with Android APK, iOS App, and Desktop/Mobile Web
  */
 
-let activeUtterances: SpeechSynthesisUtterance[] = [];
-let speechQueue: string[] = [];
-let isSpeakingActive = false;
+let activeAudio: HTMLAudioElement | null = null;
+let currentSentenceQueue: string[] = [];
+let isSpeechActive = false;
 let currentCallbacks: {
   onStart?: () => void;
   onEnd?: () => void;
   onError?: (err: any) => void;
 } | null = null;
-let heartbeatInterval: any = null;
 
 /**
- * Clean text of emojis, markdown asterisks, hashtags, and special symbols
+ * Clean text of emojis, markdown, symbols, and formatting
  */
 export function sanitizeSpeechText(rawText: string): string {
   return rawText
@@ -24,70 +23,58 @@ export function sanitizeSpeechText(rawText: string): string {
 }
 
 /**
- * Split text into short, natural sentences so mobile WebViews never freeze or cut off audio
+ * Split text into short natural phrases (< 140 characters) for continuous playback
  */
-function splitIntoSentences(text: string): string[] {
-  const matches = text.match(/[^.!?]+[.!?]+|[^.!?]+$/g);
-  if (!matches || matches.length === 0) return [text];
-  
-  const results: string[] = [];
-  for (const part of matches) {
-    const trimmed = part.trim();
-    if (trimmed.length > 0) {
-      results.push(trimmed);
+function splitIntoAudioChunks(text: string): string[] {
+  const sentences = text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [text];
+  const chunks: string[] = [];
+
+  for (const s of sentences) {
+    const trimmed = s.trim();
+    if (!trimmed) continue;
+    if (trimmed.length <= 140) {
+      chunks.push(trimmed);
+    } else {
+      // Split long sentence by commas or words
+      const words = trimmed.split(" ");
+      let current = "";
+      for (const w of words) {
+        if ((current + " " + w).trim().length <= 140) {
+          current = (current + " " + w).trim();
+        } else {
+          if (current) chunks.push(current);
+          current = w;
+        }
+      }
+      if (current) chunks.push(current);
     }
   }
-  return results.length > 0 ? results : [text];
+
+  return chunks.length > 0 ? chunks : [text];
 }
 
 /**
- * Find the best natural English voice available on device
- */
-function getBestEnglishVoice(synth: SpeechSynthesis): SpeechSynthesisVoice | null {
-  const voices = synth.getVoices();
-  if (!voices || voices.length === 0) return null;
-
-  // 1. High quality natural English voices
-  const preferred = voices.find(
-    (v) =>
-      v.lang.startsWith("en") &&
-      (v.name.includes("Female") ||
-        v.name.includes("Natural") ||
-        v.name.includes("Google") ||
-        v.name.includes("Samantha") ||
-        v.name.includes("Victoria") ||
-        v.name.includes("Karen") ||
-        v.name.includes("Moira") ||
-        v.name.includes("Zira"))
-  );
-  if (preferred) return preferred;
-
-  // 2. Any English voice
-  const anyEnglish = voices.find((v) => v.lang.startsWith("en"));
-  if (anyEnglish) return anyEnglish;
-
-  return voices[0] || null;
-}
-
-/**
- * Stop any active speech immediately
+ * Stop any ongoing audio/speech playback immediately
  */
 export async function stopCelysVoice(): Promise<void> {
-  if (heartbeatInterval) {
-    clearInterval(heartbeatInterval);
-    heartbeatInterval = null;
+  currentSentenceQueue = [];
+  isSpeechActive = false;
+
+  // 1. Stop active HTML5 audio
+  if (activeAudio) {
+    try {
+      activeAudio.pause();
+      activeAudio.src = "";
+      activeAudio.onended = null;
+      activeAudio.onerror = null;
+    } catch { }
+    activeAudio = null;
   }
 
-  speechQueue = [];
-  isSpeakingActive = false;
-  activeUtterances = [];
-
+  // 2. Stop Web Speech API fallback if running
   if (typeof window !== "undefined" && "speechSynthesis" in window) {
     try {
       window.speechSynthesis.cancel();
-    } catch { }
-    try {
-      (window as any).__celysActiveUtterance = null;
     } catch { }
   }
 
@@ -98,7 +85,8 @@ export async function stopCelysVoice(): Promise<void> {
 }
 
 /**
- * Speak text smoothly and reliably on Android APK, iOS Safari, and Desktop
+ * Speak text using High-Definition MP3 Audio Stream from /api/tts
+ * with Web Speech API offline fallback
  */
 export async function speakCelysVoice(
   rawText: string,
@@ -108,104 +96,119 @@ export async function speakCelysVoice(
     onError?: (err: any) => void;
   }
 ): Promise<void> {
-  if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-    callbacks?.onEnd?.();
-    return;
-  }
-
   const cleanText = sanitizeSpeechText(rawText);
   if (!cleanText) {
     callbacks?.onEnd?.();
     return;
   }
 
-  // Cancel any ongoing speech first
+  // Always reset previous speech
   await stopCelysVoice();
 
-  const synth = window.speechSynthesis;
   currentCallbacks = callbacks || null;
-  speechQueue = splitIntoSentences(cleanText);
-
-  // Resume audio subsystem (required on Android/iOS after gesture)
-  try {
-    synth.cancel();
-    synth.resume();
-  } catch { }
+  currentSentenceQueue = splitIntoAudioChunks(cleanText);
+  isSpeechActive = true;
 
   let hasNotifiedStart = false;
 
   const playNextSentence = () => {
-    if (speechQueue.length === 0) {
-      if (heartbeatInterval) {
-        clearInterval(heartbeatInterval);
-        heartbeatInterval = null;
-      }
-      isSpeakingActive = false;
-      activeUtterances = [];
-      (window as any).__celysActiveUtterance = null;
+    if (!isSpeechActive || currentSentenceQueue.length === 0) {
+      isSpeechActive = false;
+      activeAudio = null;
       currentCallbacks?.onEnd?.();
       currentCallbacks = null;
       return;
     }
 
-    const sentence = speechQueue.shift();
-    if (!sentence) {
+    const phrase = currentSentenceQueue.shift();
+    if (!phrase) {
       playNextSentence();
       return;
     }
 
-    const utterance = new SpeechSynthesisUtterance(sentence);
+    // High quality server-proxied MP3 stream URL
+    const audioUrl = `/api/tts?text=${encodeURIComponent(phrase)}`;
+
+    try {
+      const audio = new Audio();
+      audio.src = audioUrl;
+      audio.preload = "auto";
+      audio.playbackRate = 0.98;
+      activeAudio = audio;
+
+      audio.onplay = () => {
+        if (!hasNotifiedStart) {
+          hasNotifiedStart = true;
+          currentCallbacks?.onStart?.();
+        }
+      };
+
+      audio.onended = () => {
+        playNextSentence();
+      };
+
+      audio.onerror = () => {
+        console.warn("Audio stream notice, falling back to Web Speech for phrase:", phrase);
+        playWithWebSpeech(phrase, () => playNextSentence());
+      };
+
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          console.warn("Autoplay block or network error, falling back to Web Speech:", err);
+          playWithWebSpeech(phrase, () => playNextSentence());
+        });
+      }
+    } catch {
+      playWithWebSpeech(phrase, () => playNextSentence());
+    }
+  };
+
+  playNextSentence();
+}
+
+/**
+ * Device-local Web Speech fallback
+ */
+function playWithWebSpeech(text: string, onComplete: () => void) {
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+    onComplete();
+    return;
+  }
+
+  try {
+    const synth = window.speechSynthesis;
+    synth.cancel();
+    synth.resume();
+
+    const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "en-US";
     utterance.rate = 0.95;
     utterance.pitch = 1.05;
     utterance.volume = 1.0;
 
-    const voice = getBestEnglishVoice(synth);
-    if (voice) {
-      utterance.voice = voice;
-    }
-
-    utterance.onstart = () => {
-      if (!hasNotifiedStart) {
-        hasNotifiedStart = true;
-        isSpeakingActive = true;
-        currentCallbacks?.onStart?.();
+    const voices = synth.getVoices();
+    if (voices && voices.length > 0) {
+      const preferred =
+        voices.find((v) => v.lang.startsWith("en") && (v.name.includes("Female") || v.name.includes("Natural") || v.name.includes("Google") || v.name.includes("Samantha") || v.name.includes("Victoria") || v.name.includes("Zira"))) ||
+        voices.find((v) => v.lang.startsWith("en")) ||
+        voices[0];
+      if (preferred) {
+        utterance.voice = preferred;
       }
-    };
+    }
 
     utterance.onend = () => {
-      // Move to next sentence
-      playNextSentence();
+      onComplete();
     };
 
-    utterance.onerror = (event) => {
-      console.warn("Speech utterance event:", event);
-      playNextSentence();
+    utterance.onerror = () => {
+      onComplete();
     };
 
-    // Store reference on window to prevent Garbage Collector from silencing audio on Android
-    activeUtterances.push(utterance);
     (window as any).__celysActiveUtterance = utterance;
-
-    try {
-      synth.resume();
-      synth.speak(utterance);
-    } catch (e) {
-      console.error("SpeechSynthesis speak error:", e);
-      playNextSentence();
-    }
-  };
-
-  // Start heartbeat interval to prevent Chrome/Android WebView 15-second speech pause bug
-  if (heartbeatInterval) clearInterval(heartbeatInterval);
-  heartbeatInterval = setInterval(() => {
-    if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      if (window.speechSynthesis.speaking) {
-        window.speechSynthesis.pause();
-        window.speechSynthesis.resume();
-      }
-    }
-  }, 10000);
-
-  playNextSentence();
+    synth.speak(utterance);
+  } catch {
+    onComplete();
+  }
 }
