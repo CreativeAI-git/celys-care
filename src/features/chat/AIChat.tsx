@@ -129,7 +129,7 @@ export const AIChat: React.FC = () => {
   useEffect(() => {
     try {
       localStorage.setItem("celys_chat_history", JSON.stringify(messages));
-    } catch {}
+    } catch { }
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
@@ -139,7 +139,7 @@ export const AIChat: React.FC = () => {
       if (typeof window !== "undefined" && "speechSynthesis" in window) {
         try {
           window.speechSynthesis.cancel();
-        } catch {}
+        } catch { }
       }
     };
   }, []);
@@ -276,7 +276,7 @@ export const AIChat: React.FC = () => {
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
       try {
         window.speechSynthesis.cancel();
-      } catch {}
+      } catch { }
       setIsSpeaking(false);
     }
     setMessages(getInitialMessages(user));
@@ -374,7 +374,7 @@ export const AIChat: React.FC = () => {
                 style={{ border: "1.5px solid rgba(201,162,39,0.55)" }}
               >
                 <Image
-                  src="/images/lion-emblem-hq.jpg"
+                  src="/images/profile.jpg"
                   alt="Celys"
                   fill
                   className="object-cover"
@@ -390,8 +390,8 @@ export const AIChat: React.FC = () => {
                       ? "linear-gradient(135deg, rgba(124,58,237,0.35), rgba(76,29,149,0.35))"
                       : "linear-gradient(135deg, rgba(201,108,204,0.35), rgba(147,51,234,0.35))",
                   border: `1px solid ${m.from === "celys"
-                      ? "rgba(180,120,255,0.35)"
-                      : "rgba(201,108,204,0.4)"
+                    ? "rgba(180,120,255,0.35)"
+                    : "rgba(201,108,204,0.4)"
                     }`,
                   color: "#f0e8ff",
                   borderTopLeftRadius: m.from === "celys" ? 4 : 16,
