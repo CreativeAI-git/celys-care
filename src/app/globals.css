@@ -98,3 +98,146 @@ body {
   padding-top: env(safe-area-inset-top, 16px);
 }
 
+/* ==============================================================================
+   Platform-Wide Accessibility Modes
+   ============================================================================== */
+
+/* 1. High Contrast Mode (Ultra-Crisp Contrast & Edge Definition) */
+html.high-contrast,
+html.high-contrast body {
+  background-color: #020008 !important;
+  color: #ffffff !important;
+}
+
+html.high-contrast .cosmic-glass,
+html.high-contrast .cosmic-glass-active,
+html.high-contrast [class*="bg-white/"],
+html.high-contrast [class*="bg-purple-"] {
+  background: rgba(12, 6, 24, 0.98) !important;
+  border-color: rgba(245, 215, 110, 0.8) !important;
+  box-shadow: 0 0 24px rgba(0, 0, 0, 0.95), inset 0 0 0 1px rgba(245, 215, 110, 0.3) !important;
+}
+
+html.high-contrast input,
+html.high-contrast textarea,
+html.high-contrast select {
+  background-color: #0d061a !important;
+  border: 1.5px solid #f5d76e !important;
+  color: #ffffff !important;
+}
+
+html.high-contrast [class*="text-purple-200/"],
+html.high-contrast [class*="text-white/"],
+html.high-contrast [class*="text-gray-"] {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+html.high-contrast button:not(nav button) {
+  border-color: rgba(245, 215, 110, 0.7) !important;
+}
+
+/* 2. Larger Text Scaling (Comprehensive Platform-Wide Scale) */
+html.large-text {
+  font-size: 116% !important;
+}
+
+html.large-text p,
+html.large-text span:not(nav span),
+html.large-text h1,
+html.large-text h2,
+html.large-text h3,
+html.large-text h4,
+html.large-text h5,
+html.large-text h6,
+html.large-text a,
+html.large-text label,
+html.large-text input,
+html.large-text textarea,
+html.large-text button:not(nav button),
+html.large-text li,
+html.large-text blockquote {
+  font-size: 114% !important;
+  line-height: 1.45 !important;
+}
+
+/* Explicit scaling for arbitrary tailwind pixel utility classes */
+html.large-text [class*="text-[9px]"],
+html.large-text [class*="text-[10px]"]:not(nav span) {
+  font-size: 12px !important;
+}
+
+html.large-text [class*="text-[11px]"]:not(nav span) {
+  font-size: 13.5px !important;
+}
+
+html.large-text [class*="text-[12px]"],
+html.large-text .text-xs:not(nav span) {
+  font-size: 14.5px !important;
+}
+
+html.large-text [class*="text-[13px]"] {
+  font-size: 15.5px !important;
+}
+
+html.large-text [class*="text-[14px]"],
+html.large-text .text-sm {
+  font-size: 16.5px !important;
+}
+
+html.large-text [class*="text-[15px]"],
+html.large-text [class*="text-[16px]"],
+html.large-text .text-base {
+  font-size: 18.5px !important;
+}
+
+html.large-text .text-lg {
+  font-size: 21px !important;
+}
+
+html.large-text .text-xl {
+  font-size: 24px !important;
+}
+
+html.large-text .text-2xl {
+  font-size: 28px !important;
+}
+
+html.large-text .text-3xl {
+  font-size: 34px !important;
+}
+
+html.large-text .text-4xl {
+  font-size: 40px !important;
+}
+
+/* Scale Lucide & SVG icons proportionally across all content pages */
+html.large-text svg:not(nav svg):not(.preserve-size),
+html.large-text .lucide:not(nav .lucide) {
+  transform: scale(1.15);
+  transform-origin: center;
+}
+
+/* Keep bottom navigation bar balanced and readable without cutoffs */
+html.large-text nav {
+  font-size: 14px !important;
+}
+
+html.large-text nav span {
+  font-size: 10px !important;
+  letter-spacing: 0.01em;
+}
+
+/* 3. Reduce Motion Mode (Complete Freeze of Motion, Pulsing & Transitions) */
+html.reduce-motion,
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+  animation: none !important;
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition: none !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+

@@ -421,9 +421,9 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
         }}
       >
         <div
-          className="w-full max-w-md rounded-3xl py-1.5 px-1 sm:px-2 flex items-center justify-between shadow-2xl"
+          className="w-full max-w-md rounded-3xl py-1.5 px-1.5 sm:px-2 flex items-center justify-between gap-1 shadow-2xl"
           style={{
-            background: "rgba(26, 16, 52, 0.85)",
+            background: "rgba(26, 16, 52, 0.88)",
             border: "1px solid rgba(180, 120, 255, 0.22)",
             boxShadow: "0 8px 32px rgba(0, 0, 0, 0.5), 0 0 16px rgba(124, 58, 237, 0.15)",
           }}
@@ -436,21 +436,22 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
               <button
                 key={item.id}
                 onClick={() => handleNavigate(item.id)}
-                className="flex-1 min-w-0 flex flex-col items-center justify-center py-1 px-1 rounded-2xl transition-all duration-200"
+                className="flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 px-0.5 rounded-2xl transition-all duration-200 cursor-pointer"
                 style={{
                   color: isActive ? "#ffffff" : "rgba(240, 232, 255, 0.55)",
-                  background: isActive ? "rgba(124, 58, 237, 0.3)" : "transparent",
+                  background: isActive ? "rgba(124, 58, 237, 0.35)" : "transparent",
                   border: isActive
-                    ? "1px solid rgba(201, 108, 204, 0.45)"
+                    ? "1px solid rgba(201, 108, 204, 0.55)"
                     : "1px solid transparent",
+                  boxShadow: isActive ? "0 0 12px rgba(124, 58, 237, 0.25)" : "none",
                 }}
               >
                 <IconComponent
-                  size={18}
+                  size={17}
                   className={isActive ? "text-[#f5d76e] drop-shadow-[0_0_6px_rgba(245,215,110,0.6)]" : ""}
                 />
                 <span
-                  className="text-[10px] font-medium mt-0.5 truncate max-w-full text-center leading-tight"
+                  className="text-[10px] font-medium mt-0.5 truncate max-w-full text-center leading-tight select-none"
                   style={{
                     fontWeight: isActive ? 600 : 500,
                   }}

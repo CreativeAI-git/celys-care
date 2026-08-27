@@ -1,24 +1,23 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { CelysLogo } from "@/components/branding/CelysLogo";
 import { SparkleDivider } from "@/components/branding/SparkleDivider";
-
-const COLORS = ["#c96ccc", "#7ec8a0", "#60a5fa", "#f5d76e", "#f87171"];
-const SCENES = [
-  "🌊 Ocean",
-  "🌿 Forest",
-  "🌙 Night Sky",
-  "🌸 Garden",
-  "🏔️ Mountain",
-];
+import { useAccessibility, CALMING_COLORS, CALMING_SCENES } from "@/context/AccessibilityContext";
 
 export const CalmingSpace: React.FC = () => {
-  const [highContrast, setHighContrast] = useState(false);
-  const [largeText, setLargeText] = useState(false);
-  const [reducedMotion, setReducedMotion] = useState(false);
-  const [activeColor, setActiveColor] = useState(0);
-  const [scene, setScene] = useState(0);
+  const {
+    highContrast,
+    setHighContrast,
+    largeText,
+    setLargeText,
+    reducedMotion,
+    setReducedMotion,
+    activeColor,
+    setActiveColor,
+    scene,
+    setScene,
+  } = useAccessibility();
 
   return (
     <div
@@ -54,13 +53,13 @@ export const CalmingSpace: React.FC = () => {
         className="w-full rounded-3xl p-6 mb-4 text-center relative overflow-hidden shadow-xl"
         style={{
           background: highContrast ? "#1a0035" : "rgba(255, 255, 255, 0.03)",
-          border: `1px solid ${COLORS[activeColor]}40`,
+          border: `1px solid ${CALMING_COLORS[activeColor]}40`,
           boxShadow: `0 8px 30px rgba(0, 0, 0, 0.35)`,
           minHeight: 120,
         }}
       >
         <p style={{ fontSize: largeText ? "3rem" : "2.5rem" }}>
-          {SCENES[scene].split(" ")[0]}
+          {CALMING_SCENES[scene].split(" ")[0]}
         </p>
         <p
           className="text-xs mt-1"
@@ -69,24 +68,24 @@ export const CalmingSpace: React.FC = () => {
             fontSize: largeText ? "0.95rem" : "0.75rem",
           }}
         >
-          {SCENES[scene].split(" ").slice(1).join(" ")} — your calming scene
+          {CALMING_SCENES[scene].split(" ").slice(1).join(" ")} — your calming scene
         </p>
       </div>
 
       {/* Scene Selector Pills */}
       <div className="flex gap-1.5 mb-3 flex-wrap justify-center w-full">
-        {SCENES.map((s, i) => (
+        {CALMING_SCENES.map((s, i) => (
           <button
             key={s}
             onClick={() => setScene(i)}
-            className="px-2.5 py-1 rounded-full text-xs font-medium transition-all"
+            className="px-2.5 py-1 rounded-full text-xs font-medium transition-all cursor-pointer"
             style={{
               background:
                 scene === i
-                  ? `${COLORS[activeColor]}33`
+                  ? `${CALMING_COLORS[activeColor]}33`
                   : "rgba(255,255,255,0.07)",
               border: `1px solid ${
-                scene === i ? COLORS[activeColor] : "rgba(180,120,255,0.2)"
+                scene === i ? CALMING_COLORS[activeColor] : "rgba(180,120,255,0.2)"
               }`,
               color: "#f0e8ff",
               fontSize: largeText ? "0.85rem" : "0.75rem",
@@ -129,7 +128,7 @@ export const CalmingSpace: React.FC = () => {
             </span>
             <button
               onClick={() => set(!val)}
-              className="w-10 h-5 rounded-full transition-all relative"
+              className="w-10 h-5 rounded-full transition-all relative cursor-pointer"
               style={{
                 background: val
                   ? "linear-gradient(135deg, #c96ccc, #7c3aed)"
@@ -154,11 +153,11 @@ export const CalmingSpace: React.FC = () => {
           Calming Color Theme
         </p>
         <div className="flex gap-2.5">
-          {COLORS.map((c, i) => (
+          {CALMING_COLORS.map((c, i) => (
             <button
               key={c}
               onClick={() => setActiveColor(i)}
-              className="w-8 h-8 rounded-full transition-all"
+              className="w-8 h-8 rounded-full transition-all cursor-pointer"
               style={{
                 background: c,
                 border: `3px solid ${

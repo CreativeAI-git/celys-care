@@ -64,6 +64,11 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{if(localStorage.getItem('celys_a11y_high_contrast')==='true'){document.documentElement.classList.add('high-contrast');}if(localStorage.getItem('celys_a11y_large_text')==='true'){document.documentElement.classList.add('large-text');}if(localStorage.getItem('celys_a11y_reduced_motion')==='true'){document.documentElement.classList.add('reduce-motion');}}catch(e){}})();`,
+          }}
+        />
       </head>
       <body className="min-h-screen bg-[#0d0a1e] text-[#f0e8ff] antialiased selection:bg-[#c96ccc]/30 selection:text-white">
         <PwaRegistrar />

@@ -4,6 +4,9 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 import { offlineSync, useOnlineStatus } from "@/lib/offline-sync";
+import { AccessibilityProvider, useAccessibility } from "@/context/AccessibilityContext";
+
+export { useAccessibility };
 
 interface User {
   id: string;
@@ -187,6 +190,14 @@ export function Providers({ children }: { children: React.ReactNode }) {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
     } catch { }
+    try {
+      localStorage.removeItem("celys_a11y_high_contrast");
+      localStorage.removeItem("celys_a11y_large_text");
+      localStorage.removeItem("celys_a11y_reduced_motion");
+      localStorage.removeItem("celys_a11y_active_color");
+      localStorage.removeItem("celys_a11y_scene");
+      document.documentElement.classList.remove("high-contrast", "large-text", "reduce-motion");
+    } catch { }
     persistUser(null);
   };
 
@@ -215,8 +226,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
             )}
           </div>
         )}
-        {children}
-        <Toaster position="bottom-right" theme="dark" />
+        <AccessibilityProvider>
+          {children}
+          <Toaster position="bottom-right" theme="dark" />
+        </AccessibilityProvider>
       </AuthContext.Provider>
     </QueryClientProvider>
   );
