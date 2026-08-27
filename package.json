@@ -13,11 +13,11 @@
     "cap:ios": "cap open ios",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
-    "prisma:seed": "tsx prisma/seed.ts",
+    "prisma:seed": "npx tsx prisma/seed.ts",
     "postinstall": "prisma generate"
   },
   "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "seed": "npx tsx prisma/seed.ts"
   },
   "dependencies": {
     "@capacitor/android": "^6.2.1",
