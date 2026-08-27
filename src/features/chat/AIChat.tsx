@@ -7,6 +7,8 @@ import { useAuth } from "@/app/providers";
 import { SparkleDivider } from "@/components/branding/SparkleDivider";
 import { audioSynth } from "@/lib/audio-synth";
 
+import { speakCelysVoice, stopCelysVoice } from "@/lib/tts-service";
+
 interface Message {
   id: string;
   from: "celys" | "user";
@@ -152,92 +154,33 @@ export const AIChat: React.FC = () => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
-  const stopSpeaking = () => {
-    if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      try {
-        window.speechSynthesis.cancel();
-      } catch { }
-    }
-    activeUtteranceRef.current = null;
-    if (typeof window !== "undefined") {
-      (window as any).__activeUtterance = null;
-    }
+  const stopSpeaking = async () => {
+    await stopCelysVoice();
     setIsSpeaking(false);
     setSpeakingMessageId(null);
   };
 
-  // Robust Text-To-Speech function with Android WebView & iOS support
-  const speakText = (text: string, messageId?: string, forceSpeak: boolean = false) => {
-    if ((!voiceEnabled && !forceSpeak) || typeof window === "undefined" || !("speechSynthesis" in window)) {
+  // Robust Text-To-Speech function with Android Native TTS & Web Speech support
+  const speakText = async (text: string, messageId?: string, forceSpeak: boolean = false) => {
+    if (!voiceEnabled && !forceSpeak) {
       return;
     }
 
-    try {
-      const synth = window.speechSynthesis;
-      synth.cancel();
-
-      // Clean text of emojis & special formatting symbols for smooth natural speech
-      const cleanText = text
-        .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}✦🌸💜🌿✨☀️🌊🦁·•—*_~`]/gu, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-
-      if (!cleanText) return;
-
-      const utterance = new SpeechSynthesisUtterance(cleanText);
-      utterance.rate = 0.95;
-      utterance.pitch = 1.05;
-      utterance.volume = 1.0;
-      utterance.lang = "en-US";
-
-      // Select natural English voice if available on device
-      const voices = synth.getVoices();
-      if (voices && voices.length > 0) {
-        const preferredVoice =
-          voices.find((v) => v.lang.startsWith("en") && (v.name.includes("Female") || v.name.includes("Natural") || v.name.includes("Google") || v.name.includes("Samantha") || v.name.includes("Victoria") || v.name.includes("Zira"))) ||
-          voices.find((v) => v.lang.startsWith("en")) ||
-          voices[0];
-        if (preferredVoice) {
-          utterance.voice = preferredVoice;
-        }
-      }
-
-      utterance.onstart = () => {
+    await speakCelysVoice(text, {
+      onStart: () => {
         setIsSpeaking(true);
         if (messageId) setSpeakingMessageId(messageId);
-      };
-
-      utterance.onend = () => {
+      },
+      onEnd: () => {
         setIsSpeaking(false);
         setSpeakingMessageId(null);
-        activeUtteranceRef.current = null;
-        if (typeof window !== "undefined") {
-          (window as any).__activeUtterance = null;
-        }
-      };
-
-      utterance.onerror = (e) => {
-        console.warn("Speech synthesis notice:", e);
+      },
+      onError: (err) => {
+        console.warn("Speech playback notice:", err);
         setIsSpeaking(false);
         setSpeakingMessageId(null);
-        activeUtteranceRef.current = null;
-        if (typeof window !== "undefined") {
-          (window as any).__activeUtterance = null;
-        }
-      };
-
-      // Crucial Android WebView fix: store in window to prevent garbage collection mid-speech
-      activeUtteranceRef.current = utterance;
-      (window as any).__activeUtterance = utterance;
-
-      // Wake up Android WebView speech audio subsystem
-      synth.resume();
-      synth.speak(utterance);
-    } catch (err) {
-      console.error("speakText error:", err);
-      setIsSpeaking(false);
-      setSpeakingMessageId(null);
-    }
+      },
+    });
   };
 
   const toggleVoice = () => {
