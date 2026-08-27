@@ -9,11 +9,8 @@ out/
 build/
 dist/
 
-# Local SQLite databases & cache
-prisma/*.db
+# SQLite temporary journals
 prisma/*.db-journal
-*.sqlite
-*.sqlite3
 
 # Environment files and secrets (local secrets stay ignored)
 .env*.local
