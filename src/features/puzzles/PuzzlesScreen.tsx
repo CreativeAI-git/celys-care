@@ -112,7 +112,13 @@ function ColorHarmonyPuzzle({ onBack }: { onBack: () => void }) {
       </div>
 
       {/* Title & Subtitle (Exact Figma Match) */}
-      <h1 className="font-serif text-2xl font-bold text-amber-100 mb-1 tracking-wide text-center">
+      <h1
+        className="font-serif text-2xl font-bold mb-1 tracking-wide text-center"
+        style={{
+          color: "#f5d76e",
+          textShadow: "0 0 16px rgba(245, 215, 110, 0.35)",
+        }}
+      >
         Color Harmony
       </h1>
       <p className="text-xs text-purple-200/70 mb-3 text-center">
@@ -313,10 +319,24 @@ function ZenBlocksPuzzle({ onBack }: { onBack: () => void }) {
         </span>
       </div>
 
-      <h3 className="font-serif font-bold text-base text-white mb-1">Zen Blocks</h3>
-      <p className="text-xs text-purple-200/60 mb-3 text-center">
+      {/* Title & Subtitle (Exact Figma Match) */}
+      <h1
+        className="font-serif text-2xl font-bold mb-1 tracking-wide text-center"
+        style={{
+          color: "#f5d76e",
+          textShadow: "0 0 16px rgba(245, 215, 110, 0.35)",
+        }}
+      >
+        Zen Blocks
+      </h1>
+      <p className="text-xs text-purple-200/70 mb-3 text-center">
         Slide tiles into numerical order 1 through 8
       </p>
+
+      {/* Sparkle Divider */}
+      <div className="w-full flex items-center justify-center mb-5">
+        <SparkleDivider />
+      </div>
 
       {/* 3x3 Grid */}
       <div
@@ -761,7 +781,13 @@ function PatternMemory({ onBack }: { onBack: () => void }) {
       </div>
 
       {/* Title & Subtitle (Exact Figma Match) */}
-      <h1 className="font-serif text-2xl font-bold text-amber-100 mb-1 tracking-wide text-center">
+      <h1
+        className="font-serif text-2xl font-bold mb-1 tracking-wide text-center"
+        style={{
+          color: "#f5d76e",
+          textShadow: "0 0 16px rgba(245, 215, 110, 0.35)",
+        }}
+      >
         Pattern Memory
       </h1>
       <p className="text-xs text-purple-200/70 mb-3 text-center">
@@ -924,10 +950,24 @@ function MindfulMaze({ onBack }: { onBack: () => void }) {
         </span>
       </div>
 
-      <h3 className="font-serif font-bold text-base text-white mb-1">Mindful Maze</h3>
-      <p className="text-xs text-purple-200/60 mb-3 text-center">
-        Navigate the maze one calm breath at a time
+      {/* Title & Subtitle (Exact Figma Match) */}
+      <h1
+        className="font-serif text-2xl font-bold mb-1 tracking-wide text-center"
+        style={{
+          color: "#f5d76e",
+          textShadow: "0 0 16px rgba(245, 215, 110, 0.35)",
+        }}
+      >
+        Mindful Maze
+      </h1>
+      <p className="text-xs text-purple-200/70 mb-3 text-center">
+        Navigate the maze one breath at a time
       </p>
+
+      {/* Sparkle Divider */}
+      <div className="w-full flex items-center justify-center mb-5">
+        <SparkleDivider />
+      </div>
 
       {/* Grid */}
       <div
@@ -1057,41 +1097,93 @@ function MindfulMaze({ onBack }: { onBack: () => void }) {
 }
 
 // ==========================================
-// 6. PUZZLE: MANDALA BUILDER (HARD)
+// 6. PUZZLE: MANDALA BUILDER (EXACT FIGMA 49-SEGMENT MANDALA WHEEL)
 // ==========================================
+const MANDALA_PALETTE_8 = [
+  "#7c3aed", // 1. Deep Violet
+  "#c084fc", // 2. Soft Orchid
+  "#60a5fa", // 3. Sky Blue
+  "#7ec8a0", // 4. Mint Green
+  "#facc15", // 5. Golden Yellow
+  "#fb923c", // 6. Vibrant Orange
+  "#f472b6", // 7. Rose Pink
+  "#a78bfa", // 8. Soft Periwinkle
+];
+
+const MANDALA_RINGS = [
+  { inner: 18, outer: 46 },
+  { inner: 46, outer: 76 },
+  { inner: 76, outer: 106 },
+  { inner: 106, outer: 135 },
+];
+
+function getSegmentPath(
+  cx: number,
+  cy: number,
+  rInner: number,
+  rOuter: number,
+  startAngleDeg: number,
+  endAngleDeg: number
+) {
+  const startRad = ((startAngleDeg - 90) * Math.PI) / 180;
+  const endRad = ((endAngleDeg - 90) * Math.PI) / 180;
+
+  const x1 = cx + rInner * Math.cos(startRad);
+  const y1 = cy + rInner * Math.sin(startRad);
+  const x2 = cx + rOuter * Math.cos(startRad);
+  const y2 = cy + rOuter * Math.sin(startRad);
+
+  const x3 = cx + rOuter * Math.cos(endRad);
+  const y3 = cy + rOuter * Math.sin(endRad);
+  const x4 = cx + rInner * Math.cos(endRad);
+  const y4 = cy + rInner * Math.sin(endRad);
+
+  const largeArc = endAngleDeg - startAngleDeg > 180 ? 1 : 0;
+
+  return `M ${x1} ${y1} L ${x2} ${y2} A ${rOuter} ${rOuter} 0 ${largeArc} 1 ${x3} ${y3} L ${x4} ${y4} A ${rInner} ${rInner} 0 ${largeArc} 0 ${x1} ${y1} Z`;
+}
+
 function MandalaBuilder({ onBack }: { onBack: () => void }) {
-  const [petals, setPetals] = useState<{ id: number; angle: number; color: string }[]>([]);
-  const colors = ["#f5d76e", "#c96ccc", "#7c3aed", "#60a5fa", "#34d399", "#f43f5e"];
-  const [selectedColor, setSelectedColor] = useState(colors[0]);
+  const [selectedColor, setSelectedColor] = useState(MANDALA_PALETTE_8[0]); // Default: Violet #7c3aed
+  const [segments, setSegments] = useState<Record<string, string>>({});
 
-  const addPetals = () => {
-    const newItems: { id: number; angle: number; color: string }[] = [];
-    const count = 8;
-    const offset = (petals.length * 15) % 360;
-
-    for (let i = 0; i < count; i++) {
-      newItems.push({
-        id: Date.now() + i,
-        angle: (i * (360 / count) + offset) % 360,
-        color: selectedColor,
-      });
-    }
-
-    setPetals([...petals, ...newItems]);
-    audioSynth?.playPopSound(480 + petals.length * 10);
-
-    if (petals.length >= 24) {
-      confetti({ particleCount: 35, spread: 60 });
-    }
+  const handleSegmentClick = (ringIdx: number, sectorIdx: number) => {
+    const key = `${ringIdx}-${sectorIdx}`;
+    setSegments((prev) => ({
+      ...prev,
+      [key]: selectedColor,
+    }));
+    audioSynth?.playPopSound(440 + ringIdx * 80 + sectorIdx * 15);
   };
 
   const handleClear = () => {
-    setPetals([]);
-    audioSynth?.playPopSound(420);
+    setSegments({});
+    audioSynth?.playPopSound(380);
+  };
+
+  const handleRandom = () => {
+    const newSegs: Record<string, string> = {};
+    const chosenHub = MANDALA_PALETTE_8[Math.floor(Math.random() * MANDALA_PALETTE_8.length)];
+    setSelectedColor(chosenHub);
+
+    MANDALA_RINGS.forEach((_, rIdx) => {
+      // Pick 1 or 2 harmonious colors for this ring
+      const ringColor1 = MANDALA_PALETTE_8[Math.floor(Math.random() * MANDALA_PALETTE_8.length)];
+      const ringColor2 = MANDALA_PALETTE_8[Math.floor(Math.random() * MANDALA_PALETTE_8.length)];
+
+      for (let sIdx = 0; sIdx < 12; sIdx++) {
+        newSegs[`${rIdx}-${sIdx}`] = sIdx % 2 === 0 ? ringColor1 : ringColor2;
+      }
+    });
+
+    setSegments(newSegs);
+    audioSynth?.playPopSound(750);
+    confetti({ particleCount: 30, spread: 60 });
   };
 
   return (
-    <div className="flex flex-col items-center w-full max-w-sm mx-auto select-none">
+    <div className="flex flex-col items-center w-full max-w-sm mx-auto select-none pt-1 pb-16">
+      {/* Header Row (Exact Figma Match) */}
       <div className="flex items-center justify-between w-full mb-3 px-1">
         <button
           onClick={onBack}
@@ -1102,71 +1194,134 @@ function MandalaBuilder({ onBack }: { onBack: () => void }) {
             border: "1px solid rgba(180, 120, 255, 0.2)",
           }}
         >
-          <ChevronLeft size={14} /> Back
+          ← Back
         </button>
-        <span className="text-xs font-semibold text-purple-300">
-          💜 Mandala Builder
+        <span className="text-xs font-semibold text-purple-200 flex items-center gap-1">
+          <span>💜</span>
+          <span>Mandala Builder</span>
         </span>
       </div>
 
-      <h3 className="font-serif font-bold text-base text-white mb-1">Mandala Builder</h3>
-      <p className="text-xs text-purple-200/60 mb-3 text-center">
-        Paint a symmetrical mandala freely
+      {/* Title & Subtitle (Exact Figma Match) */}
+      <h1
+        className="font-serif text-2xl font-bold mb-1 tracking-wide text-center"
+        style={{
+          color: "#f5d76e",
+          textShadow: "0 0 16px rgba(245, 215, 110, 0.35)",
+        }}
+      >
+        Mandala Builder
+      </h1>
+      <p className="text-xs text-purple-200/70 mb-3 text-center">
+        Tap segments to paint your mandala
       </p>
 
-      {/* Color picker */}
-      <div className="flex gap-2 mb-3">
-        {colors.map((c) => (
-          <button
-            key={c}
-            onClick={() => setSelectedColor(c)}
-            className={`w-7 h-7 rounded-full border-2 transition-all cursor-pointer ${
-              selectedColor === c
-                ? "border-white scale-110 shadow-lg"
-                : "border-transparent opacity-70 hover:opacity-100"
-            }`}
-            style={{ backgroundColor: c }}
-          />
-        ))}
+      {/* Sparkle Divider */}
+      <div className="w-full flex items-center justify-center mb-5">
+        <SparkleDivider />
       </div>
 
-      {/* Canvas */}
-      <div
-        onClick={addPetals}
-        className="relative w-60 h-60 rounded-full border-2 border-purple-400/30 flex items-center justify-center cursor-pointer shadow-2xl overflow-hidden mb-4"
-        style={{ background: "radial-gradient(circle, #1a0c3d 0%, #0d081f 100%)" }}
-      >
-        <div className="w-8 h-8 rounded-full border border-amber-300 bg-amber-400/30 animate-pulse z-10" />
-
-        {petals.map((p) => (
-          <div
-            key={p.id}
-            className="absolute origin-bottom w-3 h-14 rounded-full opacity-85 shadow-md"
-            style={{
-              backgroundColor: p.color,
-              transform: `rotate(${p.angle}deg) translateY(-28px)`,
-            }}
-          />
-        ))}
-      </div>
-
-      <div className="flex gap-2">
-        <button
-          onClick={addPetals}
-          className="px-5 py-2 rounded-full text-xs font-bold text-white transition-all active:scale-95 shadow-md cursor-pointer"
-          style={{ background: "linear-gradient(135deg, #a855f7, #6366f1)" }}
-        >
-          Add Petal Ring 🌸
-        </button>
-        <button
-          onClick={handleClear}
-          className="px-4 py-2 rounded-full text-xs font-semibold text-purple-200 transition-all active:scale-95 cursor-pointer"
+      {/* Circular Segmented Mandala Grid Wheel (Exact Figma Match) */}
+      <div className="relative w-64 h-64 sm:w-72 sm:h-72 my-2 flex items-center justify-center">
+        <svg
+          viewBox="0 0 300 300"
+          className="w-full h-full rounded-full shadow-2xl filter drop-shadow-[0_8px_30px_rgba(0,0,0,0.6)] select-none"
           style={{
-            background: "rgba(255, 255, 255, 0.08)",
-            border: "1px solid rgba(180, 120, 255, 0.2)",
+            background: "radial-gradient(circle at center, #180c35 0%, #0a0518 100%)",
+            border: "2px solid rgba(168, 85, 247, 0.35)",
           }}
         >
-          Clear Canvas
+          {/* 4 Concentric Rings × 12 Slices = 48 Segments */}
+          {MANDALA_RINGS.map((ring, rIdx) =>
+            Array.from({ length: 12 }, (_, sIdx) => {
+              const startAngle = sIdx * 30;
+              const endAngle = (sIdx + 1) * 30;
+              const pathD = getSegmentPath(150, 150, ring.inner, ring.outer, startAngle, endAngle);
+              const color = segments[`${rIdx}-${sIdx}`] || "rgba(22, 11, 48, 0.65)";
+              const isPainted = Boolean(segments[`${rIdx}-${sIdx}`]);
+
+              return (
+                <path
+                  key={`${rIdx}-${sIdx}`}
+                  d={pathD}
+                  fill={color}
+                  stroke="rgba(168, 85, 247, 0.28)"
+                  strokeWidth="1.2"
+                  onClick={() => handleSegmentClick(rIdx, sIdx)}
+                  className="cursor-pointer transition-all duration-150 hover:brightness-135 active:scale-95"
+                  style={{
+                    filter: isPainted ? "drop-shadow(0 0 4px rgba(255,255,255,0.15))" : "none",
+                  }}
+                />
+              );
+            })
+          )}
+
+          {/* Center Hub Dot (Filled with currently selected color) */}
+          <circle
+            cx="150"
+            cy="150"
+            r="18"
+            fill={selectedColor}
+            stroke="rgba(255, 255, 255, 0.4)"
+            strokeWidth="1.5"
+            className="transition-all duration-200"
+            style={{
+              filter: `drop-shadow(0 0 10px ${selectedColor})`,
+            }}
+          />
+        </svg>
+      </div>
+
+      {/* 8 Color Swatches Palette (Exact Figma Match) */}
+      <div className="flex items-center justify-center gap-2 sm:gap-2.5 my-4 px-2">
+        {MANDALA_PALETTE_8.map((c) => {
+          const isSelected = selectedColor === c;
+
+          return (
+            <button
+              key={c}
+              onClick={() => {
+                setSelectedColor(c);
+                audioSynth?.playPopSound(500);
+              }}
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full transition-all duration-200 cursor-pointer relative select-none"
+              style={{
+                backgroundColor: c,
+                transform: isSelected ? "scale(1.18)" : "scale(1)",
+                border: isSelected ? "2px solid #ffffff" : "1.5px solid rgba(255, 255, 255, 0.15)",
+                boxShadow: isSelected
+                  ? `0 0 16px ${c}, 0 0 8px #ffffff`
+                  : "0 2px 8px rgba(0, 0, 0, 0.4)",
+              }}
+            />
+          );
+        })}
+      </div>
+
+      {/* Action Buttons: Clear and Random (Exact Figma Match) */}
+      <div className="flex items-center justify-center gap-3 w-full max-w-xs mt-1">
+        <button
+          onClick={handleClear}
+          className="flex-1 py-3 px-6 rounded-full text-xs font-semibold text-purple-200/90 transition-all active:scale-95 cursor-pointer text-center hover:text-white"
+          style={{
+            background: "rgba(255, 255, 255, 0.08)",
+            border: "1px solid rgba(180, 120, 255, 0.25)",
+            boxShadow: "0 4px 14px rgba(0, 0, 0, 0.25)",
+          }}
+        >
+          Clear
+        </button>
+        <button
+          onClick={handleRandom}
+          className="flex-1 py-3 px-6 rounded-full text-xs font-semibold text-purple-200/90 transition-all active:scale-95 cursor-pointer text-center hover:text-white"
+          style={{
+            background: "rgba(255, 255, 255, 0.08)",
+            border: "1px solid rgba(180, 120, 255, 0.25)",
+            boxShadow: "0 4px 14px rgba(0, 0, 0, 0.25)",
+          }}
+        >
+          Random
         </button>
       </div>
     </div>
@@ -1305,7 +1460,13 @@ export const PuzzlesScreen: React.FC = () => {
       </div>
 
       {/* Screen Title (Exact Figma Match) */}
-      <h1 className="font-serif text-3xl font-bold text-amber-100 mb-1 tracking-wide text-center">
+      <h1
+        className="font-serif text-3xl font-bold mb-1 tracking-wide text-center"
+        style={{
+          color: "#f5d76e",
+          textShadow: "0 0 20px rgba(245, 215, 110, 0.4)",
+        }}
+      >
         Puzzles
       </h1>
 

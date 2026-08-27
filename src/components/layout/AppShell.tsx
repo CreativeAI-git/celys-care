@@ -52,16 +52,15 @@ export interface FeatureMeta {
 }
 
 export const FEATURES_REGISTRY: FeatureMeta[] = [
-  // 1. Sanctuary Home
+  // Left Column Screens (Exact Figma Match)
   {
-    id: "calm",
-    label: "Sanctuary Space",
-    category: "Sanctuary",
-    icon: "🎨",
-    description: "Your safe calming space designed for mental peace and sensory ease.",
-    component: CalmingSpace,
+    id: "login",
+    label: "Login",
+    category: "Account",
+    icon: "🔓",
+    description: "Sign in to sync your sanctuary data and milestones across devices.",
+    component: LoginScreen,
   },
-  // 2. Daily Rituals
   {
     id: "mood",
     label: "Mood Check-In",
@@ -71,99 +70,24 @@ export const FEATURES_REGISTRY: FeatureMeta[] = [
     component: MoodCheckIn,
   },
   {
-    id: "chat",
-    label: "Celys AI",
-    category: "Wisdom",
-    icon: "💬",
-    description: "24/7 compassionate, therapeutic AI companion holding quiet space.",
-    component: AIChat,
-  },
-  {
     id: "affirmations",
-    label: "Sacred Affirmations",
+    label: "Affirmations",
     category: "Rituals",
     icon: "✨",
     description: "Personalized healing mantras and radiant self-worth reminders.",
     component: AffirmationsScreen,
   },
   {
-    id: "breathing",
-    label: "Breathing Pacer",
-    category: "Rituals",
-    icon: "🌬️",
-    description: "Parasympathetic vagal nerve regulation and rhythmic breath visualizers.",
-    component: BreathingScreen,
-  },
-  {
-    id: "journal",
-    label: "Soul Journal",
-    category: "Rituals",
-    icon: "📓",
-    description: "Private, encrypted safe space for reflection and emotional processing.",
-    component: JournalScreen,
-  },
-  // 3. Sanctuary & Audio
-  {
     id: "meditation",
-    label: "Guided Meditation",
+    label: "Meditation",
     category: "Sanctuary",
     icon: "🧘",
     description: "Somatic anxiety release, sleep waves, and guided mindful journeys.",
     component: MeditationScreen,
   },
   {
-    id: "soundscapes",
-    label: "432Hz Soundscapes",
-    category: "Sanctuary",
-    icon: "🎵",
-    description: "Binaural theta frequencies, tranquil rain, and harmonic resonance.",
-    component: RelaxationMusic,
-  },
-  {
-    id: "quiet",
-    label: "Quiet Room",
-    category: "Sanctuary",
-    icon: "🌑",
-    description: "Zero-stimulus dark sanctuary for nervous system decompression.",
-    component: QuietRoom,
-  },
-  {
-    id: "release",
-    label: "Energy Release",
-    category: "Sanctuary",
-    icon: "⚡",
-    description: "Transmute heavy emotions into the cosmic void with fire rituals.",
-    component: EnergyRelease,
-  },
-  // 4. Wisdom & Exploration
-  {
-    id: "soulmap",
-    label: "Soul Constellation",
-    category: "Wisdom",
-    icon: "🌟",
-    description: "Map your mindfulness milestones across your personal sky.",
-    component: SoulMap,
-  },
-  {
-    id: "aura",
-    label: "Aura Visualizer",
-    category: "Wisdom",
-    icon: "🌈",
-    description: "Real-time biometric and emotional resonance spectrum.",
-    component: AuraVisualizer,
-  },
-  {
-    id: "oracle",
-    label: "Inner Oracle",
-    category: "Wisdom",
-    icon: "🔮",
-    description: "Intuitive archetype guidance cards for reflection during crossroads.",
-    component: InnerOracle,
-  },
-  // 5. Tactile & Regulation Games
-  {
     id: "bubble",
-    label: "Bubble Pop Game",
+    label: "Bubble Game",
     category: "Games",
     icon: "🫧",
     description: "Tactile anxiety de-escalation with calming haptic sensory bubbles.",
@@ -178,22 +102,47 @@ export const FEATURES_REGISTRY: FeatureMeta[] = [
     component: CopingGames,
   },
   {
-    id: "puzzles",
-    label: "Puzzles",
-    category: "Games",
-    icon: "🧩",
-    description: "Gentle challenges for a focused mind.",
-    component: PuzzlesScreen,
-  },
-  {
     id: "activities",
-    label: "Mindful Activities",
+    label: "Activities",
     category: "Games",
-    icon: "🌿",
-    description: "Gentle somatic stretches, tea rituals, and mindful pauses.",
+    icon: "🌱",
+    description: "Small steps toward feeling better with grounding and mindful pauses.",
     component: ActivitiesScreen,
   },
-  // 6. Account & Sanctuary Info
+  {
+    id: "soulmap",
+    label: "Soul Map",
+    category: "Wisdom",
+    icon: "🌟",
+    description: "Map your mindfulness milestones across your personal sky.",
+    component: SoulMap,
+  },
+  {
+    id: "quiet",
+    label: "Quiet Room",
+    category: "Sanctuary",
+    icon: "🌑",
+    description: "Zero-stimulus dark sanctuary for nervous system decompression.",
+    component: QuietRoom,
+  },
+  {
+    id: "oracle",
+    label: "Inner Oracle",
+    category: "Wisdom",
+    icon: "🔮",
+    description: "Intuitive archetype guidance cards for reflection during crossroads.",
+    component: InnerOracle,
+  },
+  {
+    id: "preview",
+    label: "Screenshots",
+    category: "Account",
+    icon: "🖼️",
+    description: "Explore the official feature tour and App Store highlights.",
+    component: ScreenshotPreview,
+  },
+
+  // Right Column Screens (Exact Figma Match)
   {
     id: "subscription",
     label: "Subscription",
@@ -202,22 +151,105 @@ export const FEATURES_REGISTRY: FeatureMeta[] = [
     description: "Manage your unlimited Sanctuary membership and premium soundscapes.",
     component: SubscriptionScreen,
   },
-  // {
-  //   id: "preview",
-  //   label: "App Tour & Showcase",
-  //   category: "Account",
-  //   icon: "📸",
-  //   description: "Explore the official feature tour and App Store highlights.",
-  //   component: ScreenshotPreview,
-  // },
+  {
+    id: "chat",
+    label: "AI Chat",
+    category: "Wisdom",
+    icon: "💬",
+    description: "24/7 compassionate, therapeutic AI companion holding quiet space.",
+    component: AIChat,
+  },
+  {
+    id: "journal",
+    label: "Journal",
+    category: "Rituals",
+    icon: "📓",
+    description: "Private, encrypted safe space for reflection and emotional processing.",
+    component: JournalScreen,
+  },
+  {
+    id: "breathing",
+    label: "Breathing",
+    category: "Rituals",
+    icon: "🌬️",
+    description: "Parasympathetic vagal nerve regulation and rhythmic breath visualizers.",
+    component: BreathingScreen,
+  },
+  {
+    id: "soundscapes",
+    label: "Music",
+    category: "Sanctuary",
+    icon: "🎵",
+    description: "Binaural theta frequencies, tranquil rain, and harmonic resonance.",
+    component: RelaxationMusic,
+  },
+  {
+    id: "puzzles",
+    label: "Puzzles",
+    category: "Games",
+    icon: "🧩",
+    description: "Gentle challenges for a focused mind.",
+    component: PuzzlesScreen,
+  },
+  {
+    id: "calm",
+    label: "Calm Space",
+    category: "Sanctuary",
+    icon: "🎨",
+    description: "Your safe calming space designed for mental peace and sensory ease.",
+    component: CalmingSpace,
+  },
+  {
+    id: "aura",
+    label: "Aura Visualizer",
+    category: "Wisdom",
+    icon: "🌈",
+    description: "Real-time biometric and emotional resonance spectrum.",
+    component: AuraVisualizer,
+  },
+  {
+    id: "release",
+    label: "Energy Release",
+    category: "Sanctuary",
+    icon: "⚡",
+    description: "Transmute heavy emotions into the cosmic void with fire rituals.",
+    component: EnergyRelease,
+  },
   {
     id: "disclaimer",
-    label: "Safety & Disclaimer",
+    label: "Disclaimer",
     category: "Account",
     icon: "ℹ️",
     description: "Clinical safety boundaries, privacy terms, and crisis resources.",
     component: DisclaimerScreen,
   },
+];
+
+const FIGMA_MENU_LEFT = [
+  "login",
+  "mood",
+  "affirmations",
+  "meditation",
+  "bubble",
+  "coping",
+  "activities",
+  "soulmap",
+  "quiet",
+  "oracle",
+  "preview",
+];
+
+const FIGMA_MENU_RIGHT = [
+  "subscription",
+  "chat",
+  "journal",
+  "breathing",
+  "soundscapes",
+  "puzzles",
+  "calm",
+  "aura",
+  "release",
+  "disclaimer",
 ];
 
 // 5 Core Bottom Navigation Destinations
@@ -431,7 +463,7 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
         </div>
       </nav>
 
-      {/* Feature Directory Drawer (All 21 Features) */}
+      {/* Feature Directory Drawer (Sanctuary Directory with Updated Figma Names) */}
       {showDirectory && (
         <div
           className="fixed inset-0 z-50 flex flex-col animate-in fade-in duration-200"
@@ -440,14 +472,13 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
           {/* Header */}
           <div className="flex items-center justify-between px-4 sm:px-6 pt-4 sm:pt-5 pb-3 border-b border-purple-400/15 max-w-4xl mx-auto w-full flex-shrink-0">
             <div className="flex items-center gap-2">
-              <span className="text-base font-bold text-white font-serif">Sanctuary Directory</span>
-              {/* <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-200 border border-purple-400/30">
-                21 Features
-              </span> */}
+              <span className="text-base font-bold text-white font-serif tracking-wide">
+                Sanctuary Directory
+              </span>
             </div>
             <button
               onClick={() => setShowDirectory(false)}
-              className="w-8 h-8 rounded-full flex items-center justify-center text-purple-200/70 hover:text-white hover:bg-white/10 transition-colors"
+              className="w-8 h-8 rounded-full flex items-center justify-center text-purple-200/70 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
             >
               <X size={18} />
             </button>
@@ -458,7 +489,7 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
             {(["Rituals", "Sanctuary", "Wisdom", "Games", "Account"] as const).map(
               (category) => {
                 const categoryFeatures = FEATURES_REGISTRY.filter(
-                  (f) => f.category === category
+                  (f) => f.category === category && f.id !== "login" && f.id !== "preview"
                 );
                 if (categoryFeatures.length === 0) return null;
 
@@ -480,7 +511,7 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
                           <button
                             key={f.id}
                             onClick={() => handleNavigate(f.id)}
-                            className="flex items-start gap-3 p-3.5 rounded-2xl text-left transition-all hover:brightness-110 active:scale-[0.99]"
+                            className="flex items-start gap-3 p-3.5 rounded-2xl text-left transition-all hover:brightness-110 active:scale-[0.99] cursor-pointer"
                             style={{
                               background: isActive
                                 ? "rgba(124, 58, 237, 0.35)"
@@ -522,12 +553,12 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
                 {(() => {
                   const effectiveName =
                     user.displayName &&
-                    user.displayName.trim() &&
-                    user.displayName.toLowerCase() !== "beautiful soul"
+                      user.displayName.trim() &&
+                      user.displayName.toLowerCase() !== "beautiful soul"
                       ? user.displayName.trim()
                       : user.email
                         ? user.email.split("@")[0].charAt(0).toUpperCase() +
-                          user.email.split("@")[0].slice(1)
+                        user.email.split("@")[0].slice(1)
                         : "Beautiful Soul";
 
                   return (
@@ -550,7 +581,7 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
 
               <button
                 onClick={logout}
-                className="px-3.5 py-2 rounded-full text-xs font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30 transition-all flex items-center gap-1.5 flex-shrink-0 active:scale-95"
+                className="px-3.5 py-2 rounded-full text-xs font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30 transition-all flex items-center gap-1.5 flex-shrink-0 active:scale-95 cursor-pointer"
               >
                 <LogOut size={13} />
                 <span>Sign Out</span>
