@@ -4,8 +4,8 @@
   "private": true,
   "description": "Celys Care - Wellness & Mindfulness Companion Full-Stack Application",
   "scripts": {
-    "dev": "next dev -H 0.0.0.0",
-    "build": "next build",
+    "dev": "prisma db push && next dev -H 0.0.0.0",
+    "build": "prisma generate && prisma db push && next build",
     "start": "next start",
     "lint": "next lint",
     "cap:sync": "cap sync",
