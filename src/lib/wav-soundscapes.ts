@@ -74,7 +74,7 @@ export function getSoundscapeAudioUrl(type: string): string {
   }
 
   const sampleRate = 44100;
-  let duration = 6.0; // 6 seconds seamless loop
+  let duration = 8.0; // 8 seconds seamless natural loop
   if (type === "piano" || type === "bowls") duration = 8.0;
 
   const numSamples = Math.floor(sampleRate * duration);
@@ -82,108 +82,158 @@ export function getSoundscapeAudioUrl(type: string): string {
   const right = new Float32Array(numSamples);
 
   if (type === "ocean") {
-    // Ocean waves with swell filter & stereo drift
-    let b0L = 0, b1L = 0, b2L = 0;
-    let b0R = 0, b1R = 0, b2R = 0;
+    // High-Power Ocean Waves: Deep Coastal Swell (40-200Hz) + Rolling Surf (400-1800Hz) + Foamy Sea Spray (2000-8000Hz)
+    let p0L = 0, p1L = 0, p2L = 0, p3L = 0, p4L = 0, p5L = 0, p6L = 0;
+    let p0R = 0, p1R = 0, p2R = 0, p3R = 0, p4R = 0, p5R = 0, p6R = 0;
+    let brnL = 0, brnR = 0;
+    let surfL = 0, surfR = 0;
+    let foamL = 0, foamR = 0;
+
     for (let i = 0; i < numSamples; i++) {
       const t = i / sampleRate;
-      // Wave swell envelope (slow undulating breathing rhythm)
-      const swell = (Math.sin((2 * Math.PI * t) / duration) * 0.5 + 0.5) * 0.7 + 0.3;
-      
-      const whiteL = Math.random() * 2 - 1;
-      const whiteR = Math.random() * 2 - 1;
 
-      // Brown noise integration
-      b0L = (b0L + 0.02 * whiteL) / 1.02;
-      b1L = (b1L + 0.03 * b0L) / 1.03;
-      b2L = (b2L + 0.05 * b1L) / 1.05;
+      // Natural tidal swell envelope (4s build-up, peak surf crash, 4s receding wash)
+      const phase = (2 * Math.PI * t) / duration;
+      const primarySwell = Math.pow(0.5 + 0.5 * Math.sin(phase - Math.PI / 2), 1.5);
+      const secondarySwell = 0.25 * Math.sin(phase * 2 + 0.4);
+      const totalSwell = Math.max(0.1, Math.min(1.0, primarySwell + secondarySwell));
 
-      b0R = (b0R + 0.02 * whiteR) / 1.02;
-      b1R = (b1R + 0.03 * b0R) / 1.03;
-      b2R = (b2R + 0.05 * b1R) / 1.05;
+      // Breaking crest burst (peaks around wave impact)
+      const crestBurst = Math.pow(Math.max(0, primarySwell - 0.2) / 0.8, 2.0);
+      const recedingWash = Math.pow(Math.max(0, Math.sin(phase + 0.3)), 2.5) * 0.5;
 
-      left[i] = b2L * 4.5 * swell;
-      right[i] = b2R * 4.5 * swell;
+      const wL = Math.random() * 2 - 1;
+      const wR = Math.random() * 2 - 1;
+
+      // Pink noise filter (Paul Kellet's filter)
+      p0L = 0.99886 * p0L + wL * 0.0555179;
+      p1L = 0.99332 * p1L + wL * 0.0750759;
+      p2L = 0.969 * p2L + wL * 0.153852;
+      p3L = 0.8665 * p3L + wL * 0.3104856;
+      p4L = 0.55 * p4L + wL * 0.5329522;
+      p5L = -0.7616 * p5L - wL * 0.016898;
+      const pinkL = (p0L + p1L + p2L + p3L + p4L + p5L + p6L + wL * 0.5362) * 0.22;
+      p6L = wL * 0.115926;
+
+      p0R = 0.99886 * p0R + wR * 0.0555179;
+      p1R = 0.99332 * p1R + wR * 0.0750759;
+      p2R = 0.969 * p2R + wR * 0.153852;
+      p3R = 0.8665 * p3R + wR * 0.3104856;
+      p4R = 0.55 * p4R + wR * 0.5329522;
+      p5R = -0.7616 * p5R - wR * 0.016898;
+      const pinkR = (p0R + p1R + p2R + p3R + p4R + p5R + p6R + wR * 0.5362) * 0.22;
+      p6R = wR * 0.115926;
+
+      // 1. Deep Coastal Sub-Bass Rumble
+      brnL = (brnL + 0.05 * wL) / 1.05;
+      brnR = (brnR + 0.05 * wR) / 1.05;
+      const deepRumbleL = brnL * 7.5 * totalSwell;
+      const deepRumbleR = brnR * 7.5 * totalSwell;
+
+      // 2. Rolling Wave Surf & Breaker
+      surfL = surfL * 0.86 + pinkL * (1.2 + 2.0 * crestBurst);
+      surfR = surfR * 0.86 + pinkR * (1.2 + 2.0 * crestBurst);
+      const rollingSurfL = surfL * (totalSwell * 1.1 + crestBurst * 0.8);
+      const rollingSurfR = surfR * (totalSwell * 1.1 + crestBurst * 0.8);
+
+      // 3. Crisp Sea Spray & Foam
+      const foamRawL = (wL - pinkL) * (crestBurst * 1.2 + recedingWash * 0.7 + 0.15);
+      const foamRawR = (wR - pinkR) * (crestBurst * 1.2 + recedingWash * 0.7 + 0.15);
+      foamL = foamL * 0.65 + foamRawL * 0.35;
+      foamR = foamR * 0.65 + foamRawR * 0.35;
+
+      // 4. Stereo Rolling Motion
+      const panOffset = Math.sin(phase) * 0.2;
+      const gainL = Math.cos((0.5 + panOffset) * (Math.PI / 2));
+      const gainR = Math.sin((0.5 + panOffset) * (Math.PI / 2));
+
+      // Master sum with high-energy analog soft-clipping for maximum loudness
+      const rawL = (deepRumbleL * 0.45 + rollingSurfL * 0.55 + foamL * 0.4) * gainL * 2.8;
+      const rawR = (deepRumbleR * 0.45 + rollingSurfR * 0.55 + foamR * 0.4) * gainR * 2.8;
+
+      left[i] = Math.tanh(rawL);
+      right[i] = Math.tanh(rawR);
     }
   } else if (type === "rain") {
-    // Forest rain with gentle droplet high-pass pink noise
+    // Forest rain with full rich shower and crisp droplet scatter
     let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
     for (let i = 0; i < numSamples; i++) {
-      const w = Math.random() * 2 - 1;
+      const wL = Math.random() * 2 - 1;
+      const wR = Math.random() * 2 - 1;
+      const w = (wL + wR) * 0.5;
+
       b0 = 0.99886 * b0 + w * 0.0555179;
       b1 = 0.99332 * b1 + w * 0.0750759;
       b2 = 0.969 * b2 + w * 0.153852;
       b3 = 0.8665 * b3 + w * 0.3104856;
       b4 = 0.55 * b4 + w * 0.5329522;
       b5 = -0.7616 * b5 - w * 0.016898;
-      const pink = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + w * 0.5362) * 0.09;
+      const pink = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + w * 0.5362) * 0.28;
       b6 = w * 0.115926;
 
-      // Rain droplet scatter
-      const drop = Math.random() < 0.0015 ? (Math.random() * 2 - 1) * 0.4 : 0;
+      const dropL = Math.random() < 0.005 ? (Math.random() * 2 - 1) * 0.8 : 0;
+      const dropR = Math.random() < 0.005 ? (Math.random() * 2 - 1) * 0.8 : 0;
 
-      left[i] = (pink + drop) * 0.65;
-      right[i] = (pink - drop) * 0.65;
+      left[i] = Math.tanh((pink * 1.8 + dropL) * 2.0);
+      right[i] = Math.tanh((pink * 1.8 + dropR) * 2.0);
     }
   } else if (type === "bowls") {
     // Tibetan Singing Bowls (432Hz fundamental with rich resonant harmonic overtone envelope)
     const baseFreq = 432;
     const harmonics = [
-      { freq: baseFreq, gain: 0.45 },
-      { freq: baseFreq * 1.5, gain: 0.22 }, // 648Hz
-      { freq: baseFreq * 2.0, gain: 0.12 }, // 864Hz
-      { freq: baseFreq * 2.76, gain: 0.08 }, // 1192Hz
+      { freq: baseFreq, gain: 0.65 },
+      { freq: baseFreq * 1.5, gain: 0.35 },
+      { freq: baseFreq * 2.0, gain: 0.22 },
+      { freq: baseFreq * 2.76, gain: 0.15 },
+      { freq: baseFreq * 4.0, gain: 0.08 },
     ];
 
     for (let i = 0; i < numSamples; i++) {
       const t = i / sampleRate;
       let sample = 0;
-      // Gentle shimmer pulse
-      const pulse = 1.0 + 0.15 * Math.sin(2 * Math.PI * 0.25 * t);
+      const pulse = 1.0 + 0.2 * Math.sin(2 * Math.PI * 0.25 * t);
 
       for (const h of harmonics) {
         sample += Math.sin(2 * Math.PI * h.freq * t) * h.gain * pulse;
       }
 
-      left[i] = sample * 0.65;
-      right[i] = sample * 0.65;
+      left[i] = Math.tanh(sample * 1.8);
+      right[i] = Math.tanh(sample * 1.8);
     }
   } else if (type === "piano") {
-    // Gentle Piano Celestial chords (Cmaj9 arpeggiated ambient soothing progression)
-    const notes = [261.63, 329.63, 392.0, 493.88, 523.25]; // C4, E4, G4, B4, C5
+    const notes = [261.63, 329.63, 392.0, 493.88, 523.25];
     for (let i = 0; i < numSamples; i++) {
       const t = i / sampleRate;
       let sample = 0;
       for (let n = 0; n < notes.length; n++) {
-        const noteTime = (t + n * 1.2) % duration;
-        const decay = Math.exp(-noteTime * 1.2);
-        sample += Math.sin(2 * Math.PI * notes[n] * t) * 0.15 * decay;
-        // Warm sub-harmonic
-        sample += Math.sin(2 * Math.PI * (notes[n] / 2) * t) * 0.08 * decay;
+        const noteTime = (t + n * 1.3) % duration;
+        const decay = Math.exp(-noteTime * 1.1);
+        sample += Math.sin(2 * Math.PI * notes[n] * t) * 0.32 * decay;
+        sample += Math.sin(2 * Math.PI * (notes[n] / 2) * t) * 0.18 * decay;
       }
-      left[i] = sample * 0.8;
-      right[i] = sample * 0.8;
+      left[i] = Math.tanh(sample * 1.9);
+      right[i] = Math.tanh(sample * 1.9);
     }
   } else if (type === "528hz") {
-    // 528Hz Miracle & Transformation Solfeggio frequency + binaural theta beat (6Hz diff)
     for (let i = 0; i < numSamples; i++) {
       const t = i / sampleRate;
-      const leftSine = Math.sin(2 * Math.PI * 528 * t) * 0.4 + Math.sin(2 * Math.PI * 264 * t) * 0.18;
-      const rightSine = Math.sin(2 * Math.PI * 534 * t) * 0.4 + Math.sin(2 * Math.PI * 264 * t) * 0.18;
-      left[i] = leftSine * 0.7;
-      right[i] = rightSine * 0.7;
+      const leftSine = Math.sin(2 * Math.PI * 528 * t) * 0.6 + Math.sin(2 * Math.PI * 264 * t) * 0.3;
+      const rightSine = Math.sin(2 * Math.PI * 534 * t) * 0.6 + Math.sin(2 * Math.PI * 264 * t) * 0.3;
+      left[i] = Math.tanh(leftSine * 1.8);
+      right[i] = Math.tanh(rightSine * 1.8);
     }
   } else {
     // White / Calm Ambient Noise
     for (let i = 0; i < numSamples; i++) {
-      const n = (Math.random() * 2 - 1) * 0.15;
-      left[i] = n;
-      right[i] = n;
+      const nL = (Math.random() * 2 - 1) * 0.45;
+      const nR = (Math.random() * 2 - 1) * 0.45;
+      left[i] = Math.tanh(nL * 1.8);
+      right[i] = Math.tanh(nR * 1.8);
     }
   }
 
-  // Crossfade boundary (first/last 2000 samples) for click-free 100% seamless infinite loop
-  const fadeLen = 2000;
+  // Crossfade boundary for seamless loop
+  const fadeLen = 2500;
   for (let i = 0; i < fadeLen; i++) {
     const fade = i / fadeLen;
     const endIdx = numSamples - fadeLen + i;
