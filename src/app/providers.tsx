@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 import { offlineSync, useOnlineStatus } from "@/lib/offline-sync";
 import { AccessibilityProvider, useAccessibility } from "@/context/AccessibilityContext";
+import { initRevenueCat, identifyRevenueCatUser, resetRevenueCatUser } from "@/lib/revenuecat";
 
 export { useAccessibility };
 
@@ -100,6 +101,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
     refreshUser();
   }, []);
 
+  useEffect(() => {
+    initRevenueCat(user?.id);
+    if (user?.id) {
+      identifyRevenueCatUser(user.id);
+    }
+  }, [user?.id]);
+
   const login = async (email: string, password: string): Promise<User> => {
     try {
       const res = await fetch("/api/auth/login", {
@@ -189,6 +197,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
+    } catch { }
+    try {
+      await resetRevenueCatUser();
     } catch { }
     try {
       localStorage.removeItem("celys_a11y_high_contrast");

@@ -17,6 +17,12 @@ import { SparkleDivider } from "@/components/branding/SparkleDivider";
 import { useAuth } from "@/app/providers";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
+import {
+  getRevenueCatOfferings,
+  purchaseRevenueCatPackage,
+  restoreRevenueCatPurchases,
+  RevenueCatPlan,
+} from "@/lib/revenuecat";
 
 const SUB_FEATURES = [
   { icon: Brain, label: "Mood-Based Affirmations" },
@@ -34,12 +40,19 @@ export const SubscriptionScreen: React.FC = () => {
   const [trialStarted, setTrialStarted] = useState<Date | null>(null);
   const [subscribed, setSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [rcPlans, setRcPlans] = useState<RevenueCatPlan[]>([]);
 
   useEffect(() => {
     const localTrial = localStorage.getItem("celys_trial_start");
     const localSub = localStorage.getItem("celys_subscribed") === "true";
     if (localTrial) setTrialStarted(new Date(localTrial));
     if (localSub || user?.subscription?.status === "active") setSubscribed(true);
+
+    getRevenueCatOfferings().then((offerings) => {
+      if (offerings && offerings.length > 0) {
+        setRcPlans(offerings);
+      }
+    });
   }, [user]);
 
   const triggerSuccessCelebration = () => {
@@ -77,6 +90,31 @@ export const SubscriptionScreen: React.FC = () => {
 
   const handleSubscribe = async () => {
     setLoading(true);
+    const selectedPlan = rcPlans.find((p) =>
+      billing === "annual" ? p.id.includes("annual") || p.period.toLowerCase().includes("annual") || p.period.toLowerCase().includes("year") : p.id.includes("monthly") || p.period.toLowerCase().includes("month")
+    ) || rcPlans[0];
+
+    if (selectedPlan && selectedPlan.rawPackage) {
+      try {
+        const result = await purchaseRevenueCatPackage(selectedPlan.rawPackage);
+        if (result.success && result.isPremium) {
+          localStorage.setItem("celys_subscribed", "true");
+          setSubscribed(true);
+          triggerSuccessCelebration();
+          await refreshUser();
+          toast.success("Celestial Premium Activated! Welcome to Sanctuary ✨");
+          setLoading(false);
+          return;
+        } else if (result.error) {
+          toast.error(result.error);
+          setLoading(false);
+          return;
+        }
+      } catch (err: any) {
+        console.warn("Native purchase fallback:", err);
+      }
+    }
+
     try {
       const res = await fetch("/api/subscriptions/checkout", {
         method: "POST",
@@ -97,7 +135,23 @@ export const SubscriptionScreen: React.FC = () => {
   };
 
   const handleRestorePurchases = async () => {
-    toast.success("Purchases restored.");
+    setLoading(true);
+    try {
+      const res = await restoreRevenueCatPurchases();
+      if (res.isPremium) {
+        localStorage.setItem("celys_subscribed", "true");
+        setSubscribed(true);
+        triggerSuccessCelebration();
+        await refreshUser();
+        toast.success("Purchases restored! Active subscription unlocked ✨");
+      } else {
+        toast.info("No active previous purchases found for this account.");
+      }
+    } catch {
+      toast.info("Purchase restoration completed.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
