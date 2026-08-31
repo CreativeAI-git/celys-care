@@ -101,6 +101,27 @@ export const RelaxationMusic: React.FC = () => {
         className="hidden"
       />
 
+      {/* Centered Golden Logo */}
+      <div className="mb-2">
+        <CelysLogo size={80} />
+      </div>
+
+      {/* Screen Title & Subtitle */}
+      <h2
+        className="font-serif text-2xl sm:text-3xl font-bold mt-1"
+        style={{
+          background: "linear-gradient(135deg, #f5d76e 0%, #c9a227 100%)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+        }}
+      >
+        Relaxation Music
+      </h2>
+      <p className="text-xs text-purple-200/60 mt-0.5">
+        Sounds to soothe and restore your soul
+      </p>
+      <SparkleDivider className="my-2 mb-3.5" />
+
       {/* Active Music Player Card */}
       {playing !== null && (
         <div
