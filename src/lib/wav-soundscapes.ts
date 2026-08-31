@@ -4,10 +4,17 @@
  * Bypasses iOS hardware silent switch and WebAudio suspension bugs
  */
 
+function writeString(view: DataView, offset: number, string: string) {
+  for (let i = 0; i < string.length; i++) {
+    view.setUint8(offset + i, string.charCodeAt(i));
+  }
+}
+
 /**
- * Encode raw float PCM samples into a standard 16-bit stereo/mono WAV Blob
+ * Encode raw float PCM samples into a self-contained Base64 Data URI
+ * This guarantees 100% instant synchronous playback on iOS Safari, Android WebView, and all browsers
  */
-function encodeWavBlob(samplesLeft: Float32Array, samplesRight: Float32Array, sampleRate: number = 44100): Blob {
+function encodeWavDataUri(samplesLeft: Float32Array, samplesRight: Float32Array, sampleRate: number = 24000): string {
   const numChannels = 2;
   const bitsPerSample = 16;
   const bytesPerSample = bitsPerSample / 8;
@@ -25,44 +32,44 @@ function encodeWavBlob(samplesLeft: Float32Array, samplesRight: Float32Array, sa
 
   // fmt sub-chunk
   writeString(view, 12, "fmt ");
-  view.setUint32(16, 16, true); // Subchunk1Size (16 for PCM)
-  view.setUint16(20, 1, true); // AudioFormat (1 for PCM)
-  view.setUint16(22, numChannels, true); // NumChannels
-  view.setUint32(24, sampleRate, true); // SampleRate
-  view.setUint32(28, byteRate, true); // ByteRate
-  view.setUint16(32, blockAlign, true); // BlockAlign
-  view.setUint16(34, bitsPerSample, true); // BitsPerSample
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true); // PCM
+  view.setUint16(22, numChannels, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, byteRate, true);
+  view.setUint16(32, blockAlign, true);
+  view.setUint16(34, bitsPerSample, true);
 
   // data sub-chunk
   writeString(view, 36, "data");
   view.setUint32(40, dataSize, true);
 
-  // Write interleaved 16-bit PCM samples with clipping protection
+  // Interleaved 16-bit PCM samples
   let offset = 44;
   for (let i = 0; i < numSamples; i++) {
-    // Left channel
     let sL = Math.max(-1, Math.min(1, samplesLeft[i]));
     let intL = sL < 0 ? sL * 0x8000 : sL * 0x7fff;
     view.setInt16(offset, intL, true);
     offset += 2;
 
-    // Right channel
     let sR = Math.max(-1, Math.min(1, samplesRight[i]));
     let intR = sR < 0 ? sR * 0x8000 : sR * 0x7fff;
     view.setInt16(offset, intR, true);
     offset += 2;
   }
 
-  return new Blob([buffer], { type: "audio/wav" });
-}
-
-function writeString(view: DataView, offset: number, string: string) {
-  for (let i = 0; i < string.length; i++) {
-    view.setUint8(offset + i, string.charCodeAt(i));
+  // Fast chunked Base64 encoding
+  let binary = "";
+  const bytes = new Uint8Array(buffer);
+  const len = bytes.byteLength;
+  const chunkSize = 0x8000;
+  for (let i = 0; i < len; i += chunkSize) {
+    binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunkSize)));
   }
+  return "data:audio/wav;base64," + btoa(binary);
 }
 
-// In-memory cache of generated soundscape WAV URLs
+// In-memory cache of generated soundscape WAV Data URIs
 const soundscapeUrlCache: { [key: string]: string } = {};
 
 /**
@@ -245,10 +252,9 @@ export function getSoundscapeAudioUrl(type: string): string {
     right[endIdx] = mixedR;
   }
 
-  const blob = encodeWavBlob(left, right, sampleRate);
-  const blobUrl = URL.createObjectURL(blob);
-  soundscapeUrlCache[type] = blobUrl;
-  return blobUrl;
+  const dataUri = encodeWavDataUri(left, right, sampleRate);
+  soundscapeUrlCache[type] = dataUri;
+  return dataUri;
 }
 
 /**

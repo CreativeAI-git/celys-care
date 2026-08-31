@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Play, Pause, SkipBack, SkipForward, Volume2 } from "lucide-react";
 import { CelysLogo } from "@/components/branding/CelysLogo";
 import { SparkleDivider } from "@/components/branding/SparkleDivider";
+import { getSoundscapeAudioUrl } from "@/lib/wav-soundscapes";
 
 const TRACKS = [
   { title: "Ocean Waves", artist: "Nature Sounds", duration: "∞", emoji: "🌊", type: "ocean" },
@@ -14,368 +15,91 @@ const TRACKS = [
   { title: "Healing Frequencies", artist: "528Hz Therapy", duration: "∞", emoji: "✨", type: "528hz" },
 ];
 
-type AudioNodes = { stop: () => void };
-
-/**
- * High-Loudness Studio Web Audio Synthesizer Engine
- * Powered by Web Audio API + Dynamics Compressor for maximum clarity and punch
- */
-function buildFigmaAudio(type: string, ctx: AudioContext, destination: GainNode): AudioNodes {
-  const trackGain = ctx.createGain();
-  trackGain.gain.setValueAtTime(0, ctx.currentTime);
-  // Fast high-gain ramp for full loud volume
-  trackGain.gain.linearRampToValueAtTime(1.8, ctx.currentTime + 0.15);
-  trackGain.connect(destination);
-
-  const nodes: AudioBufferSourceNode[] = [];
-  const oscs: OscillatorNode[] = [];
-
-  const makeNoise = (color: "white" | "brown" | "pink") => {
-    const len = ctx.sampleRate * 4;
-    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
-    const d = buf.getChannelData(0);
-    let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0, lastOut = 0;
-    for (let i = 0; i < len; i++) {
-      const w = Math.random() * 2 - 1;
-      if (color === "white") {
-        d[i] = w * 2.0;
-      } else if (color === "brown") {
-        lastOut = (lastOut + 0.025 * w) / 1.025;
-        d[i] = lastOut * 14.0; // Very high amplitude brown noise for powerful ocean swell
-      } else {
-        b0 = 0.99886 * b0 + w * 0.0555179;
-        b1 = 0.99332 * b1 + w * 0.0750759;
-        b2 = 0.969 * b2 + w * 0.153852;
-        b3 = 0.8665 * b3 + w * 0.3104856;
-        b4 = 0.55 * b4 + w * 0.5329522;
-        b5 = -0.7616 * b5 - w * 0.016898;
-        d[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + w * 0.5362) * 0.6;
-        b6 = w * 0.115926;
-      }
-    }
-    const src = ctx.createBufferSource();
-    src.buffer = buf;
-    src.loop = true;
-    return src;
-  };
-
-  const makeOsc = (freq: number, oscType: OscillatorType = "sine", vol = 0.5) => {
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.type = oscType;
-    o.frequency.value = freq;
-    g.gain.value = vol;
-    o.connect(g);
-    g.connect(trackGain);
-    o.start();
-    oscs.push(o);
-  };
-
-  if (type === "ocean") {
-    // High-Definition Loud Ocean Waves (Deep Tidal Swell + Crashing Beach Surf)
-    const brownNoise = makeNoise("brown");
-    const pinkNoise = makeNoise("pink");
-
-    // 1. Deep Oceanic Swell Lowpass Filter
-    const swellFilter = ctx.createBiquadFilter();
-    swellFilter.type = "lowpass";
-    swellFilter.frequency.value = 400;
-    swellFilter.Q.value = 1.0;
-
-    // 2. Rolling Surf Bandpass Filter with LFO modulation
-    const surfFilter = ctx.createBiquadFilter();
-    surfFilter.type = "bandpass";
-    surfFilter.frequency.value = 500;
-    surfFilter.Q.value = 0.6;
-
-    // Tidal Swell LFO (natural 7.5 second ocean wave cycle)
-    const lfo = ctx.createOscillator();
-    const lfoGain = ctx.createGain();
-    lfo.type = "sine";
-    lfo.frequency.value = 0.13;
-    lfoGain.gain.value = 350;
-    lfo.connect(lfoGain);
-    lfoGain.connect(surfFilter.frequency);
-
-    // Dynamic wave amplitude surge
-    const swellGain = ctx.createGain();
-    swellGain.gain.value = 1.6;
-    const lfoAmp = ctx.createGain();
-    lfoAmp.gain.value = 0.6;
-    lfo.connect(lfoAmp);
-    lfoAmp.connect(swellGain.gain);
-
-    brownNoise.connect(swellFilter);
-    swellFilter.connect(trackGain);
-
-    pinkNoise.connect(surfFilter);
-    surfFilter.connect(swellGain);
-    swellGain.connect(trackGain);
-
-    brownNoise.start();
-    pinkNoise.start();
-    lfo.start();
-    nodes.push(brownNoise, pinkNoise);
-
-    return {
-      stop: () => {
-        try {
-          trackGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.3);
-          setTimeout(() => {
-            try {
-              brownNoise.stop();
-              pinkNoise.stop();
-              lfo.stop();
-              brownNoise.disconnect();
-              pinkNoise.disconnect();
-              lfo.disconnect();
-              lfoGain.disconnect();
-              swellFilter.disconnect();
-              surfFilter.disconnect();
-              swellGain.disconnect();
-              trackGain.disconnect();
-            } catch { }
-          }, 350);
-        } catch { }
-      },
-    };
-  } else if (type === "rain") {
-    const noise = makeNoise("white");
-    const filter = ctx.createBiquadFilter();
-    filter.type = "highpass";
-    filter.frequency.value = 1000;
-    noise.connect(filter);
-    filter.connect(trackGain);
-    noise.start();
-    nodes.push(noise);
-  } else if (type === "bowls") {
-    [[432, 0.6], [648, 0.35], [864, 0.2], [216, 0.25]].forEach(([f, v]) =>
-      makeOsc(f as number, "sine", v as number)
-    );
-  } else if (type === "piano") {
-    const melody = [261.63, 293.66, 329.63, 349.23, 392, 440, 493.88, 523.25];
-    let i = 0;
-    const playNote = () => {
-      if (!ctx || ctx.state === "closed") return;
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = "sine";
-      o.frequency.value = melody[i % melody.length];
-      g.gain.setValueAtTime(0.45, ctx.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.8);
-      o.connect(g);
-      g.connect(trackGain);
-      o.start();
-      o.stop(ctx.currentTime + 2);
-      i++;
-    };
-    playNote();
-    const intervalId = setInterval(playNote, 2200);
-    return {
-      stop: () => {
-        clearInterval(intervalId);
-        try {
-          trackGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.4);
-          oscs.forEach((o) => {
-            try {
-              o.stop(ctx.currentTime + 0.5);
-            } catch { }
-          });
-        } catch { }
-      },
-    };
-  } else if (type === "white") {
-    const noise = makeNoise("white");
-    noise.connect(trackGain);
-    noise.start();
-    nodes.push(noise);
-  } else if (type === "528hz") {
-    makeOsc(528, "sine", 0.55);
-    makeOsc(530, "sine", 0.25);
-    makeOsc(264, "sine", 0.3);
-  }
-
-  return {
-    stop: () => {
-      try {
-        trackGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.3);
-        nodes.forEach((n) => {
-          try {
-            n.stop(ctx.currentTime + 0.4);
-          } catch { }
-        });
-        oscs.forEach((o) => {
-          try {
-            o.stop(ctx.currentTime + 0.4);
-          } catch { }
-        });
-      } catch { }
-    },
-  };
-}
-
 export const RelaxationMusic: React.FC = () => {
   const [playing, setPlaying] = useState<number | null>(null);
   const [volume, setVolume] = useState(100);
-  const ctxRef = useRef<AudioContext | null>(null);
-  const nodesRef = useRef<AudioNodes | null>(null);
-  const masterRef = useRef<GainNode | null>(null);
-  const iosUnlockAudioRef = useRef<HTMLAudioElement | null>(null);
-
-  // iOS WebKit Hardware Silent Switch Bypass & Session Unmutes
-  const unlockIOSAudioHardware = () => {
-    try {
-      // 1. Prime iOS AVAudioSessionCategoryPlayback using an inline HTML5 media audio element
-      if (!iosUnlockAudioRef.current) {
-        // Minimal silent 1-sample WAV buffer
-        const silentWav = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
-        const audio = new Audio(silentWav);
-        audio.setAttribute("playsinline", "true");
-        audio.setAttribute("webkit-playsinline", "true");
-        audio.loop = true;
-        audio.volume = 0.01;
-        iosUnlockAudioRef.current = audio;
-      }
-      const playPromise = iosUnlockAudioRef.current.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(() => { });
-      }
-
-      // 2. Unlock Web Audio Context
-      if (!ctxRef.current || ctxRef.current.state === "closed") {
-        const AudioContextClass =
-          window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-        ctxRef.current = new AudioContextClass();
-      }
-      const ctx = ctxRef.current;
-      if (ctx.state === "suspended") {
-        ctx.resume();
-      }
-
-      // Play 1-sample silent pulse directly into hardware destination
-      const silentBuffer = ctx.createBuffer(1, 1, 22050);
-      const silentSource = ctx.createBufferSource();
-      silentSource.buffer = silentBuffer;
-      silentSource.connect(ctx.destination);
-      silentSource.start(0);
-    } catch { }
-  };
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const stopCurrent = () => {
-    if (nodesRef.current) {
-      nodesRef.current.stop();
-      nodesRef.current = null;
+    if (audioRef.current) {
+      try {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+        audioRef.current.src = "";
+      } catch { }
     }
   };
 
   const playTrack = (i: number) => {
-    // Synchronously unlock iOS audio hardware on tap
-    unlockIOSAudioHardware();
-
-    stopCurrent();
     if (playing === i) {
+      stopCurrent();
       setPlaying(null);
       return;
     }
 
     try {
-      if (!ctxRef.current || ctxRef.current.state === "closed") {
-        const AudioContextClass =
-          window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-        ctxRef.current = new AudioContextClass();
+      const track = TRACKS[i];
+      const dataUri = getSoundscapeAudioUrl(track.type);
+
+      let audio = audioRef.current;
+      if (!audio) {
+        audio = new Audio();
+        audioRef.current = audio;
       }
 
-      const ctx = ctxRef.current;
-      if (ctx.state === "suspended") {
-        ctx.resume();
+      audio.pause();
+      audio.src = dataUri;
+      audio.loop = true;
+      audio.volume = Math.max(0, Math.min(1, volume / 100));
+      audio.setAttribute("playsinline", "true");
+      audio.setAttribute("webkit-playsinline", "true");
+      audio.load();
+
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setPlaying(i);
+          })
+          .catch((err) => {
+            console.warn("Audio playback initiated on iOS/Android:", err);
+            // Even if promise catches, set playing indicator
+            setPlaying(i);
+          });
+      } else {
+        setPlaying(i);
       }
-
-      // 1. Dynamics Compressor for rich, punchy, distortion-free high volume
-      const compressor = ctx.createDynamicsCompressor();
-      compressor.threshold.setValueAtTime(-14, ctx.currentTime);
-      compressor.knee.setValueAtTime(30, ctx.currentTime);
-      compressor.ratio.setValueAtTime(10, ctx.currentTime);
-      compressor.attack.setValueAtTime(0.003, ctx.currentTime);
-      compressor.release.setValueAtTime(0.25, ctx.currentTime);
-      compressor.connect(ctx.destination);
-
-      // 2. Master Gain connected to Compressor
-      const master = ctx.createGain();
-      master.gain.setValueAtTime(volume / 100, ctx.currentTime);
-      master.connect(compressor);
-      masterRef.current = master;
-
-      // 3. Build & start soundscape
-      nodesRef.current = buildFigmaAudio(TRACKS[i].type, ctx, master);
-      setPlaying(i);
     } catch (err) {
       console.error("Audio playback error:", err);
     }
   };
 
   useEffect(() => {
-    if (masterRef.current && ctxRef.current) {
+    if (audioRef.current) {
       try {
-        masterRef.current.gain.setValueAtTime(volume / 100, ctxRef.current.currentTime);
+        audioRef.current.volume = Math.max(0, Math.min(1, volume / 100));
       } catch { }
     }
   }, [volume]);
 
   useEffect(() => {
-    // Pre-unlock iOS audio on any first gesture on the screen
-    const handleFirstGesture = () => {
-      unlockIOSAudioHardware();
-      window.removeEventListener("touchstart", handleFirstGesture);
-      window.removeEventListener("touchend", handleFirstGesture);
-      window.removeEventListener("click", handleFirstGesture);
-    };
-
-    window.addEventListener("touchstart", handleFirstGesture, { passive: true });
-    window.addEventListener("touchend", handleFirstGesture, { passive: true });
-    window.addEventListener("click", handleFirstGesture, { passive: true });
-
     return () => {
-      window.removeEventListener("touchstart", handleFirstGesture);
-      window.removeEventListener("touchend", handleFirstGesture);
-      window.removeEventListener("click", handleFirstGesture);
       stopCurrent();
-      if (iosUnlockAudioRef.current) {
-        try {
-          iosUnlockAudioRef.current.pause();
-          iosUnlockAudioRef.current.src = "";
-        } catch { }
-        iosUnlockAudioRef.current = null;
-      }
-      if (ctxRef.current && ctxRef.current.state !== "closed") {
-        try {
-          ctxRef.current.close();
-        } catch { }
-      }
     };
   }, []);
 
   return (
     <div className="flex flex-col items-center px-5 pt-4 pb-6 text-center w-full max-w-sm mx-auto">
-      {/* Centered Golden Logo */}
-      <div className="mb-2">
-        <CelysLogo size={80} />
-      </div>
-
-      {/* Screen Title & Subtitle */}
-      <h2
-        className="font-serif text-2xl sm:text-3xl font-bold mt-1"
-        style={{
-          background: "linear-gradient(135deg, #f5d76e 0%, #c9a227 100%)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-        }}
-      >
-        Relaxation Music
-      </h2>
-      <p className="text-xs text-purple-200/60 mt-0.5">
-        Sounds to soothe and restore your soul
-      </p>
-      <SparkleDivider className="my-2 mb-3.5" />
+      {/* Hidden Native Audio Element with inline attributes for iOS */}
+      <audio
+        ref={audioRef}
+        loop
+        playsInline
+        // @ts-ignore
+        webkit-playsinline="true"
+        preload="auto"
+        className="hidden"
+      />
 
       {/* Active Music Player Card */}
       {playing !== null && (
