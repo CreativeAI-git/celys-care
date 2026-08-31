@@ -192,7 +192,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess }) => {
                 type="text"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Your name (e.g. Celeste)"
+                placeholder="Your name (optional)"
                 className="flex-1 bg-transparent outline-none text-xs text-[#f0e8ff] placeholder:text-purple-200/40"
               />
             </div>
