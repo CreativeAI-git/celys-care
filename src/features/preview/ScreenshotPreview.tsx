@@ -231,12 +231,12 @@ export const ScreenshotPreview: React.FC = () => {
       </div>
 
       {/* 3. Previous / Next Feature Controls — Matches Figma Exactly */}
-      <div className="flex items-center justify-center gap-3.5 mt-5 mb-2 w-full">
+      <div className="flex items-center justify-center gap-2.5 sm:gap-3.5 mt-5 mb-2 w-full max-w-sm mx-auto px-1">
         {/* Previous Circular Button */}
         <button
           onClick={handlePrev}
           aria-label="Previous Feature"
-          className="w-12 h-12 rounded-full flex items-center justify-center transition-all hover:bg-white/15 active:scale-95"
+          className="w-11 h-11 sm:w-12 sm:h-12 shrink-0 rounded-full flex items-center justify-center transition-all hover:bg-white/15 active:scale-95"
           style={{
             background: "rgba(255, 255, 255, 0.08)",
             border: "1px solid rgba(180, 120, 255, 0.28)",
@@ -244,27 +244,26 @@ export const ScreenshotPreview: React.FC = () => {
             boxShadow: "0 4px 12px rgba(0, 0, 0, 0.25)",
           }}
         >
-          <ChevronLeft size={20} />
+          <ChevronLeft size={18} />
         </button>
 
         {/* Center Next Feature Purple Gradient Pill */}
         <button
           onClick={handleNext}
-          className="h-12 px-7 rounded-full flex items-center justify-center gap-1.5 text-sm font-semibold text-white transition-all hover:brightness-110 active:scale-[0.98]"
+          className="flex-1 min-w-0 h-11 sm:h-12 px-4 rounded-full flex items-center justify-center gap-1.5 text-xs sm:text-sm font-semibold text-white transition-all hover:brightness-110 active:scale-[0.98] shadow-xl"
           style={{
             background: "linear-gradient(135deg, #b04be6 0%, #7c3aed 100%)",
             boxShadow: "0 4px 20px rgba(168, 85, 247, 0.45)",
           }}
         >
-          <span>Next Feature</span>
-          <span className="text-base font-normal">→</span>
+          <span className="truncate">Next Feature →</span>
         </button>
 
         {/* Next Circular Button */}
         <button
           onClick={handleNext}
           aria-label="Next Feature"
-          className="w-12 h-12 rounded-full flex items-center justify-center transition-all hover:bg-white/15 active:scale-95"
+          className="w-11 h-11 sm:w-12 sm:h-12 shrink-0 rounded-full flex items-center justify-center transition-all hover:bg-white/15 active:scale-95"
           style={{
             background: "rgba(255, 255, 255, 0.08)",
             border: "1px solid rgba(180, 120, 255, 0.28)",
@@ -272,7 +271,7 @@ export const ScreenshotPreview: React.FC = () => {
             boxShadow: "0 4px 12px rgba(0, 0, 0, 0.25)",
           }}
         >
-          <ChevronRight size={20} />
+          <ChevronRight size={18} />
         </button>
       </div>
 

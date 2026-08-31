@@ -1,7 +1,7 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import React, { useState } from "react";
-import Image from "next/image";
 import { Mail, Lock, Eye, EyeOff, User } from "lucide-react";
 import { useAuth } from "@/app/providers";
 import { toast } from "sonner";
@@ -85,12 +85,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess }) => {
     <div className="relative w-full flex flex-col items-center justify-start overflow-hidden select-none">
       {/* Top Lion Hero Banner (Figma Exact Match) */}
       <div style={{ aspectRatio: "4/3", height: "100%" }} className="relative w-full h-[100%] sm:h-[240px] overflow-hidden rounded-3xl shadow-2xl">
-        <Image
+        <img
           src="/images/lion-hero-hq3.jpg"
           alt="Celys Care Celestial Lion"
-          fill
-          priority
-          className="object-cover object-center"
+          className="w-full h-full object-cover object-center block"
+          loading="eager"
         />
         {/* Deep cosmic vignette and smooth fade to page background */}
         <div

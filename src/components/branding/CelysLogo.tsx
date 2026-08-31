@@ -1,5 +1,5 @@
+/* eslint-disable @next/next/no-img-element */
 import React, { useState } from "react";
-import Image from "next/image";
 
 interface CelysLogoProps {
   size?: number;
@@ -29,31 +29,28 @@ export const CelysLogo: React.FC<CelysLogoProps> = ({
 
       {/* Circular Emblem with concentric gold border and shadow */}
       <div
-        className="relative overflow-hidden rounded-full flex items-center justify-center transition-transform hover:scale-105 duration-300 isolate"
+        className="relative overflow-hidden rounded-full flex items-center justify-center transition-transform hover:scale-105 duration-300"
         style={{
           width: size,
           height: size,
           boxShadow:
             "0 0 30px rgba(201,162,39,0.6), 0 0 12px rgba(201,162,39,0.35), inset 0 0 0 2px rgba(245,215,110,0.8)",
           background: "radial-gradient(circle at 35% 35%, #2a114f 0%, #0d0a1e 90%)",
-          borderRadius: "9999px",
-          WebkitMaskImage: "-webkit-radial-gradient(white, black)",
-          maskImage: "radial-gradient(circle, white 100%, black 100%)",
+          borderRadius: "50%",
         }}
       >
-        <Image
+        <img
           src={imgSrc}
           alt="Celys Care Celestial Emblem"
           width={size}
           height={size}
-          unoptimized
           onError={() => {
             if (imgSrc !== "/images/lion-emblem-hq1.jpg") {
               setImgSrc("/images/lion-emblem-hq1.jpg");
             }
           }}
-          className="w-full h-full object-cover object-center rounded-full"
-          priority
+          className="w-full h-full object-cover object-center rounded-full block pointer-events-none select-none"
+          loading="eager"
         />
       </div>
 
@@ -79,3 +76,4 @@ export const CelysLogo: React.FC<CelysLogoProps> = ({
 };
 
 export default CelysLogo;
+

@@ -726,11 +726,11 @@ function Grounding54321Flow({
       </div>
 
       {/* Action Buttons: Circular Prev & Pill Next (Exact Figma Match) */}
-      <div className="flex items-center gap-3 w-full">
+      <div className="flex items-center gap-2.5 w-full max-w-sm mx-auto px-0.5">
         {stageIdx > 0 && (
           <button
             onClick={handlePrev}
-            className="w-13 h-13 sm:w-14 sm:h-14 rounded-full text-base font-semibold text-purple-200/90 transition-all active:scale-95 cursor-pointer shrink-0 flex items-center justify-center hover:text-white"
+            className="w-12 h-12 rounded-full text-base font-semibold text-purple-200/90 transition-all active:scale-95 cursor-pointer shrink-0 flex items-center justify-center hover:text-white"
             style={{
               background: "rgba(255, 255, 255, 0.08)",
               border: "1px solid rgba(180, 120, 255, 0.25)",
@@ -744,13 +744,13 @@ function Grounding54321Flow({
 
         <button
           onClick={handleNext}
-          className="flex-1 h-13 sm:h-14 rounded-full text-white font-bold text-sm tracking-wide transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center shadow-xl"
+          className="flex-1 min-w-0 h-12 rounded-full text-white font-bold text-sm tracking-wide transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center shadow-xl px-4"
           style={{
             background: "linear-gradient(135deg, #c084fc 0%, #7c3aed 100%)",
             boxShadow: "0 6px 25px rgba(168, 85, 247, 0.4)",
           }}
         >
-          {stage.nextLabel}
+          <span className="truncate">{stage.nextLabel}</span>
         </button>
       </div>
     </div>
@@ -997,14 +997,14 @@ function ActivityDetailFlow({
       </div>
 
       {/* Action Buttons: Circular Prev & Pill Next (Exact Figma Match) */}
-      <div className="flex items-center gap-3 w-full">
+      <div className="flex items-center gap-2.5 w-full max-w-sm mx-auto px-0.5">
         {currentStep > 0 && (
           <button
             onClick={() => {
               setCurrentStep((s) => s - 1);
               audioSynth?.playPopSound(420);
             }}
-            className="w-13 h-13 sm:w-14 sm:h-14 rounded-full text-base font-semibold text-purple-200/90 transition-all active:scale-95 cursor-pointer shrink-0 flex items-center justify-center hover:text-white"
+            className="w-12 h-12 rounded-full text-base font-semibold text-purple-200/90 transition-all active:scale-95 cursor-pointer shrink-0 flex items-center justify-center hover:text-white"
             style={{
               background: "rgba(255, 255, 255, 0.08)",
               border: "1px solid rgba(180, 120, 255, 0.25)",
@@ -1018,13 +1018,13 @@ function ActivityDetailFlow({
 
         <button
           onClick={handleNextStep}
-          className="flex-1 h-13 sm:h-14 rounded-full text-white font-bold text-sm tracking-wide transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center"
+          className="flex-1 min-w-0 h-12 rounded-full text-white font-bold text-sm tracking-wide transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center shadow-xl px-4"
           style={{
             background: "linear-gradient(135deg, #c084fc 0%, #7c3aed 100%)",
             boxShadow: "0 6px 25px rgba(168, 85, 247, 0.4)",
           }}
         >
-          {currentStep < totalSteps - 1 ? "Next Step →" : "Complete ✦"}
+          <span className="truncate">{currentStep < totalSteps - 1 ? "Next Step →" : "Complete ✦"}</span>
         </button>
       </div>
     </div>

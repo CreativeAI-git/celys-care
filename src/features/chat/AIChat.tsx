@@ -1,7 +1,7 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import Image from "next/image";
 import { Send, Volume2, VolumeX, Trash2 } from "lucide-react";
 import { useAuth } from "@/app/providers";
 import { SparkleDivider } from "@/components/branding/SparkleDivider";
@@ -399,12 +399,11 @@ export const AIChat: React.FC = () => {
                 className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 mt-0.5 relative shadow-md"
                 style={{ border: "1.5px solid rgba(201,162,39,0.55)" }}
               >
-                <Image
+                <img
                   src="/images/profile.jpg"
                   alt="Celys"
-                  fill
-                  unoptimized
-                  className="object-cover rounded-full"
+                  className="w-full h-full object-cover rounded-full block"
+                  loading="eager"
                 />
               </div>
             )}
@@ -481,12 +480,11 @@ export const AIChat: React.FC = () => {
               className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0 relative"
               style={{ border: "1px solid rgba(201,162,39,0.5)" }}
             >
-              <Image
+              <img
                 src="/images/profile.jpg"
                 alt="Celys"
-                fill
-                unoptimized
-                className="object-cover rounded-full"
+                className="w-full h-full object-cover rounded-full block"
+                loading="eager"
               />
             </div>
             <div
