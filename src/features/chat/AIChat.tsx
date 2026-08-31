@@ -6,8 +6,7 @@ import { Send, Volume2, VolumeX, Trash2 } from "lucide-react";
 import { useAuth } from "@/app/providers";
 import { SparkleDivider } from "@/components/branding/SparkleDivider";
 import { audioSynth } from "@/lib/audio-synth";
-
-import { speakCelysVoice, stopCelysVoice } from "@/lib/tts-service";
+import { speakCelysVoice, stopCelysVoice, unlockAudioContext } from "@/lib/tts-service";
 
 interface Message {
   id: string;
@@ -75,6 +74,7 @@ export const AIChat: React.FC = () => {
 
   // Pre-load and cache voices for Android WebView & iOS WebKit
   useEffect(() => {
+    unlockAudioContext();
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
       try {
         window.speechSynthesis.getVoices();
@@ -131,6 +131,7 @@ export const AIChat: React.FC = () => {
 
   const onPromptClick = (promptText: string) => {
     if (hasDragged.current) return;
+    unlockAudioContext();
     handleSend(promptText);
   };
 
@@ -166,6 +167,7 @@ export const AIChat: React.FC = () => {
       return;
     }
 
+    unlockAudioContext();
     await speakCelysVoice(text, {
       onStart: () => {
         setIsSpeaking(true);
@@ -184,6 +186,7 @@ export const AIChat: React.FC = () => {
   };
 
   const toggleVoice = () => {
+    unlockAudioContext();
     const next = !voiceEnabled;
     setVoiceEnabled(next);
     localStorage.setItem("celys_voice_enabled", String(next));
@@ -237,13 +240,8 @@ export const AIChat: React.FC = () => {
 
     if (!customText) setInput("");
 
-    // Audio gesture unlock for mobile WebViews
-    if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      try {
-        window.speechSynthesis.resume();
-      } catch { }
-    }
-
+    // Prime & unlock audio on mobile gesture
+    unlockAudioContext();
     audioSynth?.playPopSound(600);
 
     const nowTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });

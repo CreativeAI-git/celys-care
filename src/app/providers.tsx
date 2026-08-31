@@ -100,6 +100,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     refreshUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // RevenueCat user identification (Temporarily Disabled)

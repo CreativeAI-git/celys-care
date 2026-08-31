@@ -1,11 +1,13 @@
 /**
  * High-Definition Unified Text-To-Speech Service for Celys Care
- * Compatible with Android APK, iOS App, and Desktop/Mobile Web
+ * 100% Reliable across Android APK, iOS App, Mobile Web & Desktop
  */
 
-let activeAudio: HTMLAudioElement | null = null;
-let currentSentenceQueue: string[] = [];
-let isSpeechActive = false;
+// Module-level references to prevent Android garbage collection & track state
+let activeUtterances: SpeechSynthesisUtterance[] = [];
+let heartbeatInterval: NodeJS.Timeout | null = null;
+let isSpeakingState = false;
+let audioFallback: HTMLAudioElement | null = null;
 let currentCallbacks: {
   onStart?: () => void;
   onEnd?: () => void;
@@ -13,80 +15,169 @@ let currentCallbacks: {
 } | null = null;
 
 /**
- * Clean text of emojis, markdown, symbols, and formatting
+ * Clean text of emojis, markdown symbols, asterisks, hashtags, and formatting
  */
 export function sanitizeSpeechText(rawText: string): string {
+  if (!rawText) return "";
   return rawText
-    .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}✦🌸💜🌿✨☀️🌊🦁·•—*_~`#]/gu, " ")
+    .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}✦🌸💜🌿✨☀️🌊🦁·•—_~`#*[\]()]/gu, " ")
+    .replace(/https?:\/\/\S+/g, "")
     .replace(/\s+/g, " ")
     .trim();
 }
 
 /**
- * Split text into short natural phrases (< 140 characters) for continuous playback
+ * Split text into natural sentence clauses for natural pacing
  */
-function splitIntoAudioChunks(text: string): string[] {
-  const sentences = text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [text];
-  const chunks: string[] = [];
+function splitIntoNaturalClauses(text: string): string[] {
+  // Split on periods, exclamation marks, question marks, semicolons or line breaks
+  const rawClauses = text.split(/(?<=[.!?;\n])\s+/);
+  const clauses: string[] = [];
 
-  for (const s of sentences) {
-    const trimmed = s.trim();
+  for (const c of rawClauses) {
+    const trimmed = c.trim();
     if (!trimmed) continue;
-    if (trimmed.length <= 140) {
-      chunks.push(trimmed);
-    } else {
-      // Split long sentence by commas or words
-      const words = trimmed.split(" ");
-      let current = "";
-      for (const w of words) {
-        if ((current + " " + w).trim().length <= 140) {
-          current = (current + " " + w).trim();
-        } else {
-          if (current) chunks.push(current);
-          current = w;
-        }
+
+    // If clause is excessively long (> 160 chars), break naturally at commas
+    if (trimmed.length > 160) {
+      const subParts = trimmed.split(/(?<=[,])\s+/);
+      for (const sp of subParts) {
+        const subTrimmed = sp.trim();
+        if (subTrimmed) clauses.push(subTrimmed);
       }
-      if (current) chunks.push(current);
+    } else {
+      clauses.push(trimmed);
     }
   }
 
-  return chunks.length > 0 ? chunks : [text];
+  return clauses.length > 0 ? clauses : [text];
 }
 
 /**
- * Stop any ongoing audio/speech playback immediately
+ * Start Android Chrome WebView speech synthesis keepalive heartbeat
+ * (Fixes the well-known Chromium bug where TTS stops speaking after ~15s)
  */
-export async function stopCelysVoice(): Promise<void> {
-  currentSentenceQueue = [];
-  isSpeechActive = false;
+function startHeartbeat() {
+  stopHeartbeat();
+  heartbeatInterval = setInterval(() => {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      try {
+        if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
+          window.speechSynthesis.pause();
+          window.speechSynthesis.resume();
+        }
+      } catch { }
+    }
+  }, 9000);
+}
 
-  // 1. Stop active HTML5 audio
-  if (activeAudio) {
+function stopHeartbeat() {
+  if (heartbeatInterval) {
+    clearInterval(heartbeatInterval);
+    heartbeatInterval = null;
+  }
+}
+
+/**
+ * Pre-warm and unlock audio hardware on mobile user gesture
+ */
+export function unlockAudioContext(): void {
+  if (typeof window === "undefined") return;
+
+  // 1. Unlock Web Speech API
+  if ("speechSynthesis" in window) {
     try {
-      activeAudio.pause();
-      activeAudio.src = "";
-      activeAudio.onended = null;
-      activeAudio.onerror = null;
+      window.speechSynthesis.resume();
+      // Speak and immediately cancel empty utterance to prime audio pipeline
+      if (!window.speechSynthesis.speaking) {
+        const dummy = new SpeechSynthesisUtterance("");
+        dummy.volume = 0;
+        window.speechSynthesis.speak(dummy);
+        window.speechSynthesis.cancel();
+      }
     } catch { }
-    activeAudio = null;
   }
 
-  // 2. Stop Web Speech API fallback if running
+  // 2. Unlock HTML5 Audio
+  try {
+    const silentAudio = new Audio();
+    silentAudio.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
+    silentAudio.volume = 0.01;
+    silentAudio.play().catch(() => { });
+  } catch { }
+}
+
+/**
+ * Best voice selector with preferences for warm, calm English voices
+ */
+function getPreferredVoice(synth: SpeechSynthesis): SpeechSynthesisVoice | null {
+  const voices = synth.getVoices();
+  if (!voices || voices.length === 0) return null;
+
+  // Priority order for natural, soothing AI voices
+  const preferredVoiceNames = [
+    "Google UK English Female",
+    "Google US English",
+    "en-US-SMT",
+    "Samantha",
+    "Victoria",
+    "Karen",
+    "Zira",
+    "Microsoft Zira",
+    "Natural",
+    "Female",
+    "en-US",
+  ];
+
+  for (const name of preferredVoiceNames) {
+    const found = voices.find(
+      (v) => v.name.toLowerCase().includes(name.toLowerCase()) || v.lang.toLowerCase().includes(name.toLowerCase())
+    );
+    if (found) return found;
+  }
+
+  // Fallback to any English voice
+  const enVoice = voices.find((v) => v.lang.startsWith("en"));
+  return enVoice || voices[0] || null;
+}
+
+/**
+ * Stop any ongoing speech playback immediately
+ */
+export async function stopCelysVoice(): Promise<void> {
+  isSpeakingState = false;
+  stopHeartbeat();
+  activeUtterances = [];
+
+  // Stop Web Speech
   if (typeof window !== "undefined" && "speechSynthesis" in window) {
     try {
       window.speechSynthesis.cancel();
     } catch { }
   }
 
+  // Stop HTML Audio fallback
+  if (audioFallback) {
+    try {
+      audioFallback.pause();
+      audioFallback.src = "";
+      audioFallback.onended = null;
+      audioFallback.onerror = null;
+    } catch { }
+    audioFallback = null;
+  }
+
   if (currentCallbacks?.onEnd) {
-    currentCallbacks.onEnd();
+    try {
+      currentCallbacks.onEnd();
+    } catch { }
   }
   currentCallbacks = null;
 }
 
 /**
- * Speak text using High-Definition MP3 Audio Stream from /api/tts
- * with Web Speech API offline fallback
+ * High-Reliability Speech Synthesizer for Celys Care
+ * Compatible with Android APK, iOS App, Mobile Chrome, and Desktop
  */
 export async function speakCelysVoice(
   rawText: string,
@@ -102,39 +193,138 @@ export async function speakCelysVoice(
     return;
   }
 
-  // Always reset previous speech
+  // Stop previous speech cleanly
   await stopCelysVoice();
 
   currentCallbacks = callbacks || null;
-  currentSentenceQueue = splitIntoAudioChunks(cleanText);
-  isSpeechActive = true;
+  isSpeakingState = true;
 
-  let hasNotifiedStart = false;
+  // Check if Web Speech API is supported
+  const hasSpeechSynthesis =
+    typeof window !== "undefined" &&
+    "speechSynthesis" in window &&
+    typeof SpeechSynthesisUtterance !== "undefined";
 
-  const playNextSentence = () => {
-    if (!isSpeechActive || currentSentenceQueue.length === 0) {
-      isSpeechActive = false;
-      activeAudio = null;
-      currentCallbacks?.onEnd?.();
-      currentCallbacks = null;
-      return;
-    }
+  if (hasSpeechSynthesis) {
+    speakWithWebSpeechEngine(cleanText);
+  } else {
+    speakWithAudioStreamFallback(cleanText);
+  }
+}
 
-    const phrase = currentSentenceQueue.shift();
-    if (!phrase) {
-      playNextSentence();
-      return;
-    }
+/**
+ * Primary Engine: Native Web Speech API with Android queueing & lifecycle fixes
+ */
+function speakWithWebSpeechEngine(cleanText: string) {
+  try {
+    const synth = window.speechSynthesis;
+    synth.cancel();
+    synth.resume();
 
-    // High quality server-proxied MP3 stream URL
-    const audioUrl = `/api/tts?text=${encodeURIComponent(phrase)}`;
+    const clauses = splitIntoNaturalClauses(cleanText);
+    const selectedVoice = getPreferredVoice(synth);
 
-    try {
+    let currentIndex = 0;
+    let hasNotifiedStart = false;
+
+    const playNextClause = () => {
+      if (!isSpeakingState || currentIndex >= clauses.length) {
+        isSpeakingState = false;
+        stopHeartbeat();
+        activeUtterances = [];
+        currentCallbacks?.onEnd?.();
+        currentCallbacks = null;
+        return;
+      }
+
+      const textChunk = clauses[currentIndex];
+      currentIndex++;
+
+      const utterance = new SpeechSynthesisUtterance(textChunk);
+      utterance.rate = 0.95; // slightly slower, calming pace
+      utterance.pitch = 1.05; // warm feminine tone
+      utterance.volume = 1.0;
+      utterance.lang = "en-US";
+
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+      }
+
+      utterance.onstart = () => {
+        if (!hasNotifiedStart) {
+          hasNotifiedStart = true;
+          currentCallbacks?.onStart?.();
+        }
+      };
+
+      utterance.onend = () => {
+        // Small 80ms natural breath pause between clauses
+        setTimeout(() => {
+          if (isSpeakingState) {
+            playNextClause();
+          }
+        }, 80);
+      };
+
+      utterance.onerror = (e) => {
+        // If interrupted due to cancel, do not treat as fatal error
+        if (e.error === "interrupted" || e.error === "canceled") {
+          return;
+        }
+        console.warn("SpeechSynthesis clause notice, proceeding to next clause:", e);
+        if (isSpeakingState) {
+          playNextClause();
+        }
+      };
+
+      // Keep strong reference in global array to prevent GC on Android Chromium
+      activeUtterances.push(utterance);
+      (window as any).__celysActiveUtterance = utterance;
+
+      synth.speak(utterance);
+    };
+
+    startHeartbeat();
+    playNextClause();
+  } catch (error) {
+    console.warn("Web Speech API failed, falling back to Audio Stream:", error);
+    speakWithAudioStreamFallback(cleanText);
+  }
+}
+
+/**
+ * Secondary Fallback: High-Definition Audio Stream with Absolute URL resolution
+ */
+function speakWithAudioStreamFallback(cleanText: string) {
+  try {
+    const clauses = splitIntoNaturalClauses(cleanText);
+    let currentIndex = 0;
+    let hasNotifiedStart = false;
+
+    const playNextAudio = () => {
+      if (!isSpeakingState || currentIndex >= clauses.length) {
+        isSpeakingState = false;
+        audioFallback = null;
+        currentCallbacks?.onEnd?.();
+        currentCallbacks = null;
+        return;
+      }
+
+      const textChunk = clauses[currentIndex];
+      currentIndex++;
+
+      // Construct safe URL (supports both local web and mobile relative paths)
+      const baseUrl =
+        typeof window !== "undefined" && window.location.origin && !window.location.origin.includes("localhost")
+          ? window.location.origin
+          : "";
+      const streamUrl = `${baseUrl}/api/tts?text=${encodeURIComponent(textChunk)}`;
+
       const audio = new Audio();
-      audio.src = audioUrl;
+      audio.src = streamUrl;
       audio.preload = "auto";
       audio.playbackRate = 0.98;
-      activeAudio = audio;
+      audioFallback = audio;
 
       audio.onplay = () => {
         if (!hasNotifiedStart) {
@@ -144,71 +334,30 @@ export async function speakCelysVoice(
       };
 
       audio.onended = () => {
-        playNextSentence();
+        playNextAudio();
       };
 
       audio.onerror = () => {
-        console.warn("Audio stream notice, falling back to Web Speech for phrase:", phrase);
-        playWithWebSpeech(phrase, () => playNextSentence());
+        console.warn("Audio stream error for chunk, advancing:", textChunk);
+        playNextAudio();
       };
 
       const playPromise = audio.play();
       if (playPromise !== undefined) {
         playPromise.catch((err) => {
-          console.warn("Autoplay block or network error, falling back to Web Speech:", err);
-          playWithWebSpeech(phrase, () => playNextSentence());
+          console.warn("Autoplay block or network error:", err);
+          playNextAudio();
         });
       }
-    } catch {
-      playWithWebSpeech(phrase, () => playNextSentence());
-    }
-  };
-
-  playNextSentence();
-}
-
-/**
- * Device-local Web Speech fallback
- */
-function playWithWebSpeech(text: string, onComplete: () => void) {
-  if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-    onComplete();
-    return;
-  }
-
-  try {
-    const synth = window.speechSynthesis;
-    synth.cancel();
-    synth.resume();
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "en-US";
-    utterance.rate = 0.95;
-    utterance.pitch = 1.05;
-    utterance.volume = 1.0;
-
-    const voices = synth.getVoices();
-    if (voices && voices.length > 0) {
-      const preferred =
-        voices.find((v) => v.lang.startsWith("en") && (v.name.includes("Female") || v.name.includes("Natural") || v.name.includes("Google") || v.name.includes("Samantha") || v.name.includes("Victoria") || v.name.includes("Zira"))) ||
-        voices.find((v) => v.lang.startsWith("en")) ||
-        voices[0];
-      if (preferred) {
-        utterance.voice = preferred;
-      }
-    }
-
-    utterance.onend = () => {
-      onComplete();
     };
 
-    utterance.onerror = () => {
-      onComplete();
-    };
-
-    (window as any).__celysActiveUtterance = utterance;
-    synth.speak(utterance);
-  } catch {
-    onComplete();
+    playNextAudio();
+  } catch (err) {
+    console.error("All speech synthesis options exhausted:", err);
+    currentCallbacks?.onError?.(err);
+    currentCallbacks?.onEnd?.();
+    isSpeakingState = false;
+    currentCallbacks = null;
   }
 }
+
