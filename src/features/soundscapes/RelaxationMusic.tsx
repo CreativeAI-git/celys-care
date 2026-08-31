@@ -220,6 +220,46 @@ export const RelaxationMusic: React.FC = () => {
   const ctxRef = useRef<AudioContext | null>(null);
   const nodesRef = useRef<AudioNodes | null>(null);
   const masterRef = useRef<GainNode | null>(null);
+  const iosUnlockAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // iOS WebKit Hardware Silent Switch Bypass & Session Unmutes
+  const unlockIOSAudioHardware = () => {
+    try {
+      // 1. Prime iOS AVAudioSessionCategoryPlayback using an inline HTML5 media audio element
+      if (!iosUnlockAudioRef.current) {
+        // Minimal silent 1-sample WAV buffer
+        const silentWav = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
+        const audio = new Audio(silentWav);
+        audio.setAttribute("playsinline", "true");
+        audio.setAttribute("webkit-playsinline", "true");
+        audio.loop = true;
+        audio.volume = 0.01;
+        iosUnlockAudioRef.current = audio;
+      }
+      const playPromise = iosUnlockAudioRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => { });
+      }
+
+      // 2. Unlock Web Audio Context
+      if (!ctxRef.current || ctxRef.current.state === "closed") {
+        const AudioContextClass =
+          window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        ctxRef.current = new AudioContextClass();
+      }
+      const ctx = ctxRef.current;
+      if (ctx.state === "suspended") {
+        ctx.resume();
+      }
+
+      // Play 1-sample silent pulse directly into hardware destination
+      const silentBuffer = ctx.createBuffer(1, 1, 22050);
+      const silentSource = ctx.createBufferSource();
+      silentSource.buffer = silentBuffer;
+      silentSource.connect(ctx.destination);
+      silentSource.start(0);
+    } catch { }
+  };
 
   const stopCurrent = () => {
     if (nodesRef.current) {
@@ -229,6 +269,9 @@ export const RelaxationMusic: React.FC = () => {
   };
 
   const playTrack = (i: number) => {
+    // Synchronously unlock iOS audio hardware on tap
+    unlockIOSAudioHardware();
+
     stopCurrent();
     if (playing === i) {
       setPlaying(null);
@@ -279,8 +322,30 @@ export const RelaxationMusic: React.FC = () => {
   }, [volume]);
 
   useEffect(() => {
+    // Pre-unlock iOS audio on any first gesture on the screen
+    const handleFirstGesture = () => {
+      unlockIOSAudioHardware();
+      window.removeEventListener("touchstart", handleFirstGesture);
+      window.removeEventListener("touchend", handleFirstGesture);
+      window.removeEventListener("click", handleFirstGesture);
+    };
+
+    window.addEventListener("touchstart", handleFirstGesture, { passive: true });
+    window.addEventListener("touchend", handleFirstGesture, { passive: true });
+    window.addEventListener("click", handleFirstGesture, { passive: true });
+
     return () => {
+      window.removeEventListener("touchstart", handleFirstGesture);
+      window.removeEventListener("touchend", handleFirstGesture);
+      window.removeEventListener("click", handleFirstGesture);
       stopCurrent();
+      if (iosUnlockAudioRef.current) {
+        try {
+          iosUnlockAudioRef.current.pause();
+          iosUnlockAudioRef.current.src = "";
+        } catch { }
+        iosUnlockAudioRef.current = null;
+      }
       if (ctxRef.current && ctxRef.current.state !== "closed") {
         try {
           ctxRef.current.close();
