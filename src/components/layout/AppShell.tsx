@@ -378,15 +378,15 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
 
       {/* Top Application Header Bar — Clean & Exact Figma Match with iOS Status Bar Protection */}
       <header
-        className="relative z-20 w-full max-w-md flex items-center justify-between px-4 pb-2 flex-shrink-0"
+        className="relative z-20 w-full max-w-md flex items-center justify-between px-4 pb-2.5 flex-shrink-0"
         style={{
-          paddingTop: "max(12px, calc(env(safe-area-inset-top, 0px) + 12px))",
+          paddingTop: "max(52px, calc(env(safe-area-inset-top, 0px) + 14px))",
         }}
       >
         {/* Left: Screen Icon & Title */}
         <div className="flex items-center gap-2">
           <span className="text-base select-none">{currentFeature.icon}</span>
-          <span className="text-xs sm:text-sm font-semibold text-[#f0e8ff] tracking-wide">
+          <span className="text-sm font-semibold text-[#f0e8ff] tracking-wide">
             {currentFeature.label}
           </span>
         </div>
@@ -394,7 +394,7 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
         {/* Right: Clean Circular Hamburger Menu Button */}
         <button
           onClick={() => setShowDirectory(true)}
-          className="w-8 h-8 rounded-full flex items-center justify-center transition-all hover:bg-white/15 active:scale-95"
+          className="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:bg-white/15 active:scale-95"
           style={{
             background: showDirectory
               ? "rgba(124, 58, 237, 0.4)"
@@ -404,7 +404,7 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
           }}
           title="Sanctuary Directory Menu"
         >
-          <Menu size={16} />
+          <Menu size={18} />
         </button>
       </header>
 
@@ -479,7 +479,7 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
           <div
             className="flex items-center justify-between px-4 sm:px-6 pb-3 border-b border-purple-400/15 max-w-4xl mx-auto w-full flex-shrink-0"
             style={{
-              paddingTop: "max(16px, calc(env(safe-area-inset-top, 0px) + 16px))",
+              paddingTop: "max(54px, calc(env(safe-area-inset-top, 0px) + 16px))",
             }}
           >
             <div className="flex items-center gap-2">
