@@ -376,11 +376,11 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
       <StarField count={45} />
       <LotusCorners />
 
-      {/* Top Application Header Bar — Clean & Exact Figma Match with iOS Status Bar Protection */}
+      {/* Top Application Header Bar — Responsive Adaptive Header for iOS & Android */}
       <header
         className="relative z-20 w-full max-w-md flex items-center justify-between px-4 pb-2.5 flex-shrink-0"
         style={{
-          paddingTop: "max(52px, calc(env(safe-area-inset-top, 0px) + 14px))",
+          paddingTop: "calc(env(safe-area-inset-top, 0px) + 10px)",
         }}
       >
         {/* Left: Screen Icon & Title */}
@@ -479,7 +479,7 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
           <div
             className="flex items-center justify-between px-4 sm:px-6 pb-3 border-b border-purple-400/15 max-w-4xl mx-auto w-full flex-shrink-0"
             style={{
-              paddingTop: "max(54px, calc(env(safe-area-inset-top, 0px) + 16px))",
+              paddingTop: "calc(env(safe-area-inset-top, 0px) + 14px)",
             }}
           >
             <div className="flex items-center gap-2">
