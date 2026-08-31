@@ -376,8 +376,13 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
       <StarField count={45} />
       <LotusCorners />
 
-      {/* Top Application Header Bar — Clean & Exact Figma Match */}
-      <header className="relative z-20 w-full max-w-md flex items-center justify-between px-4 pt-3 pb-2 flex-shrink-0">
+      {/* Top Application Header Bar — Clean & Exact Figma Match with iOS Status Bar Protection */}
+      <header
+        className="relative z-20 w-full max-w-md flex items-center justify-between px-4 pb-2 flex-shrink-0"
+        style={{
+          paddingTop: "max(12px, calc(env(safe-area-inset-top, 0px) + 12px))",
+        }}
+      >
         {/* Left: Screen Icon & Title */}
         <div className="flex items-center gap-2">
           <span className="text-base select-none">{currentFeature.icon}</span>
@@ -471,7 +476,12 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
           style={{ background: "rgba(10, 6, 24, 0.97)", backdropFilter: "blur(16px)" }}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 sm:px-6 pt-4 sm:pt-5 pb-3 border-b border-purple-400/15 max-w-4xl mx-auto w-full flex-shrink-0">
+          <div
+            className="flex items-center justify-between px-4 sm:px-6 pb-3 border-b border-purple-400/15 max-w-4xl mx-auto w-full flex-shrink-0"
+            style={{
+              paddingTop: "max(16px, calc(env(safe-area-inset-top, 0px) + 16px))",
+            }}
+          >
             <div className="flex items-center gap-2">
               <span className="text-base font-bold text-white font-serif tracking-wide">
                 Sanctuary Directory

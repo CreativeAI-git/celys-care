@@ -235,7 +235,7 @@ html.reduce-motion *::after {
 }
 
 .safe-area-top {
-  padding-top: max(0.5rem, env(safe-area-inset-top, 0.5rem)) !important;
+  padding-top: max(12px, calc(env(safe-area-inset-top, 0px) + 12px)) !important;
 }
 
 * {
