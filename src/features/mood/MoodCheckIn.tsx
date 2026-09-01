@@ -97,8 +97,8 @@ export const MoodCheckIn: React.FC = () => {
   return (
     <div className="flex flex-col items-center px-5 pt-4 pb-6 text-center w-full max-w-sm mx-auto">
       {/* Centered Golden Logo */}
-      <div className="mb-2">
-        <CelysLogo size={90} />
+      <div className="mb-2 flex items-center justify-center">
+        <CelysLogo size={80} />
       </div>
 
       {/* Screen Title & Subtitle */}

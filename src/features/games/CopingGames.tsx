@@ -1259,8 +1259,8 @@ export const CopingGames: React.FC = () => {
   return (
     <div className="flex flex-col items-center px-3 pt-2 pb-8 text-center w-full max-w-md mx-auto">
       {/* Centered Golden Lion Logo */}
-      <div className="mb-2">
-        <CelysLogo size={76} />
+      <div className="mb-2 flex items-center justify-center">
+        <CelysLogo size={80} />
       </div>
 
       {/* Screen Title & Subtitle (Exact Figma Match) */}

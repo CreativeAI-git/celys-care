@@ -15,7 +15,10 @@ export const CelysLogo: React.FC<CelysLogoProps> = ({
   const [imgSrc, setImgSrc] = useState("/images/profile.jpg");
 
   return (
-    <div className={`relative inline-flex flex-col items-center justify-center ${className}`}>
+    <div
+      className={`relative inline-flex flex-col items-center justify-center flex-shrink-0 select-none ${className}`}
+      style={{ width: size, height: size }}
+    >
       {/* Ambient gold-violet glow */}
       <div
         className="absolute rounded-full pointer-events-none -z-10 blur-sm"
@@ -29,10 +32,14 @@ export const CelysLogo: React.FC<CelysLogoProps> = ({
 
       {/* Circular Emblem with concentric gold border and shadow */}
       <div
-        className="relative overflow-hidden rounded-full flex items-center justify-center transition-transform hover:scale-105 duration-300"
+        className="relative overflow-hidden rounded-full flex items-center justify-center transition-transform hover:scale-105 duration-300 flex-shrink-0"
         style={{
           width: size,
           height: size,
+          minWidth: size,
+          minHeight: size,
+          maxWidth: size,
+          maxHeight: size,
           boxShadow:
             "0 0 30px rgba(201,162,39,0.6), 0 0 12px rgba(201,162,39,0.35), inset 0 0 0 2px rgba(245,215,110,0.8)",
           background: "radial-gradient(circle at 35% 35%, #2a114f 0%, #0d0a1e 90%)",
@@ -49,7 +56,8 @@ export const CelysLogo: React.FC<CelysLogoProps> = ({
               setImgSrc("/images/lion-emblem-hq1.jpg");
             }
           }}
-          className="w-full h-full object-cover object-center rounded-full block pointer-events-none select-none"
+          className="w-full h-full object-cover object-center rounded-full block pointer-events-none select-none flex-shrink-0"
+          style={{ width: size, height: size, minWidth: size, minHeight: size, aspectRatio: "1/1" }}
           loading="eager"
         />
       </div>

@@ -102,7 +102,7 @@ export const RelaxationMusic: React.FC = () => {
       />
 
       {/* Centered Golden Logo */}
-      <div className="mb-2">
+      <div className="mb-2 flex items-center justify-center">
         <CelysLogo size={80} />
       </div>
 

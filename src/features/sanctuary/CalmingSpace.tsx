@@ -22,8 +22,8 @@ export const CalmingSpace: React.FC = () => {
   return (
     <div className="flex flex-col items-center px-4 pt-1 pb-16 text-center w-full max-w-sm mx-auto select-none">
       {/* Centered Golden Logo */}
-      <div className="mb-1.5 transition-transform hover:scale-105 duration-300">
-        <CelysLogo size={74} />
+      <div className="mb-2 flex items-center justify-center">
+        <CelysLogo size={80} />
       </div>
 
       {/* Screen Title & Subtitle */}

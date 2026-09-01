@@ -1455,8 +1455,8 @@ export const PuzzlesScreen: React.FC = () => {
   return (
     <div className="flex flex-col items-center px-4 pt-1 pb-24 w-full max-w-md mx-auto select-none">
       {/* Golden Lion Logo (Exact Figma Match) */}
-      <div className="mb-2 transition-transform hover:scale-105 duration-300">
-        <CelysLogo size={76} />
+      <div className="mb-2 flex items-center justify-center">
+        <CelysLogo size={80} />
       </div>
 
       {/* Screen Title (Exact Figma Match) */}
