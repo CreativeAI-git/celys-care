@@ -971,7 +971,7 @@ function MindfulMaze({ onBack }: { onBack: () => void }) {
 
       {/* Grid */}
       <div
-        className="w-full max-w-[250px] aspect-square rounded-3xl p-2.5 mb-3 select-none shadow-2xl"
+        className="grid grid-cols-6 grid-rows-6 gap-1.5 p-2.5 rounded-3xl w-full max-w-[250px] aspect-square mb-3 select-none shadow-2xl overflow-hidden"
         style={{
           background: "rgba(18, 10, 40, 0.75)",
           border: isWon
@@ -979,40 +979,38 @@ function MindfulMaze({ onBack }: { onBack: () => void }) {
             : "1.5px solid rgba(168, 85, 247, 0.3)",
         }}
       >
-        <div className="grid grid-cols-6 grid-rows-6 gap-1.5 w-full h-full">
-          {mazeGrid.map((row, r) =>
-            row.map((cell, c) => {
-              const isPlayer = player.r === r && player.c === c;
-              const isGoal = goal.r === r && goal.c === c;
-              const isWall = cell === 1;
+        {mazeGrid.map((row, r) =>
+          row.map((cell, c) => {
+            const isPlayer = player.r === r && player.c === c;
+            const isGoal = goal.r === r && goal.c === c;
+            const isWall = cell === 1;
 
-              return (
-                <div
-                  key={`${r}-${c}`}
-                  className="rounded-lg flex items-center justify-center relative transition-all"
-                  style={{
-                    background: isWall ? "rgba(10, 5, 24, 0.95)" : "rgba(35, 18, 65, 0.6)",
-                    border: isWall
-                      ? "1px solid rgba(168, 85, 247, 0.12)"
-                      : "1px solid rgba(168, 85, 247, 0.3)",
-                  }}
-                >
-                  {isPlayer ? (
-                    <div
-                      className="w-4 h-4 rounded-full"
-                      style={{
-                        background: "radial-gradient(circle at 35% 35%, #f472b6, #c084fc 70%, #9333ea)",
-                        boxShadow: "0 0 14px #d946ef",
-                      }}
-                    />
-                  ) : isGoal ? (
-                    <span className="text-base select-none">⭐</span>
-                  ) : null}
-                </div>
-              );
-            })
-          )}
-        </div>
+            return (
+              <div
+                key={`${r}-${c}`}
+                className="w-full h-full rounded-full flex items-center justify-center relative transition-all min-w-0 min-h-0 aspect-square overflow-hidden"
+                style={{
+                  background: isWall ? "rgba(10, 5, 24, 0.95)" : "rgba(35, 18, 65, 0.6)",
+                  border: isWall
+                    ? "1px solid rgba(168, 85, 247, 0.12)"
+                    : "1px solid rgba(168, 85, 247, 0.3)",
+                }}
+              >
+                {isPlayer ? (
+                  <div
+                    className="w-4 h-4 rounded-full flex-shrink-0"
+                    style={{
+                      background: "radial-gradient(circle at 35% 35%, #f472b6, #c084fc 70%, #9333ea)",
+                      boxShadow: "0 0 14px #d946ef",
+                    }}
+                  />
+                ) : isGoal ? (
+                  <span className="text-base select-none leading-none flex items-center justify-center">⭐</span>
+                ) : null}
+              </div>
+            );
+          })
+        )}
       </div>
 
       {isWon ? (

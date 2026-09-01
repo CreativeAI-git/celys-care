@@ -959,7 +959,7 @@ function GamePeacefulMaze({ onBack }: { onBack: () => void }) {
 
       {/* 6x6 Maze Grid Stage */}
       <div
-        className="w-full max-w-[260px] aspect-square rounded-3xl p-2.5 mb-3.5 select-none shadow-2xl transition-all"
+        className="grid grid-cols-6 grid-rows-6 gap-1.5 p-2.5 rounded-3xl w-full max-w-[260px] aspect-square mb-3.5 select-none shadow-2xl transition-all overflow-hidden"
         style={{
           background: "rgba(18, 10, 40, 0.75)",
           border: isWon
@@ -970,70 +970,68 @@ function GamePeacefulMaze({ onBack }: { onBack: () => void }) {
             : "0 8px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(168, 85, 247, 0.15)",
         }}
       >
-        <div className="grid grid-cols-6 grid-rows-6 gap-1.5 w-full h-full">
-          {currentMaze.grid.map((row, r) =>
-            row.map((cell, c) => {
-              const isPlayer = player.r === r && player.c === c;
-              const isGoal = currentMaze.goal.r === r && currentMaze.goal.c === c;
-              const isWall = cell === 1;
-              const isPlayerAtGoal = isPlayer && isGoal;
+        {currentMaze.grid.map((row, r) =>
+          row.map((cell, c) => {
+            const isPlayer = player.r === r && player.c === c;
+            const isGoal = currentMaze.goal.r === r && currentMaze.goal.c === c;
+            const isWall = cell === 1;
+            const isPlayerAtGoal = isPlayer && isGoal;
 
-              return (
-                <div
-                  key={`${r}-${c}`}
-                  className="rounded-lg flex items-center justify-center relative transition-all duration-200"
-                  style={{
-                    background: isPlayerAtGoal
-                      ? "radial-gradient(circle, rgba(250, 204, 21, 0.35) 0%, rgba(168, 85, 247, 0.4) 100%)"
-                      : isWall
-                      ? "rgba(10, 5, 24, 0.95)"
-                      : "rgba(35, 18, 65, 0.6)",
-                    border: isPlayerAtGoal
-                      ? "2px solid #facc15"
-                      : isWall
-                      ? "1px solid rgba(168, 85, 247, 0.12)"
-                      : "1px solid rgba(168, 85, 247, 0.3)",
-                    boxShadow: isPlayerAtGoal
-                      ? "0 0 20px rgba(250, 204, 21, 0.7), inset 0 0 10px rgba(250, 204, 21, 0.4)"
-                      : "none",
-                  }}
-                >
-                  {/* Goal & Player Rendering */}
-                  {isPlayerAtGoal ? (
-                    <div className="relative flex items-center justify-center animate-in zoom-in duration-300">
-                      <div className="absolute w-6 h-6 rounded-full bg-amber-400/40 animate-ping" />
-                      <span
-                        className="text-xl sm:text-2xl relative z-10 select-none animate-bounce"
-                        style={{
-                          filter: "drop-shadow(0 0 16px #facc15) drop-shadow(0 0 6px #ffffff)",
-                        }}
-                      >
-                        ⭐
-                      </span>
-                    </div>
-                  ) : isGoal ? (
+            return (
+              <div
+                key={`${r}-${c}`}
+                className="w-full h-full rounded-full flex items-center justify-center relative transition-all duration-200 min-w-0 min-h-0 aspect-square overflow-hidden"
+                style={{
+                  background: isPlayerAtGoal
+                    ? "radial-gradient(circle, rgba(250, 204, 21, 0.35) 0%, rgba(168, 85, 247, 0.4) 100%)"
+                    : isWall
+                    ? "rgba(10, 5, 24, 0.95)"
+                    : "rgba(35, 18, 65, 0.6)",
+                  border: isPlayerAtGoal
+                    ? "2px solid #facc15"
+                    : isWall
+                    ? "1px solid rgba(168, 85, 247, 0.12)"
+                    : "1px solid rgba(168, 85, 247, 0.35)",
+                  boxShadow: isPlayerAtGoal
+                    ? "0 0 20px rgba(250, 204, 21, 0.7), inset 0 0 10px rgba(250, 204, 21, 0.4)"
+                    : "none",
+                }}
+              >
+                {/* Goal & Player Rendering */}
+                {isPlayerAtGoal ? (
+                  <div className="relative flex items-center justify-center animate-in zoom-in duration-300">
+                    <div className="absolute w-6 h-6 rounded-full bg-amber-400/40 animate-ping" />
                     <span
-                      className="text-base sm:text-lg animate-pulse select-none"
+                      className="text-xl sm:text-2xl relative z-10 select-none animate-bounce"
                       style={{
-                        filter: "drop-shadow(0 0 8px rgba(250, 204, 21, 0.7))",
+                        filter: "drop-shadow(0 0 16px #facc15) drop-shadow(0 0 6px #ffffff)",
                       }}
                     >
                       ⭐
                     </span>
-                  ) : isPlayer ? (
-                    <div
-                      className="w-4 h-4 sm:w-5 sm:h-5 rounded-full transition-transform animate-in zoom-in"
-                      style={{
-                        background: "radial-gradient(circle at 35% 35%, #f472b6, #c084fc 70%, #9333ea)",
-                        boxShadow: "0 0 14px #d946ef, 0 0 4px #ffffff",
-                      }}
-                    />
-                  ) : null}
-                </div>
-              );
-            })
-          )}
-        </div>
+                  </div>
+                ) : isGoal ? (
+                  <span
+                    className="text-base sm:text-lg animate-pulse select-none"
+                    style={{
+                      filter: "drop-shadow(0 0 8px rgba(250, 204, 21, 0.7))",
+                    }}
+                  >
+                    ⭐
+                  </span>
+                ) : isPlayer ? (
+                  <div
+                    className="w-4 h-4 sm:w-5 sm:h-5 rounded-full transition-transform animate-in zoom-in flex-shrink-0"
+                    style={{
+                      background: "radial-gradient(circle at 35% 35%, #f472b6, #c084fc 70%, #9333ea)",
+                      boxShadow: "0 0 14px #d946ef, 0 0 4px #ffffff",
+                    }}
+                  />
+                ) : null}
+              </div>
+            );
+          })
+        )}
       </div>
 
       {/* If won: Show Victory Card; Else show D-Pad controls */}
