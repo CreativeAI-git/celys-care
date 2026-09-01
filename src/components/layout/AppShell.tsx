@@ -378,9 +378,9 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
 
       {/* Top Application Header Bar — Responsive Adaptive Header for iOS & Android */}
       <header
-        className="relative z-20 w-full max-w-md flex items-center justify-between px-4 pb-2.5 flex-shrink-0"
+        className="relative z-20 w-full max-w-md flex items-center justify-between px-4 pt-1 pb-1 flex-shrink-0"
         style={{
-          paddingTop: "calc(env(safe-area-inset-top, 0px) + 10px)",
+          paddingTop: "calc(env(safe-area-inset-top, 0px) + 4px)",
         }}
       >
         {/* Left: Screen Icon & Title */}
@@ -410,7 +410,7 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
 
       {/* Main Viewport Content Area */}
       <main
-        className={`relative z-10 w-full max-w-md flex-1 min-h-0 px-2 py-1 flex flex-col justify-start pb-20 ${activeScreenId === "chat" ? "overflow-hidden" : "overflow-y-auto"
+        className={`relative z-10 w-full max-w-md flex-1 min-h-0 px-2 pt-2 pb-20 ${activeScreenId === "chat" ? "overflow-hidden" : "overflow-y-auto"
           }`}
       >
         <CurrentFeatureComponent onSuccess={() => handleNavigate("mood")} />

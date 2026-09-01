@@ -18,12 +18,12 @@ export const CelysLogo: React.FC<CelysLogoProps> = ({
     <div className={`relative inline-flex flex-col items-center justify-center ${className}`}>
       {/* Ambient gold-violet glow */}
       <div
-        className="absolute rounded-full pointer-events-none -z-10"
+        className="absolute rounded-full pointer-events-none -z-10 blur-sm"
         style={{
-          width: size * 1.6,
-          height: size * 1.6,
+          width: size * 1.2,
+          height: size * 1.2,
           background:
-            "radial-gradient(circle, rgba(201,162,39,0.45) 0%, rgba(124,58,237,0.2) 50%, transparent 72%)",
+            "radial-gradient(circle, rgba(201,162,39,0.3) 0%, rgba(124,58,237,0.15) 55%, transparent 70%)",
         }}
       />
 
