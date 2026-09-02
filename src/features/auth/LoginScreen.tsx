@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Mail, Lock, Eye, EyeOff, User } from "lucide-react";
 import { useAuth } from "@/app/providers";
 import { toast } from "sonner";
@@ -9,17 +10,49 @@ import { CelysLogo } from "@/components/branding/CelysLogo";
 
 interface LoginScreenProps {
   onSuccess?: () => void;
+  onNavigate?: (screenId: string) => void;
+  initialMode?: "login" | "signup";
+  onModeChange?: (mode: "login" | "signup") => void;
 }
 
-export const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess }) => {
+export const LoginScreen: React.FC<LoginScreenProps> = ({
+  onSuccess,
+  onNavigate,
+  initialMode = "login",
+  onModeChange,
+}) => {
+  const router = useRouter();
   const { login, register } = useAuth();
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [mode, setMode] = useState<"login" | "signup">(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  React.useEffect(() => {
+    if (initialMode) {
+      setMode(initialMode);
+    }
+  }, [initialMode]);
+
+  const handleNavigateLegal = (target: "privacy" | "terms") => {
+    if (onModeChange) {
+      onModeChange(mode);
+    }
+    if (typeof window !== "undefined") {
+      try {
+        sessionStorage.setItem("celys_auth_return_mode", mode);
+      } catch { }
+    }
+    if (onNavigate) {
+      onNavigate(target);
+    } else {
+      router.push(`/${target}`);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,6 +86,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess }) => {
       return;
     }
 
+    if (mode === "signup" && !agreedToTerms) {
+      setError("Please accept the Terms & Conditions and Privacy Policy to continue.");
+      toast.error("Please accept the Terms & Conditions and Privacy Policy.");
+      return;
+    }
+
     setLoading(true);
     try {
       const emailPrefix = trimmedEmail.split("@")[0];
@@ -60,19 +99,24 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess }) => {
 
       if (mode === "signup") {
         const userGreeting = displayName.trim() || fallbackName;
-        const registeredUser = await register(
+        await register(
           trimmedEmail,
           trimmedPassword,
           userGreeting
         );
-        const finalName = registeredUser?.displayName || userGreeting;
-        toast.success(`Welcome to Celys Care Sanctuary, ${finalName}! ✨`);
+        toast.success("Account created successfully! Please enter your password to log in. ✨");
+        // Seamlessly switch to Log In tab with email pre-filled
+        setMode("login");
+        if (onModeChange) onModeChange("login");
+        setPassword("");
+        setError("");
+        return;
       } else {
         const loggedInUser = await login(trimmedEmail, trimmedPassword);
         const finalName = loggedInUser?.displayName || fallbackName;
-        toast.success(`Welcome back, ${finalName}! 🌸`);
+        toast.success(`Welcome to Celys Care Sanctuary, ${finalName}! 🌸`);
+        if (onSuccess) onSuccess();
       }
-      if (onSuccess) onSuccess();
     } catch (err: any) {
       setError(err.message || "Authentication failed. Please check your credentials.");
       toast.error(err.message || "Failed to authenticate.");
@@ -141,6 +185,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess }) => {
             onClick={() => {
               setMode("login");
               setError("");
+              if (onModeChange) onModeChange("login");
+              if (typeof window !== "undefined") {
+                try {
+                  sessionStorage.setItem("celys_auth_return_mode", "login");
+                } catch { }
+              }
             }}
             className="flex-1 py-2 rounded-full text-xs font-semibold transition-all duration-300"
             style={{
@@ -160,6 +210,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess }) => {
             onClick={() => {
               setMode("signup");
               setError("");
+              if (onModeChange) onModeChange("signup");
+              if (typeof window !== "undefined") {
+                try {
+                  sessionStorage.setItem("celys_auth_return_mode", "signup");
+                } catch { }
+              }
             }}
             className="flex-1 py-2 rounded-full text-xs font-semibold transition-all duration-300"
             style={{
@@ -242,9 +298,65 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess }) => {
 
           {/* Error Message */}
           {error && (
-            <p className="text-xs text-rose-400 text-center bg-rose-950/40 border border-rose-800/40 rounded-xl py-1.5 px-2">
-              {error}
-            </p>
+            <div className="text-xs text-rose-300 text-center bg-rose-950/50 border border-rose-800/40 rounded-xl py-2 px-3 flex flex-col items-center gap-1 shadow-sm">
+              <p>{error}</p>
+              {error.toLowerCase().includes("not found") && mode === "login" && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("signup");
+                    setError("");
+                    if (onModeChange) onModeChange("signup");
+                  }}
+                  className="text-[11px] font-semibold text-[#f5d76e] underline hover:text-white transition-colors cursor-pointer mt-0.5"
+                >
+                  Create an account instead ✦
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Terms & Conditions and Privacy Policy Acceptance for Sign Up */}
+          {mode === "signup" && (
+            <div className="flex items-start gap-2.5 px-1.5 pt-1 pb-0.5 text-left">
+              <input
+                type="checkbox"
+                id="terms-agreement-checkbox"
+                checked={agreedToTerms}
+                onChange={(e) => {
+                  setAgreedToTerms(e.target.checked);
+                  if (error) setError("");
+                }}
+                className="mt-0.5 w-3.5 h-3.5 rounded cursor-pointer accent-[#b04be6] flex-shrink-0"
+              />
+              <label
+                htmlFor="terms-agreement-checkbox"
+                className="text-[11px] text-purple-200/75 leading-tight cursor-pointer select-none"
+              >
+                I agree to the{" "}
+                <a
+                  href="/terms"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleNavigateLegal("terms");
+                  }}
+                  className="text-[#f5d76e] underline hover:text-white font-medium transition-colors"
+                >
+                  Terms & Conditions
+                </a>{" "}
+                and{" "}
+                <a
+                  href="/privacy"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleNavigateLegal("privacy");
+                  }}
+                  className="text-[#f5d76e] underline hover:text-white font-medium transition-colors"
+                >
+                  Privacy Policy
+                </a>
+              </label>
+            </div>
           )}
 
           {/* Main Action Button — Figma Exact Match */}
@@ -273,9 +385,37 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess }) => {
           </button>
 
           {/* Bottom Tagline — Exact Figma Match */}
-          <p className="text-[11px] text-purple-200/50 text-center mt-2 mb-1 tracking-wide font-normal">
+          <p className="text-[11px] text-purple-200/50 text-center mt-2 mb-0.5 tracking-wide font-normal">
             Your safe space. Your support. Your journey. ♡
           </p>
+
+          {/* Discreet Legal Footer for Login mode */}
+          {mode === "login" && (
+            <p className="text-[10px] text-purple-200/40 text-center tracking-wide">
+              By signing in, you accept our{" "}
+              <a
+                href="/terms"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleNavigateLegal("terms");
+                }}
+                className="hover:text-purple-200/80 underline transition-colors"
+              >
+                Terms
+              </a>{" "}
+              &{" "}
+              <a
+                href="/privacy"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleNavigateLegal("privacy");
+                }}
+                className="hover:text-purple-200/80 underline transition-colors"
+              >
+                Privacy Policy
+              </a>
+            </p>
+          )}
         </form>
       </div>
     </div>

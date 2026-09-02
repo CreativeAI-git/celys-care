@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import { Info, Check, Phone } from "lucide-react";
 import { CelysLogo } from "@/components/branding/CelysLogo";
 import { SparkleDivider } from "@/components/branding/SparkleDivider";
@@ -38,7 +39,21 @@ const RESOURCES = [
   },
 ];
 
-export const DisclaimerScreen: React.FC = () => {
+interface DisclaimerScreenProps {
+  onNavigate?: (screenId: string) => void;
+}
+
+export const DisclaimerScreen: React.FC<DisclaimerScreenProps> = ({ onNavigate }) => {
+  const router = useRouter();
+
+  const handleRedirect = (target: "privacy" | "terms") => {
+    if (onNavigate) {
+      onNavigate(target);
+    } else {
+      router.push(`/${target}`);
+    }
+  };
+
   return (
     <div className="flex flex-col items-center px-5 pt-4 pb-6 text-center w-full max-w-sm mx-auto">
       {/* Centered Golden Logo */}
@@ -192,11 +207,29 @@ export const DisclaimerScreen: React.FC = () => {
         ))}
       </div>
 
+      {/* Footer Notice with Functional Redirection */}
       <p
-        className="text-[9px] text-center mt-4"
-        style={{ color: "rgba(240,232,255,0.35)" }}
+        className="text-[10px] text-center mt-5 mb-2 leading-relaxed"
+        style={{ color: "rgba(240,232,255,0.45)" }}
       >
-        © 2026 Celys Care · All wellness content is for informational purposes only · Privacy Policy · Terms of Service
+        © 2026 Celys Care · All wellness content is for informational purposes only ·{" "}
+        <button
+          type="button"
+          onClick={() => handleRedirect("privacy")}
+          className="text-[#f5d76e] underline hover:text-white cursor-pointer font-medium transition-colors"
+          title="Go to Privacy Policy"
+        >
+          Privacy Policy
+        </button>{" "}
+        ·{" "}
+        <button
+          type="button"
+          onClick={() => handleRedirect("terms")}
+          className="text-[#f5d76e] underline hover:text-white cursor-pointer font-medium transition-colors"
+          title="Go to Terms & Conditions"
+        >
+          Terms of Service
+        </button>
       </p>
     </div>
   );

@@ -77,3 +77,42 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const existingUser = await prisma.user.findUnique({
+      where: { id: user.id },
+    });
+
+    if (existingUser) {
+      await prisma.user.delete({
+        where: { id: user.id },
+      });
+    }
+
+    const response = NextResponse.json({
+      success: true,
+      message: "Account and profile deleted successfully.",
+    });
+
+    response.cookies.set({
+      name: "celys_auth_token",
+      value: "",
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 0,
+    });
+
+    return response;
+  } catch (error) {
+    console.error("Profile DELETE error:", error);
+    return NextResponse.json({ error: "Failed to delete account" }, { status: 500 });
+  }
+}

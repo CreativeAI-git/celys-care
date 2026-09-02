@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { hashPassword, createToken, setAuthCookie } from "@/lib/auth";
+import { hashPassword } from "@/lib/auth";
 import { RegisterSchema } from "@/validations/auth";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
@@ -88,30 +88,20 @@ export async function POST(req: NextRequest) {
       return { ...user, profile, subscription };
     });
 
-    const token = await createToken({
-      id: newUser.id,
-      email: newUser.email,
-      displayName: newUser.displayName,
-      role: newUser.role,
-    });
-
     const response = NextResponse.json(
       {
         success: true,
+        message: "Account created successfully. Please log in with your credentials.",
         user: {
           id: newUser.id,
           email: newUser.email,
           displayName: newUser.displayName,
           avatarUrl: newUser.avatarUrl,
           role: newUser.role,
-          profile: newUser.profile,
-          subscription: newUser.subscription,
         },
       },
       { status: 201 }
     );
-
-    setAuthCookie(response, token);
 
     // Audit log
     await prisma.auditLog.create({

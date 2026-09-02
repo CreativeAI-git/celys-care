@@ -17,13 +17,12 @@ import { SparkleDivider } from "@/components/branding/SparkleDivider";
 import { useAuth } from "@/app/providers";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
-// RevenueCat In-App Purchases (Temporarily Disabled)
-// import {
-//   getRevenueCatOfferings,
-//   purchaseRevenueCatPackage,
-//   restoreRevenueCatPurchases,
-//   RevenueCatPlan,
-// } from "@/lib/revenuecat";
+import {
+  getRevenueCatOfferings,
+  purchaseRevenueCatPackage,
+  restoreRevenueCatPurchases,
+  RevenueCatPlan,
+} from "@/lib/revenuecat";
 
 const SUB_FEATURES = [
   { icon: Brain, label: "Mood-Based Affirmations" },
@@ -41,7 +40,7 @@ export const SubscriptionScreen: React.FC = () => {
   const [trialStarted, setTrialStarted] = useState<Date | null>(null);
   const [subscribed, setSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
-  // const [rcPlans, setRcPlans] = useState<any[]>([]);
+  const [rcPlans, setRcPlans] = useState<RevenueCatPlan[]>([]);
 
   useEffect(() => {
     const localTrial = localStorage.getItem("celys_trial_start");
@@ -49,12 +48,11 @@ export const SubscriptionScreen: React.FC = () => {
     if (localTrial) setTrialStarted(new Date(localTrial));
     if (localSub || user?.subscription?.status === "active") setSubscribed(true);
 
-    // RevenueCat offerings fetch (Temporarily Disabled)
-    // getRevenueCatOfferings().then((offerings) => {
-    //   if (offerings && offerings.length > 0) {
-    //     setRcPlans(offerings);
-    //   }
-    // });
+    getRevenueCatOfferings().then((offerings) => {
+      if (offerings && offerings.length > 0) {
+        setRcPlans(offerings);
+      }
+    });
   }, [user]);
 
   const triggerSuccessCelebration = () => {
@@ -92,7 +90,6 @@ export const SubscriptionScreen: React.FC = () => {
 
   const handleSubscribe = async () => {
     setLoading(true);
-    /* RevenueCat Native In-App Purchase Flow (Temporarily Disabled)
     const selectedPlan = rcPlans.find((p) =>
       billing === "annual" ? p.id.includes("annual") || p.period.toLowerCase().includes("annual") || p.period.toLowerCase().includes("year") : p.id.includes("monthly") || p.period.toLowerCase().includes("month")
     ) || rcPlans[0];
@@ -117,7 +114,6 @@ export const SubscriptionScreen: React.FC = () => {
         console.warn("Native purchase fallback:", err);
       }
     }
-    */
 
     try {
       const res = await fetch("/api/subscriptions/checkout", {
@@ -140,7 +136,6 @@ export const SubscriptionScreen: React.FC = () => {
 
   const handleRestorePurchases = async () => {
     setLoading(true);
-    /* RevenueCat Restore Flow (Temporarily Disabled)
     try {
       const res = await restoreRevenueCatPurchases();
       if (res.isPremium) {
@@ -157,9 +152,6 @@ export const SubscriptionScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-    */
-    toast.success("Purchases restored.");
-    setLoading(false);
   };
 
   return (
@@ -328,7 +320,7 @@ export const SubscriptionScreen: React.FC = () => {
         No credit card needed for trial · Cancel anytime
       </p>
       <button
-        onClick={() => toast.success("Purchases restored.")}
+        onClick={handleRestorePurchases}
         className="text-[10px] mt-1 text-purple-200/30 hover:text-purple-200"
       >
         Restore purchase

@@ -12,7 +12,10 @@ import {
   LogOut,
   X,
   Menu,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import { useAuth } from "@/app/providers";
 import { StarField } from "@/components/branding/StarField";
@@ -41,6 +44,8 @@ import { EnergyRelease } from "@/features/sanctuary/EnergyRelease";
 import { InnerOracle } from "@/features/oracle/InnerOracle";
 import { DisclaimerScreen } from "@/features/disclaimer/DisclaimerScreen";
 import { ScreenshotPreview } from "@/features/preview/ScreenshotPreview";
+import { PrivacyPolicyScreen } from "@/features/legal/PrivacyPolicyScreen";
+import { TermsConditionsScreen } from "@/features/legal/TermsConditionsScreen";
 
 export interface FeatureMeta {
   id: string;
@@ -223,6 +228,22 @@ export const FEATURES_REGISTRY: FeatureMeta[] = [
     description: "Clinical safety boundaries, privacy terms, and crisis resources.",
     component: DisclaimerScreen,
   },
+  {
+    id: "privacy",
+    label: "Privacy Policy",
+    category: "Account",
+    icon: "🛡️",
+    description: "How Celys Care protects your data, session privacy, and sacred space.",
+    component: PrivacyPolicyScreen,
+  },
+  {
+    id: "terms",
+    label: "Terms & Conditions",
+    category: "Account",
+    icon: "📜",
+    description: "Usage licenses, intellectual property, and guidelines for Celys Care.",
+    component: TermsConditionsScreen,
+  },
 ];
 
 const FIGMA_MENU_LEFT = [
@@ -250,6 +271,8 @@ const FIGMA_MENU_RIGHT = [
   "aura",
   "release",
   "disclaimer",
+  "privacy",
+  "terms",
 ];
 
 // 5 Core Bottom Navigation Destinations
@@ -266,13 +289,54 @@ interface AppShellProps {
 }
 
 export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) => {
-  const { user, logout, isLoading } = useAuth();
+  const { user, logout, deleteAccount, isLoading } = useAuth();
   const [activeScreenId, setActiveScreenId] = useState(initialScreen);
   const [showDirectory, setShowDirectory] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    try {
+      await deleteAccount();
+      setShowDeleteModal(false);
+      setShowDirectory(false);
+      toast.success("Your account and all data have been permanently deleted.");
+      handleNavigate("login");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete account");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const [authMode, setAuthMode] = useState<"login" | "signup">(() => {
+    if (initialScreen === "signup") return "signup";
+    if (typeof window !== "undefined") {
+      try {
+        const saved = sessionStorage.getItem("celys_auth_return_mode");
+        if (saved === "signup" || saved === "login") return saved;
+        if (window.location.pathname.includes("signup")) return "signup";
+      } catch { }
+    }
+    return "login";
+  });
+
+  const handleSetAuthMode = (mode: "login" | "signup") => {
+    setAuthMode(mode);
+    if (typeof window !== "undefined") {
+      try {
+        sessionStorage.setItem("celys_auth_return_mode", mode);
+      } catch { }
+    }
+  };
 
   // Sync initialScreen if prop changes
   useEffect(() => {
-    if (initialScreen && FEATURES_REGISTRY.some((f) => f.id === initialScreen)) {
+    if (initialScreen === "signup") {
+      handleSetAuthMode("signup");
+      setActiveScreenId("login");
+    } else if (initialScreen && FEATURES_REGISTRY.some((f) => f.id === initialScreen)) {
       setActiveScreenId(initialScreen);
     }
   }, [initialScreen]);
@@ -283,7 +347,13 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
       const path = window.location.pathname.replace(/^\//, "");
       const hash = window.location.hash.replace("#", "");
       const target = hash || path;
-      if (target && FEATURES_REGISTRY.some((f) => f.id === target)) {
+      if (target === "signup") {
+        handleSetAuthMode("signup");
+        setActiveScreenId("login");
+      } else if (target === "login") {
+        handleSetAuthMode("login");
+        setActiveScreenId("login");
+      } else if (target && FEATURES_REGISTRY.some((f) => f.id === target)) {
         setActiveScreenId(target);
       }
     };
@@ -293,7 +363,13 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
       const path = window.location.pathname.replace(/^\//, "");
       const hash = window.location.hash.replace("#", "");
       const target = hash || path;
-      if (target && FEATURES_REGISTRY.some((f) => f.id === target)) {
+      if (target === "signup") {
+        handleSetAuthMode("signup");
+        setActiveScreenId("login");
+      } else if (target === "login") {
+        handleSetAuthMode("login");
+        setActiveScreenId("login");
+      } else if (target && FEATURES_REGISTRY.some((f) => f.id === target)) {
         setActiveScreenId(target);
       }
     }
@@ -306,7 +382,52 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
     };
   }, []);
 
+  // When user is authenticated, ensure we immediately redirect to "calm" if activeScreenId is "login" or "signup"
+  useEffect(() => {
+    if (user && (activeScreenId === "login" || activeScreenId === "signup")) {
+      setActiveScreenId("calm");
+      if (typeof window !== "undefined") {
+        try {
+          window.history.replaceState({ screenId: "calm" }, "", "/");
+        } catch { }
+      }
+    }
+  }, [user, activeScreenId]);
+
   const handleNavigate = (screenId: string) => {
+    if (screenId === "signup") {
+      if (user) {
+        setActiveScreenId("calm");
+        setShowDirectory(false);
+        if (typeof window !== "undefined") {
+          window.history.pushState({ screenId: "calm" }, "", "/");
+        }
+        return;
+      }
+      handleSetAuthMode("signup");
+      setActiveScreenId("login");
+      setShowDirectory(false);
+      if (typeof window !== "undefined") {
+        window.history.pushState({ screenId: "signup" }, "", "/signup");
+      }
+      return;
+    }
+    if (screenId === "login") {
+      if (user) {
+        setActiveScreenId("calm");
+        setShowDirectory(false);
+        if (typeof window !== "undefined") {
+          window.history.pushState({ screenId: "calm" }, "", "/");
+        }
+        return;
+      }
+      setActiveScreenId("login");
+      setShowDirectory(false);
+      if (typeof window !== "undefined") {
+        window.history.pushState({ screenId: "login" }, "", authMode === "signup" ? "/signup" : "/login");
+      }
+      return;
+    }
     setActiveScreenId(screenId);
     setShowDirectory(false);
     if (typeof window !== "undefined") {
@@ -338,8 +459,55 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
     );
   }
 
-  // 2. Unauthenticated Flow: Pure Login/Signup Screen without any bottom bar or prototype navigation
+  // 2. Unauthenticated Flow: Allow public screens (Privacy, Terms, Disclaimer) without login, or show Login/Signup
   if (!user) {
+    if (activeScreenId === "privacy" || activeScreenId === "terms" || activeScreenId === "disclaimer") {
+      const publicFeature =
+        FEATURES_REGISTRY.find((f) => f.id === activeScreenId) || FEATURES_REGISTRY[0];
+      const PublicComponent = publicFeature.component;
+
+      return (
+        <div
+          className="relative min-h-[100dvh] w-full flex flex-col items-center justify-between overflow-y-auto"
+          style={{
+            background:
+              "radial-gradient(ellipse at 30% 20%, #2a0d5e 0%, #0d0a1e 45%, #1a0838 100%)",
+            fontFamily: "'Inter', sans-serif",
+          }}
+        >
+          <StarField count={35} />
+          <LotusCorners />
+
+          {/* Clean Top Navigation Bar with Dynamic Back Button */}
+          <header
+            className="relative z-20 w-full max-w-md flex items-center justify-between px-4 pt-2 pb-2 flex-shrink-0"
+            style={{
+              paddingTop: "calc(env(safe-area-inset-top, 0px) + 8px)",
+            }}
+          >
+            <button
+              onClick={() => handleNavigate("login")}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-purple-200/90 bg-white/10 hover:bg-white/20 border border-purple-300/20 transition-all active:scale-95 shadow-sm"
+              title={authMode === "signup" ? "Back to Sign Up" : "Back to Log In"}
+            >
+              <span>←</span>
+              <span>{authMode === "signup" ? "Back to Sign Up" : "Back to Log In"}</span>
+            </button>
+            <span className="text-xs font-semibold text-[#f5d76e]">
+              {publicFeature.label}
+            </span>
+          </header>
+
+          <main className="relative z-10 w-full max-w-md flex-1 px-3 pt-2 pb-10">
+            <PublicComponent
+              onNavigate={handleNavigate}
+              onSuccess={() => handleNavigate("login")}
+            />
+          </main>
+        </div>
+      );
+    }
+
     return (
       <div
         className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden px-4 py-8"
@@ -352,7 +520,12 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
         <StarField count={45} />
         <LotusCorners />
         <div className="relative z-10 w-full max-w-sm">
-          <LoginScreen onSuccess={() => handleNavigate(activeScreenId || "calm")} />
+          <LoginScreen
+            initialMode={authMode}
+            onModeChange={handleSetAuthMode}
+            onSuccess={() => handleNavigate("calm")}
+            onNavigate={handleNavigate}
+          />
         </div>
       </div>
     );
@@ -413,7 +586,10 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
         className={`relative z-10 w-full max-w-md flex-1 min-h-0 px-2 pt-2 pb-20 ${activeScreenId === "chat" ? "overflow-hidden" : "overflow-y-auto"
           }`}
       >
-        <CurrentFeatureComponent onSuccess={() => handleNavigate("mood")} />
+        <CurrentFeatureComponent
+          onSuccess={() => handleNavigate("mood")}
+          onNavigate={handleNavigate}
+        />
       </main>
 
       {/* Real Application Bottom Navigation Bar */}
@@ -558,44 +734,108 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
               }
             )}
 
-            {/* Profile Card & Logout */}
-            <div className="mt-8 p-3.5 sm:p-4 rounded-2xl bg-white/[0.04] border border-purple-400/15 flex items-center justify-between gap-3 w-full">
-              <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
-                {(() => {
-                  const effectiveName =
-                    user.displayName &&
-                      user.displayName.trim() &&
-                      user.displayName.toLowerCase() !== "beautiful soul"
-                      ? user.displayName.trim()
-                      : user.email
-                        ? user.email.split("@")[0].charAt(0).toUpperCase() +
-                        user.email.split("@")[0].slice(1)
-                        : "Beautiful Soul";
+            {/* Profile Card & Account Management */}
+            <div className="mt-8 p-3.5 sm:p-4 rounded-2xl bg-white/[0.04] border border-purple-400/15 flex flex-col gap-3 w-full">
+              <div className="flex items-center justify-between gap-2.5 w-full">
+                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+                  {(() => {
+                    const effectiveName =
+                      user.displayName &&
+                        user.displayName.trim() &&
+                        user.displayName.toLowerCase() !== "beautiful soul"
+                        ? user.displayName.trim()
+                        : user.email
+                          ? user.email.split("@")[0].charAt(0).toUpperCase() +
+                          user.email.split("@")[0].slice(1)
+                          : "Beautiful Soul";
 
-                  return (
-                    <>
-                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-purple-600/30 border border-purple-400/30 flex items-center justify-center text-sm font-bold text-white flex-shrink-0 shadow-inner">
-                        {effectiveName.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-bold text-white truncate">
-                          {effectiveName}
-                        </p>
-                        <p className="text-[10px] text-purple-200/60 truncate">
-                          {user.email}
-                        </p>
-                      </div>
-                    </>
-                  );
-                })()}
+                    return (
+                      <>
+                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-purple-600/30 border border-purple-400/30 flex items-center justify-center text-sm font-bold text-white flex-shrink-0 shadow-inner">
+                          {effectiveName.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-bold text-white truncate">
+                            {effectiveName}
+                          </p>
+                          <p className="text-[10px] text-purple-200/60 truncate">
+                            {user.email}
+                          </p>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+
+                <button
+                  onClick={logout}
+                  className="px-3.5 py-2 rounded-full text-xs font-semibold bg-white/10 text-purple-200/90 border border-purple-300/20 hover:bg-white/15 transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                  title="Sign Out"
+                >
+                  <LogOut size={13} />
+                  <span>Sign Out</span>
+                </button>
               </div>
 
+              {/* Danger Zone: Delete Account */}
+              <div className="pt-2.5 border-t border-purple-400/10 flex items-center justify-between">
+                <span className="text-[11px] text-purple-200/50">Need to delete your account?</span>
+                <button
+                  onClick={() => setShowDeleteModal(true)}
+                  className="text-xs text-rose-400 hover:text-rose-300 font-semibold transition-colors flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/25 active:scale-95 cursor-pointer"
+                >
+                  <Trash2 size={12} />
+                  <span>Delete Account</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Global Delete Account Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+          <div
+            className="w-full max-w-sm rounded-3xl p-5 relative overflow-hidden shadow-2xl border border-rose-500/40 text-center"
+            style={{
+              background: "linear-gradient(135deg, #1f0b24 0%, #120718 100%)",
+            }}
+          >
+            <div className="w-12 h-12 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center mx-auto mb-3">
+              <AlertTriangle size={24} />
+            </div>
+
+            <h3 className="text-base font-bold text-white">
+              Permanently Delete Account?
+            </h3>
+
+            <p className="text-xs text-purple-200/70 mt-2 leading-relaxed">
+              This action is <span className="text-rose-400 font-semibold">permanent and cannot be undone</span>. All your check-ins, journal entries, affirmations, milestones, and personal data will be completely erased from our servers.
+            </p>
+
+            <div className="w-full flex flex-col gap-2.5 mt-5">
               <button
-                onClick={logout}
-                className="px-3.5 py-2 rounded-full text-xs font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30 transition-all flex items-center gap-1.5 flex-shrink-0 active:scale-95 cursor-pointer"
+                onClick={handleDeleteAccount}
+                disabled={isDeleting}
+                className="w-full py-3 rounded-full text-xs font-semibold text-white bg-gradient-to-r from-rose-600 to-red-600 hover:brightness-110 active:scale-95 transition-all shadow-lg flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
               >
-                <LogOut size={13} />
-                <span>Sign Out</span>
+                {isDeleting ? (
+                  <span>Deleting Account...</span>
+                ) : (
+                  <>
+                    <Trash2 size={14} />
+                    <span>Yes, Permanently Delete</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={isDeleting}
+                className="w-full py-2.5 rounded-full text-xs font-medium text-purple-200/80 hover:bg-white/10 transition-all cursor-pointer"
+              >
+                Cancel & Keep Account
               </button>
             </div>
           </div>

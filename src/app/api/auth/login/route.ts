@@ -32,12 +32,18 @@ export async function POST(req: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Account not found with this email. Please check your email or sign up." },
+        { status: 404 }
+      );
     }
 
     const isMatch = await verifyPassword(password, user.passwordHash);
     if (!isMatch) {
-      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Incorrect password. Please try again." },
+        { status: 401 }
+      );
     }
 
     const token = await createToken({

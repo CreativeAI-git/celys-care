@@ -5,8 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 import { offlineSync, useOnlineStatus } from "@/lib/offline-sync";
 import { AccessibilityProvider, useAccessibility } from "@/context/AccessibilityContext";
-// RevenueCat In-App Purchases (Temporarily Disabled)
-// import { initRevenueCat, identifyRevenueCatUser, resetRevenueCatUser } from "@/lib/revenuecat";
+import { initRevenueCat, identifyRevenueCatUser, resetRevenueCatUser } from "@/lib/revenuecat";
 
 export { useAccessibility };
 
@@ -28,6 +27,7 @@ export interface AuthContextType {
   register: (email: string, password: string, displayName?: string) => Promise<User>;
   loginDemo: () => Promise<void>;
   logout: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
 
@@ -103,13 +103,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // RevenueCat user identification (Temporarily Disabled)
-  // useEffect(() => {
-  //   initRevenueCat(user?.id);
-  //   if (user?.id) {
-  //     identifyRevenueCatUser(user.id);
-  //   }
-  // }, [user?.id]);
+  useEffect(() => {
+    initRevenueCat(user?.id);
+    if (user?.id) {
+      identifyRevenueCatUser(user.id);
+    }
+  }, [user?.id]);
 
   const login = async (email: string, password: string): Promise<User> => {
     try {
@@ -158,7 +157,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
       if (!res.ok) {
         throw new Error(data.error || "Registration failed");
       }
-      persistUser(data.user);
       return data.user;
     } catch (err: any) {
       // If network/server/database is unreachable, provide local fallback
@@ -176,7 +174,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
           displayName: fallbackName,
           role: "USER",
         };
-        persistUser(fallbackUser);
         return fallbackUser;
       }
       throw err;
@@ -201,15 +198,34 @@ export function Providers({ children }: { children: React.ReactNode }) {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
     } catch { }
-    // try {
-    //   await resetRevenueCatUser();
-    // } catch { }
+    try {
+      await resetRevenueCatUser();
+    } catch { }
     try {
       localStorage.removeItem("celys_a11y_high_contrast");
       localStorage.removeItem("celys_a11y_large_text");
       localStorage.removeItem("celys_a11y_reduced_motion");
       localStorage.removeItem("celys_a11y_active_color");
       localStorage.removeItem("celys_a11y_scene");
+      document.documentElement.classList.remove("high-contrast", "large-text", "reduce-motion");
+    } catch { }
+    persistUser(null);
+  };
+
+  const deleteAccount = async () => {
+    try {
+      await fetch("/api/auth/delete-account", {
+        method: "DELETE",
+      });
+    } catch (e) {
+      console.warn("Delete account server error:", e);
+    }
+    try {
+      await resetRevenueCatUser();
+    } catch { }
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
       document.documentElement.classList.remove("high-contrast", "large-text", "reduce-motion");
     } catch { }
     persistUser(null);
@@ -226,6 +242,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           register,
           loginDemo,
           logout,
+          deleteAccount,
           refreshUser,
         }}
       >
