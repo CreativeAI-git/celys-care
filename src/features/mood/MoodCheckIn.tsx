@@ -5,9 +5,10 @@ import { Heart } from "lucide-react";
 import { CelysLogo } from "@/components/branding/CelysLogo";
 import { SparkleDivider } from "@/components/branding/SparkleDivider";
 import { useAuth } from "@/app/providers";
+import { useAccessibility } from "@/context/AccessibilityContext";
 import { offlineSync } from "@/lib/offline-sync";
 import { toast } from "sonner";
-import confetti from "canvas-confetti";
+import { triggerConfetti as confetti } from "@/lib/confetti";
 
 const MOODS = [
   { emoji: "😊", label: "Happy", color: "#f5d76e", msg: "Your joy is contagious. Celebrate this moment!" },
@@ -34,6 +35,7 @@ const getPersonalizedMoodMessage = (msg: string, user: any) => {
 
 export const MoodCheckIn: React.FC = () => {
   const { user } = useAuth();
+  const { currentTheme } = useAccessibility();
   const [selected, setSelected] = useState<number | null>(null);
   const [saved, setSaved] = useState(false);
   const [history, setHistory] = useState<{ label: string; color: string; emoji: string; created_at: string }[]>([]);
@@ -130,7 +132,7 @@ export const MoodCheckIn: React.FC = () => {
                   ? `${m.color}22`
                   : "rgba(255,255,255,0.06)",
               border: `1px solid ${
-                selected === i ? m.color : "rgba(180,120,255,0.18)"
+                selected === i ? m.color : currentTheme.border
               }`,
               boxShadow:
                 selected === i ? `0 0 14px ${m.color}44` : "none",
@@ -155,14 +157,15 @@ export const MoodCheckIn: React.FC = () => {
         <div
           className="w-full rounded-2xl p-4 text-center mb-3 transition-all animate-in fade-in"
           style={{
-            background: "rgba(255,255,255,0.06)",
-            border: "1px solid rgba(180,120,255,0.2)",
+            background: currentTheme.cardBg,
+            border: `1px solid ${currentTheme.cardBorder}`,
+            boxShadow: `0 8px 30px rgba(0, 0, 0, 0.4), 0 0 20px ${currentTheme.glow}`,
           }}
         >
           <Heart
             size={16}
             className="mx-auto mb-2"
-            style={{ color: "#c96ccc" }}
+            style={{ color: currentTheme.color }}
           />
           <p
             className="text-xs sm:text-sm leading-relaxed"
@@ -186,15 +189,16 @@ export const MoodCheckIn: React.FC = () => {
       {/* Recent Moods Card */}
       {history.length > 0 && (
         <div
-          className="w-full rounded-2xl p-3.5 text-left"
+          className="w-full rounded-2xl p-3.5 text-left transition-all duration-300"
           style={{
-            background: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(180,120,255,0.15)",
+            background: currentTheme.cardBg,
+            border: `1px solid ${currentTheme.cardBorder}`,
+            boxShadow: `0 4px 16px rgba(0,0,0,0.25)`,
           }}
         >
           <p
-            className="text-[11px] mb-2 font-semibold"
-            style={{ color: "#c9a227" }}
+            className="text-[11px] mb-2 font-semibold tracking-wide transition-colors"
+            style={{ color: currentTheme.color }}
           >
             Recent Moods ✦
           </p>

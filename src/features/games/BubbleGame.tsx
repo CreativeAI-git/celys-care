@@ -3,10 +3,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { CelysLogo } from "@/components/branding/CelysLogo";
 import { SparkleDivider } from "@/components/branding/SparkleDivider";
+import { useAccessibility } from "@/context/AccessibilityContext";
 
 const BUBBLE_COLORS = ["#c96ccc", "#7c3aed", "#60a5fa", "#a78bfa", "#f5d76e", "#7ec8a0"];
 
 export const BubbleGame: React.FC = () => {
+  const { currentTheme } = useAccessibility();
   const [gamePhase, setGamePhase] = useState<"idle" | "inhale" | "hold" | "exhale">("idle");
   const [count, setCount] = useState(0);
   const [pops, setPops] = useState(0);
@@ -171,10 +173,10 @@ export const BubbleGame: React.FC = () => {
       {/* Main Action Button */}
       <button
         onClick={() => setGamePhase((p) => (p === "idle" ? "inhale" : "idle"))}
-        className="w-full rounded-full py-3.5 font-semibold text-white text-xs transition-all hover:opacity-95 active:scale-[0.98]"
+        className="w-full rounded-full py-3.5 font-semibold text-white text-xs transition-all hover:opacity-95 active:scale-[0.98] cursor-pointer"
         style={{
-          background: "linear-gradient(135deg, #c96ccc, #7c3aed)",
-          boxShadow: "0 4px 16px rgba(201,108,204,0.35)",
+          background: currentTheme.navActiveGradient,
+          boxShadow: `0 4px 16px ${currentTheme.glow}`,
         }}
       >
         {gamePhase === "idle" ? "▶ Begin Game" : "⏹ Stop"}

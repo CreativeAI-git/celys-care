@@ -5,8 +5,9 @@ import { Heart, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import { CelysLogo } from "@/components/branding/CelysLogo";
 import { SparkleDivider } from "@/components/branding/SparkleDivider";
 import { useAuth } from "@/app/providers";
+import { useAccessibility } from "@/context/AccessibilityContext";
 import { toast } from "sonner";
-import confetti from "canvas-confetti";
+import { triggerConfetti as confetti } from "@/lib/confetti";
 
 const AFFIRMATIONS = [
   "I am safe. I am strong. I am doing my best, and that is enough.",
@@ -29,6 +30,7 @@ const AFFIRMATION_MOODS = [
 
 export const AffirmationsScreen: React.FC = () => {
   const { user } = useAuth();
+  const { currentTheme } = useAccessibility();
   const [idx, setIdx] = useState(0);
   const [mood, setMood] = useState(0);
   const [liked, setLiked] = useState<number[]>([]);
@@ -122,10 +124,11 @@ export const AffirmationsScreen: React.FC = () => {
             style={{
               background:
                 mood === i && !showSaved
-                  ? "linear-gradient(135deg, #c96ccc, #7c3aed)"
+                  ? currentTheme.toggleGradient
                   : "rgba(255,255,255,0.07)",
-              border: "1px solid rgba(180,120,255,0.22)",
-              color: mood === i && !showSaved ? "#fff" : "rgba(240,232,255,0.6)",
+              border: `1px solid ${mood === i && !showSaved ? currentTheme.borderStrong : currentTheme.border}`,
+              color: mood === i && !showSaved ? "#fff" : "rgba(240,232,255,0.7)",
+              boxShadow: mood === i && !showSaved ? `0 0 12px ${currentTheme.glow}` : "none",
             }}
           >
             {m}
@@ -174,11 +177,11 @@ export const AffirmationsScreen: React.FC = () => {
       ) : (
         <div className="w-full relative">
           <div
-            className="rounded-3xl p-6 text-center relative overflow-hidden flex flex-col items-center justify-between"
+            className="rounded-3xl p-6 text-center relative overflow-hidden flex flex-col items-center justify-between transition-all duration-500 shadow-2xl"
             style={{
-              background:
-                "linear-gradient(135deg, rgba(124,58,237,0.22), rgba(201,108,204,0.15))",
-              border: "1px solid rgba(201,162,39,0.3)",
+              background: currentTheme.cardBg,
+              border: `1.5px solid ${currentTheme.cardBorder}`,
+              boxShadow: `0 8px 32px rgba(0, 0, 0, 0.45), 0 0 24px ${currentTheme.glow}`,
               minHeight: 180,
             }}
           >
@@ -208,12 +211,12 @@ export const AffirmationsScreen: React.FC = () => {
             </p>
             <button
               onClick={toggleLike}
-              className="mt-4 transition-transform active:scale-125"
+              className="mt-4 transition-transform active:scale-125 cursor-pointer"
             >
               <Heart
-                size={20}
-                fill={liked.includes(idx) ? "#c96ccc" : "none"}
-                style={{ color: "#c96ccc" }}
+                size={22}
+                fill={liked.includes(idx) ? currentTheme.color : "none"}
+                style={{ color: currentTheme.color }}
               />
             </button>
             {!user && (
@@ -230,13 +233,13 @@ export const AffirmationsScreen: React.FC = () => {
           <div className="flex items-center justify-between mt-4">
             <button
               onClick={prev}
-              className="w-10 h-10 rounded-full flex items-center justify-center transition-all hover:bg-white/10"
+              className="w-10 h-10 rounded-full flex items-center justify-center transition-all hover:bg-white/10 cursor-pointer"
               style={{
-                background: "rgba(255,255,255,0.07)",
-                border: "1px solid rgba(180,120,255,0.2)",
+                background: currentTheme.cardBg,
+                border: `1px solid ${currentTheme.border}`,
               }}
             >
-              <ChevronLeft size={18} style={{ color: "#c96ccc" }} />
+              <ChevronLeft size={18} style={{ color: currentTheme.color }} />
             </button>
             <span
               className="text-xs font-medium"
@@ -246,13 +249,13 @@ export const AffirmationsScreen: React.FC = () => {
             </span>
             <button
               onClick={next}
-              className="w-10 h-10 rounded-full flex items-center justify-center transition-all hover:bg-white/10"
+              className="w-10 h-10 rounded-full flex items-center justify-center transition-all hover:bg-white/10 cursor-pointer"
               style={{
-                background: "rgba(255,255,255,0.07)",
-                border: "1px solid rgba(180,120,255,0.2)",
+                background: currentTheme.cardBg,
+                border: `1px solid ${currentTheme.border}`,
               }}
             >
-              <ChevronRight size={18} style={{ color: "#c96ccc" }} />
+              <ChevronRight size={18} style={{ color: currentTheme.color }} />
             </button>
           </div>
         </div>

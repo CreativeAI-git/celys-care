@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { CelysLogo } from "@/components/branding/CelysLogo";
 import { SparkleDivider } from "@/components/branding/SparkleDivider";
+import { useAccessibility } from "@/context/AccessibilityContext";
 
 const N_PARTICLES = 22;
 type Particle = { id: number; x: number; y: number; vx: number; vy: number; color: string; size: number };
@@ -10,6 +11,7 @@ const ANXIETY_COLORS = ["#a78bfa", "#c084fc", "#f87171", "#fb923c", "#fbbf24"];
 const CALM_COLORS = ["#7ec8a0", "#60a5fa", "#6ee7b7", "#a5f3fc", "#c084fc"];
 
 export const EnergyRelease: React.FC = () => {
+  const { currentTheme, reducedMotion } = useAccessibility();
   const [phase, setPhase] = useState<"idle" | "shaking" | "releasing" | "calm">("idle");
   const [particles, setParticles] = useState<Particle[]>([]);
   const shakeRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -160,13 +162,13 @@ export const EnergyRelease: React.FC = () => {
             setParticles([]);
             setTimeout(startShake, 50);
           }}
-          className="mt-4 w-full rounded-full py-3.5 font-semibold text-white text-xs transition-all active:scale-[0.98]"
+          className="mt-4 w-full rounded-full py-3.5 font-semibold text-white text-xs transition-all active:scale-[0.98] cursor-pointer"
           style={{
             background:
               phase === "calm"
                 ? "linear-gradient(135deg, #7ec8a0, #60a5fa)"
-                : "linear-gradient(135deg, #c96ccc, #8b3fc8, #7c3aed)",
-            boxShadow: "0 4px 20px rgba(201,108,204,0.35)",
+                : currentTheme.navActiveGradient,
+            boxShadow: `0 4px 20px ${currentTheme.glow}`,
           }}
         >
           {phase === "calm" ? "Shake Again 🌿" : "⚡ Shake Out Anxiety"}

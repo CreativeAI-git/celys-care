@@ -4,6 +4,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Send, Volume2, VolumeX, Trash2 } from "lucide-react";
 import { useAuth } from "@/app/providers";
+import { useAccessibility } from "@/context/AccessibilityContext";
 import { SparkleDivider } from "@/components/branding/SparkleDivider";
 import { audioSynth } from "@/lib/audio-synth";
 import { speakCelysVoice, stopCelysVoice, unlockAudioContext } from "@/lib/tts-service";
@@ -45,6 +46,7 @@ const getInitialMessages = (user?: any): Message[] => [
 
 export const AIChat: React.FC = () => {
   const { user } = useAuth();
+  const { currentTheme } = useAccessibility();
   const [messages, setMessages] = useState<Message[]>(() => {
     if (typeof window !== "undefined") {
       try {
@@ -203,7 +205,40 @@ export const AIChat: React.FC = () => {
   };
 
   const generateAIResponse = (userText: string): string => {
-    const lower = userText.toLowerCase();
+    const lower = userText.toLowerCase().trim();
+
+    // 1. Morning greetings
+    if (/\b(good\s*morning|morning|shubh\s*prabhat)\b/i.test(lower)) {
+      return "Good morning! 🌅 Wishing you a gentle, grounded start to your day. Have you taken a deep mindful breath this morning?";
+    }
+
+    // 2. Evening / Night greetings
+    if (/\b(good\s*night|goodnight|shubh\s*ratri)\b/i.test(lower)) {
+      return "Good night! 🌙 Let the day's weight dissolve into the twilight. Sleep peacefully knowing you are safe and valued.";
+    }
+    if (/\b(good\s*evening)\b/i.test(lower)) {
+      return "Good evening, beautiful soul. ✨ As the day winds down, release whatever you've been carrying. How are you feeling right now?";
+    }
+
+    // 3. Casual Greetings ("hi", "hello", "hey", "hlo", "hii", "namaste", "yo")
+    if (/\b(hi|hello|hey|hii|heyy|hlo|hola|namaste|yo|greetings|wassup|sup)\b/i.test(lower)) {
+      const greetings = [
+        "Hello! 🌸 I'm Celys, your wellness companion. It is so wonderful to connect with you. How is your heart feeling today?",
+        "Hi there! ✨ Welcome to your quiet sanctuary. I'm right here listening without judgment. How has your day been?",
+        "Hey beautiful soul! 💜 I'm so glad you stopped by. What is on your mind right now?",
+      ];
+      return greetings[Math.floor(Math.random() * greetings.length)];
+    }
+
+    // 4. Inquiries ("How are you", "Kaise ho")
+    if (/\b(how\s*(are|r)\s*(you|u)|how('?s| is)\s*it\s*going|kaise\s*ho|kese\s*ho|kya\s*hal|whats\s*up|what's\s*up)\b/i.test(lower)) {
+      return "I'm feeling peaceful, calm, and truly grateful to hold this safe space with you. 💜 More importantly, how has your day been treating you?";
+    }
+
+    // 5. Identity ("Who are you", "What can you do")
+    if (/\b(who\s*(are|r)\s*(you|u)|what\s*(are|r)\s*(you|u)|what\s*can\s*you\s*do|tum\s*kaun\s*ho|aap\s*kaun\s*ho)\b/i.test(lower)) {
+      return "I am Celys, your personal AI wellness and mindfulness companion. 🌸 I'm here 24/7 to listen without judgment, guide you through anxiety and stress, share uplifting affirmations, walk you through calming breathwork, or simply keep you company whenever you need a safe sanctuary.";
+    }
 
     if (lower.includes("anxious") || lower.includes("anxiety") || lower.includes("panic") || lower.includes("overwhelm")) {
       return "I hear the weight in your words, and I want to remind you: you are safe in this moment. Place one hand on your heart and feel your breath. Would you like to do a quick 4-4-6 breathing exercise together or simply release what's on your mind? 🌸";
@@ -226,9 +261,9 @@ export const AIChat: React.FC = () => {
     }
 
     const fallbacks = [
-      "Thank you for sharing that with me. Your inner experience matters deeply. What would feel most nourishing for your spirit right now? 💜",
-      "I hear you. Taking a moment to pause and name what you are feeling is a powerful act of self-care. Let's take this one breath at a time. 🌸",
-      "You are doing better than you think you are. Be patient with your unfolding journey. I'm here with you every step of the way. ✨",
+      "I hear you, and whatever you are experiencing right now is completely welcome in this sanctuary. 🌸 Tell me a little more—how does that feel inside your body?",
+      "Thank you for sharing that with me. You have my full attention and zero judgment. What would feel most comforting or nourishing for you right now? 💜",
+      "I am right here with you. Let's take this one breath at a time. Would you like an uplifting affirmation, a gentle reflection question, or simply a safe space to vent? ✨",
     ];
 
     return fallbacks[Math.floor(Math.random() * fallbacks.length)];
@@ -382,10 +417,10 @@ export const AIChat: React.FC = () => {
 
       {/* Messages Scroll Area */}
       <div
-        className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-2.5 my-1 pr-1.5 p-2.5 rounded-2xl scroll-smooth"
+        className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-2.5 my-1 pr-1.5 p-2.5 rounded-2xl scroll-smooth transition-all duration-300"
         style={{
-          background: "rgba(0,0,0,0.25)",
-          border: "1px solid rgba(180,120,255,0.15)",
+          background: currentTheme.cardBg,
+          border: `1px solid ${currentTheme.cardBorder}`,
         }}
       >
         {messages.map((m) => (
@@ -400,7 +435,7 @@ export const AIChat: React.FC = () => {
                 style={{ border: "1.5px solid rgba(201,162,39,0.55)" }}
               >
                 <img
-                  src="/images/profile.jpg"
+                  src="/images/profile.jpg?v=7"
                   alt="Celys"
                   className="w-full h-full object-cover rounded-full block"
                   loading="eager"
@@ -424,19 +459,19 @@ export const AIChat: React.FC = () => {
                   background:
                     m.from === "celys"
                       ? speakingMessageId === m.id
-                        ? "linear-gradient(135deg, rgba(124,58,237,0.5), rgba(76,29,149,0.5))"
-                        : "linear-gradient(135deg, rgba(124,58,237,0.35), rgba(76,29,149,0.35))"
-                      : "linear-gradient(135deg, rgba(201,108,204,0.35), rgba(147,51,234,0.35))",
+                        ? "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06))"
+                        : "linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))"
+                      : currentTheme.navActiveGradient,
                   border: `1px solid ${m.from === "celys"
                     ? speakingMessageId === m.id
                       ? "rgba(245,215,110,0.6)"
-                      : "rgba(180,120,255,0.35)"
-                    : "rgba(201,108,204,0.4)"
+                      : currentTheme.border
+                    : currentTheme.borderStrong
                     }`,
                   color: "#f0e8ff",
                   borderTopLeftRadius: m.from === "celys" ? 4 : 16,
                   borderTopRightRadius: m.from === "user" ? 4 : 16,
-                  boxShadow: speakingMessageId === m.id ? "0 0 16px rgba(245,215,110,0.25)" : "none",
+                  boxShadow: m.from === "user" ? `0 0 14px ${currentTheme.glow}` : speakingMessageId === m.id ? "0 0 16px rgba(245,215,110,0.25)" : "none",
                 }}
               >
                 <span>{m.text}</span>
@@ -481,7 +516,7 @@ export const AIChat: React.FC = () => {
               style={{ border: "1px solid rgba(201,162,39,0.5)" }}
             >
               <img
-                src="/images/profile.jpg"
+                src="/images/profile.jpg?v=7"
                 alt="Celys"
                 className="w-full h-full object-cover rounded-full block"
                 loading="eager"
@@ -524,9 +559,9 @@ export const AIChat: React.FC = () => {
               onClick={() => onPromptClick(p)}
               className="text-[11px] px-3 py-1.5 rounded-full whitespace-nowrap transition-all hover:bg-white/15 active:scale-95 flex-shrink-0 cursor-pointer"
               style={{
-                background: "rgba(255,255,255,0.08)",
-                border: "1px solid rgba(180,120,255,0.25)",
-                color: "rgba(240,232,255,0.85)",
+                background: currentTheme.cardBg,
+                border: `1px solid ${currentTheme.border}`,
+                color: "rgba(240,232,255,0.88)",
               }}
             >
               ✦ {p}
@@ -542,10 +577,10 @@ export const AIChat: React.FC = () => {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSend()}
           placeholder="Share what is on your heart…"
-          className="flex-1 min-w-0 rounded-2xl px-4 py-2.5 text-xs outline-none transition-all placeholder:text-purple-200/35"
+          className="flex-1 min-w-0 rounded-2xl px-4 py-2.5 text-xs outline-none transition-all placeholder:text-white/40"
           style={{
-            background: "rgba(255,255,255,0.07)",
-            border: "1px solid rgba(180,120,255,0.25)",
+            background: currentTheme.cardBg,
+            border: `1px solid ${currentTheme.cardBorder}`,
             color: "#f0e8ff",
           }}
         />
@@ -554,8 +589,8 @@ export const AIChat: React.FC = () => {
           disabled={!input.trim() || isTyping}
           className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-all hover:opacity-90 active:scale-95 disabled:opacity-40 cursor-pointer"
           style={{
-            background: "linear-gradient(135deg, #c96ccc, #7c3aed)",
-            boxShadow: "0 2px 10px rgba(201,108,204,0.3)",
+            background: currentTheme.navActiveGradient,
+            boxShadow: `0 0 14px ${currentTheme.glow}`,
           }}
           title="Send message"
         >

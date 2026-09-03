@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Play, Pause, SkipBack, SkipForward, Volume2 } from "lucide-react";
 import { CelysLogo } from "@/components/branding/CelysLogo";
 import { SparkleDivider } from "@/components/branding/SparkleDivider";
+import { useAccessibility } from "@/context/AccessibilityContext";
 import { getSoundscapeAudioUrl } from "@/lib/wav-soundscapes";
 
 const TRACKS = [
@@ -16,6 +17,7 @@ const TRACKS = [
 ];
 
 export const RelaxationMusic: React.FC = () => {
+  const { currentTheme } = useAccessibility();
   const [playing, setPlaying] = useState<number | null>(null);
   const [volume, setVolume] = useState(100);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -152,12 +154,12 @@ export const RelaxationMusic: React.FC = () => {
             {Array.from({ length: 24 }).map((_, i) => (
               <div
                 key={i}
-                className="rounded-full flex-1"
+                className="rounded-full flex-1 transition-all duration-300"
                 style={{
-                  background: "linear-gradient(to top, #c96ccc, #7c3aed)",
+                  background: currentTheme.toggleGradient,
                   animation: `pulse ${0.6 + (i % 5) * 0.15}s ease-in-out infinite alternate`,
                   height: `${14 + Math.sin(i * 0.8) * 12}px`,
-                  opacity: 0.8,
+                  opacity: 0.85,
                 }}
               />
             ))}
@@ -174,7 +176,7 @@ export const RelaxationMusic: React.FC = () => {
               onChange={(e) => setVolume(+e.target.value)}
               className="flex-1 h-1 rounded-full appearance-none cursor-pointer"
               style={{
-                background: `linear-gradient(to right, #c96ccc ${volume}%, rgba(255,255,255,0.12) ${volume}%)`,
+                background: `linear-gradient(to right, ${currentTheme.color} ${volume}%, rgba(255,255,255,0.12) ${volume}%)`,
               }}
             />
             <span
@@ -197,8 +199,12 @@ export const RelaxationMusic: React.FC = () => {
             </button>
             <button
               onClick={() => playTrack(playing)}
-              className="w-11 h-11 rounded-full flex items-center justify-center text-white transition-transform active:scale-95"
-              style={{ background: "linear-gradient(135deg, #c96ccc, #7c3aed)" }}
+              className="w-11 h-11 rounded-full flex items-center justify-center text-white transition-transform active:scale-95 cursor-pointer shadow-lg"
+              style={{
+                background: currentTheme.navActiveGradient,
+                boxShadow: `0 0 16px ${currentTheme.glow}`,
+                border: `1px solid ${currentTheme.borderStrong}`,
+              }}
             >
               <Pause size={18} color="white" />
             </button>
@@ -222,12 +228,13 @@ export const RelaxationMusic: React.FC = () => {
             style={{
               background:
                 playing === i
-                  ? "rgba(124,58,237,0.22)"
-                  : "rgba(255,255,255,0.06)",
+                  ? currentTheme.navActiveGradient
+                  : currentTheme.cardBg,
               border: `1px solid ${playing === i
-                  ? "rgba(201,108,204,0.45)"
-                  : "rgba(180,120,255,0.16)"
+                  ? currentTheme.borderStrong
+                  : currentTheme.cardBorder
                 }`,
+              boxShadow: playing === i ? `0 0 16px ${currentTheme.glow}` : "none",
             }}
           >
             <span style={{ fontSize: 22 }}>{t.emoji}</span>
@@ -235,13 +242,13 @@ export const RelaxationMusic: React.FC = () => {
               <p className="text-xs font-semibold" style={{ color: "#f0e8ff" }}>
                 {t.title}
               </p>
-              <p className="text-[11px] truncate text-purple-200/50">
+              <p className="text-[11px] truncate text-white/60">
                 {t.artist}
               </p>
             </div>
             <div className="flex items-center gap-2">
               {playing === i ? (
-                <Pause size={16} style={{ color: "#c96ccc" }} />
+                <Pause size={16} style={{ color: "#ffffff" }} />
               ) : (
                 <Play size={16} style={{ color: "rgba(240,232,255,0.4)" }} />
               )}

@@ -3,8 +3,10 @@
 import React, { useState, useEffect } from "react";
 import { CelysLogo } from "@/components/branding/CelysLogo";
 import { SparkleDivider } from "@/components/branding/SparkleDivider";
+import { useAccessibility } from "@/context/AccessibilityContext";
 
 export const QuietRoom: React.FC = () => {
+  const { currentTheme, reducedMotion } = useAccessibility();
   const [active, setActive] = useState(false);
   const [secs, setSecs] = useState(60);
   const [phase, setPhase] = useState<"idle" | "active" | "done">("idle");
@@ -44,7 +46,7 @@ export const QuietRoom: React.FC = () => {
             height: 18,
             background: "white",
             boxShadow: "0 0 40px 12px rgba(255,255,255,0.18)",
-            animation: "pulse 4s ease-in-out infinite",
+            animation: reducedMotion ? "none" : "pulse 4s ease-in-out infinite",
           }}
         />
         <p
@@ -146,11 +148,11 @@ export const QuietRoom: React.FC = () => {
       {/* Enter Action Button */}
       <button
         onClick={start}
-        className="mt-4 w-full rounded-full py-3.5 font-semibold text-white text-xs transition-all hover:opacity-95 active:scale-[0.98]"
+        className="mt-4 w-full rounded-full py-3.5 font-semibold text-white text-xs transition-all hover:opacity-95 active:scale-[0.98] cursor-pointer"
         style={{
-          background: "linear-gradient(135deg, #1a1035, #2d1b5e)",
-          border: "1px solid rgba(180,120,255,0.3)",
-          boxShadow: "0 0 20px rgba(124,58,237,0.2)",
+          background: currentTheme.navActiveGradient,
+          border: `1px solid ${currentTheme.borderStrong}`,
+          boxShadow: `0 0 20px ${currentTheme.glow}`,
         }}
       >
         Enter the Quiet Room

@@ -3,8 +3,9 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { CelysLogo } from "@/components/branding/CelysLogo";
 import { SparkleDivider } from "@/components/branding/SparkleDivider";
+import { useAccessibility } from "@/context/AccessibilityContext";
 import { audioSynth } from "@/lib/audio-synth";
-import confetti from "canvas-confetti";
+import { triggerConfetti as confetti } from "@/lib/confetti";
 import {
   Sparkles,
   ChevronLeft,
@@ -19,27 +20,34 @@ import {
 } from "lucide-react";
 
 // ==========================================
-// 1. PUZZLE: COLOR HARMONY (EXACT FIGMA MATCH)
+// 1. PUZZLE: COLOR HARMONY (THEME-ADAPTIVE SPECTRUMS)
 // ==========================================
-const HARMONY_SPECTRUM = [
-  "#2b2674", // 1. Darkest Indigo Navy
-  "#582098", // 2. Medium Deep Violet
-  "#7e22ce", // 3. Violet
-  "#a855f7", // 4. Vibrant Lilac Purple
-  "#c4b5fd", // 5. Soft Pastel Lavender
-  "#ede9fe", // 6. Pale Luminous White-Lilac
-];
+const HARMONY_THEMES: Record<number, string[]> = {
+  // 0: Lotus Purple
+  0: ["#1e1045", "#3b176f", "#582098", "#7e22ce", "#a855f7", "#ede9fe"],
+  // 1: Healing Emerald
+  1: ["#022c22", "#064e3b", "#047857", "#059669", "#34d399", "#d1fae5"],
+  // 2: Celestial Azure
+  2: ["#082f49", "#0369a1", "#0284c7", "#38bdf8", "#7dd3fc", "#e0f2fe"],
+  // 3: Radiant Gold
+  3: ["#451a03", "#78350f", "#b45309", "#d97706", "#fbbf24", "#fef3c7"],
+  // 4: Sunset Coral
+  4: ["#4c0519", "#881337", "#be123c", "#e11d48", "#fb7185", "#ffe4e6"],
+};
 
 function ColorHarmonyPuzzle({ onBack }: { onBack: () => void }) {
+  const { currentTheme, activeColor } = useAccessibility();
+  const spectrum = HARMONY_THEMES[activeColor] || HARMONY_THEMES[0];
   const [tiles, setTiles] = useState<string[]>([]);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [swaps, setSwaps] = useState(0);
   const [isWon, setIsWon] = useState(false);
 
-  const shuffleTiles = () => {
-    let shuffled = [...HARMONY_SPECTRUM].sort(() => Math.random() - 0.5);
-    while (JSON.stringify(shuffled) === JSON.stringify(HARMONY_SPECTRUM)) {
-      shuffled = [...HARMONY_SPECTRUM].sort(() => Math.random() - 0.5);
+  const shuffleTiles = (overrideSpectrum?: string[]) => {
+    const activeSpectrum = (overrideSpectrum && Array.isArray(overrideSpectrum)) ? overrideSpectrum : spectrum;
+    let shuffled = [...activeSpectrum].sort(() => Math.random() - 0.5);
+    while (JSON.stringify(shuffled) === JSON.stringify(activeSpectrum)) {
+      shuffled = [...activeSpectrum].sort(() => Math.random() - 0.5);
     }
     setTiles(shuffled);
     setSelectedIndex(null);
@@ -49,7 +57,7 @@ function ColorHarmonyPuzzle({ onBack }: { onBack: () => void }) {
   };
 
   const showAnswer = () => {
-    setTiles([...HARMONY_SPECTRUM]);
+    setTiles([...spectrum]);
     setSelectedIndex(null);
     setIsWon(true);
     audioSynth?.playPopSound(800);
@@ -57,8 +65,8 @@ function ColorHarmonyPuzzle({ onBack }: { onBack: () => void }) {
   };
 
   useEffect(() => {
-    shuffleTiles();
-  }, []);
+    shuffleTiles(spectrum);
+  }, [activeColor]);
 
   const handleTileClick = (index: number) => {
     if (isWon) return;
@@ -82,7 +90,7 @@ function ColorHarmonyPuzzle({ onBack }: { onBack: () => void }) {
       setSwaps((s) => s + 1);
       audioSynth?.playPopSound(620);
 
-      if (JSON.stringify(newTiles) === JSON.stringify(HARMONY_SPECTRUM)) {
+      if (JSON.stringify(newTiles) === JSON.stringify(spectrum)) {
         setIsWon(true);
         audioSynth?.playPopSound(880);
         confetti({ particleCount: 40, spread: 70 });
@@ -98,15 +106,21 @@ function ColorHarmonyPuzzle({ onBack }: { onBack: () => void }) {
           onClick={onBack}
           className="text-xs px-3.5 py-1.5 rounded-full transition-all hover:bg-white/10 flex items-center gap-1 cursor-pointer"
           style={{
-            background: "rgba(255, 255, 255, 0.08)",
+            background: currentTheme.cardBg,
             color: "rgba(240, 232, 255, 0.8)",
-            border: "1px solid rgba(180, 120, 255, 0.2)",
+            border: `1px solid ${currentTheme.cardBorder}`,
           }}
         >
           ← Back
         </button>
         <div className="flex items-center gap-1.5 text-xs font-semibold text-purple-200">
-          <span className="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block shadow-[0_0_8px_#3b82f6]" />
+          <span
+            className="w-2.5 h-2.5 rounded-full inline-block"
+            style={{
+              background: currentTheme.color,
+              boxShadow: `0 0 8px ${currentTheme.glow}`,
+            }}
+          />
           <span>{swaps} swaps</span>
         </div>
       </div>
@@ -143,12 +157,12 @@ function ColorHarmonyPuzzle({ onBack }: { onBack: () => void }) {
               style={{
                 background: color,
                 boxShadow: isSelected
-                  ? "0 0 24px #ffffff, 0 0 40px rgba(168, 85, 247, 0.8)"
+                  ? `0 0 24px #ffffff, 0 0 40px ${currentTheme.glow}`
                   : "0 6px 18px rgba(0, 0, 0, 0.45)",
                 transform: isSelected ? "scale(1.08) translateY(-4px)" : "scale(1)",
                 border: isSelected
                   ? "2.5px solid #ffffff"
-                  : "1.5px solid rgba(255, 255, 255, 0.15)",
+                  : `1.5px solid ${currentTheme.cardBorder}`,
               }}
             />
           );
@@ -160,14 +174,14 @@ function ColorHarmonyPuzzle({ onBack }: { onBack: () => void }) {
         Tap a color to select it, tap another to swap
       </p>
 
-      {/* Action Buttons: Shuffle and Show Answer (Exact Figma Match) */}
+      {/* Action Buttons: Shuffle and Show Answer */}
       <div className="flex items-center justify-center gap-3 w-full max-w-xs">
         <button
-          onClick={shuffleTiles}
-          className="flex-1 py-3 px-4 rounded-full text-xs font-semibold text-purple-200/90 transition-all active:scale-95 cursor-pointer text-center hover:text-white"
+          onClick={() => shuffleTiles(spectrum)}
+          className="flex-1 py-3 px-4 rounded-full text-xs font-semibold text-white/90 transition-all active:scale-95 cursor-pointer text-center hover:text-white"
           style={{
-            background: "rgba(255, 255, 255, 0.08)",
-            border: "1px solid rgba(180, 120, 255, 0.25)",
+            background: currentTheme.cardBg,
+            border: `1px solid ${currentTheme.cardBorder}`,
             boxShadow: "0 4px 14px rgba(0, 0, 0, 0.25)",
           }}
         >
@@ -175,10 +189,10 @@ function ColorHarmonyPuzzle({ onBack }: { onBack: () => void }) {
         </button>
         <button
           onClick={showAnswer}
-          className="flex-1 py-3 px-4 rounded-full text-xs font-semibold text-purple-200/90 transition-all active:scale-95 cursor-pointer text-center hover:text-white"
+          className="flex-1 py-3 px-4 rounded-full text-xs font-semibold text-white/90 transition-all active:scale-95 cursor-pointer text-center hover:text-white"
           style={{
-            background: "rgba(255, 255, 255, 0.08)",
-            border: "1px solid rgba(180, 120, 255, 0.25)",
+            background: currentTheme.cardBg,
+            border: `1px solid ${currentTheme.cardBorder}`,
             boxShadow: "0 4px 14px rgba(0, 0, 0, 0.25)",
           }}
         >
@@ -203,11 +217,12 @@ function ColorHarmonyPuzzle({ onBack }: { onBack: () => void }) {
             ✨ Perfect gradient in <strong>{swaps}</strong> swaps.
           </p>
           <button
-            onClick={shuffleTiles}
+            onClick={() => shuffleTiles()}
             className="px-6 py-2.5 rounded-full text-xs font-bold text-white transition-all active:scale-95 shadow-lg cursor-pointer"
             style={{
-              background: "linear-gradient(135deg, #a855f7, #6366f1)",
-              boxShadow: "0 4px 18px rgba(168, 85, 247, 0.4)",
+              background: currentTheme.navActiveGradient,
+              border: `1px solid ${currentTheme.borderStrong}`,
+              boxShadow: `0 4px 18px ${currentTheme.glow}`,
             }}
           >
             Play Again
@@ -235,6 +250,7 @@ const ZEN_EMOJIS: Record<number, string> = {
 };
 
 function ZenBlocksPuzzle({ onBack }: { onBack: () => void }) {
+  const { currentTheme } = useAccessibility();
   const [board, setBoard] = useState<number[]>([]);
   const [moves, setMoves] = useState(0);
   const [isWon, setIsWon] = useState(false);
@@ -342,9 +358,9 @@ function ZenBlocksPuzzle({ onBack }: { onBack: () => void }) {
       <div
         className="grid grid-cols-3 gap-2.5 p-3 rounded-3xl w-full max-w-[270px] aspect-square mb-4 select-none"
         style={{
-          background: "radial-gradient(circle, #1a0d3d 0%, #0d0a1e 100%)",
-          border: "1.5px solid rgba(180, 120, 255, 0.25)",
-          boxShadow: "0 8px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(124, 58, 237, 0.15)",
+          background: currentTheme.cardBg,
+          border: `1.5px solid ${currentTheme.borderStrong}`,
+          boxShadow: `0 8px 30px rgba(0, 0, 0, 0.5), 0 0 20px ${currentTheme.glow}`,
         }}
       >
         {board.map((tile, idx) => {
@@ -355,7 +371,7 @@ function ZenBlocksPuzzle({ onBack }: { onBack: () => void }) {
                 className="rounded-2xl flex items-center justify-center"
                 style={{
                   background: "rgba(255, 255, 255, 0.02)",
-                  border: "1px dashed rgba(180, 120, 255, 0.2)",
+                  border: `1.5px dashed ${currentTheme.cardBorder}`,
                 }}
               />
             );
@@ -370,18 +386,18 @@ function ZenBlocksPuzzle({ onBack }: { onBack: () => void }) {
               className="rounded-2xl flex flex-col items-center justify-center font-bold transition-all active:scale-95 cursor-pointer shadow-md"
               style={{
                 background: isCorrect
-                  ? "linear-gradient(135deg, rgba(201, 108, 204, 0.4), rgba(124, 58, 237, 0.5))"
-                  : "rgba(255, 255, 255, 0.08)",
+                  ? currentTheme.toggleGradient
+                  : "rgba(255, 255, 255, 0.07)",
                 border: isCorrect
-                  ? "1.5px solid rgba(245, 215, 110, 0.6)"
-                  : "1px solid rgba(180, 120, 255, 0.2)",
-                boxShadow: isCorrect ? "0 0 12px rgba(245, 215, 110, 0.25)" : "none",
+                  ? `1.5px solid ${currentTheme.borderStrong}`
+                  : `1px solid ${currentTheme.cardBorder}`,
+                boxShadow: isCorrect ? `0 0 14px ${currentTheme.glow}` : "none",
               }}
             >
               <span className="text-xl">{ZEN_EMOJIS[tile]}</span>
               <span
                 className="text-[10px] mt-0.5"
-                style={{ color: isCorrect ? "#f5d76e" : "rgba(240, 232, 255, 0.6)" }}
+                style={{ color: isCorrect ? "#ffffff" : "rgba(240, 232, 255, 0.75)" }}
               >
                 {tile}
               </span>
@@ -394,20 +410,25 @@ function ZenBlocksPuzzle({ onBack }: { onBack: () => void }) {
         <div
           className="w-full rounded-3xl p-4 text-center animate-in fade-in zoom-in duration-300 shadow-xl"
           style={{
-            background: "linear-gradient(135deg, rgba(201, 162, 39, 0.35), rgba(124, 58, 237, 0.45))",
-            border: "1.5px solid #f5d76e",
+            background: currentTheme.cardBg,
+            border: `1.5px solid ${currentTheme.borderStrong}`,
+            boxShadow: `0 8px 32px rgba(0,0,0,0.6), 0 0 24px ${currentTheme.glow}`,
           }}
         >
           <div className="flex items-center justify-center gap-1.5 text-base font-bold text-amber-300 mb-1">
             <Trophy size={18} /> Zen Mandala Complete!
           </div>
-          <p className="text-xs text-purple-100 mb-3">
+          <p className="text-xs text-white/80 mb-3">
             You aligned the tiles in <strong>{moves}</strong> mindful moves. 🌸
           </p>
           <button
             onClick={shuffleBoard}
             className="px-6 py-2.5 rounded-full text-xs font-bold text-white transition-all active:scale-95 shadow-lg cursor-pointer"
-            style={{ background: "linear-gradient(135deg, #a855f7, #6366f1)" }}
+            style={{
+              background: currentTheme.navActiveGradient,
+              border: `1px solid ${currentTheme.borderStrong}`,
+              boxShadow: `0 4px 18px ${currentTheme.glow}`,
+            }}
           >
             Play Again
           </button>
@@ -415,10 +436,10 @@ function ZenBlocksPuzzle({ onBack }: { onBack: () => void }) {
       ) : (
         <button
           onClick={shuffleBoard}
-          className="flex items-center justify-center gap-1 text-xs px-4 py-2 rounded-full font-medium transition-all active:scale-95 cursor-pointer text-purple-200/80 hover:text-white"
+          className="flex items-center justify-center gap-1 text-xs px-4 py-2 rounded-full font-medium transition-all active:scale-95 cursor-pointer text-white/80 hover:text-white"
           style={{
-            background: "rgba(255, 255, 255, 0.08)",
-            border: "1px solid rgba(180, 120, 255, 0.2)",
+            background: currentTheme.cardBg,
+            border: `1px solid ${currentTheme.cardBorder}`,
           }}
         >
           <RotateCcw size={12} /> Reset Puzzle
@@ -476,6 +497,7 @@ const WORD_COORDS_13: Record<string, [number, number][]> = {
 };
 
 function CalmWordFind({ onBack }: { onBack: () => void }) {
+  const { currentTheme } = useAccessibility();
   const [foundWords, setFoundWords] = useState<string[]>([]);
   const [selectedCells, setSelectedCells] = useState<[number, number][]>([]);
 
@@ -560,9 +582,9 @@ function CalmWordFind({ onBack }: { onBack: () => void }) {
       <div
         className="grid grid-cols-9 gap-1 sm:gap-1.5 p-3 rounded-3xl w-full max-w-[340px] aspect-square mb-4 select-none"
         style={{
-          background: "rgba(22, 11, 48, 0.75)",
-          border: "1px solid rgba(168, 85, 247, 0.3)",
-          boxShadow: "0 8px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(168, 85, 247, 0.15)",
+          background: currentTheme.cardBg,
+          border: `1.5px solid ${currentTheme.borderStrong}`,
+          boxShadow: `0 8px 30px rgba(0, 0, 0, 0.5), 0 0 20px ${currentTheme.glow}`,
         }}
       >
         {FIGMA_GRID_9X9.map((row, r) =>
@@ -579,16 +601,16 @@ function CalmWordFind({ onBack }: { onBack: () => void }) {
                   background: found
                     ? "linear-gradient(135deg, rgba(126, 200, 160, 0.45), rgba(96, 165, 250, 0.45))"
                     : selected
-                    ? "linear-gradient(135deg, #c96ccc, #7c3aed)"
+                    ? currentTheme.navActiveGradient
                     : "rgba(255, 255, 255, 0.04)",
                   border: found
                     ? "1.5px solid #7ec8a0"
                     : selected
                     ? "1.5px solid #ffffff"
-                    : "1px solid rgba(180, 120, 255, 0.1)",
+                    : `1px solid ${currentTheme.cardBorder}`,
                   color: found ? "#7ec8a0" : selected ? "#ffffff" : "rgba(240, 232, 255, 0.85)",
                   boxShadow: selected
-                    ? "0 0 10px rgba(201, 108, 204, 0.6)"
+                    ? `0 0 12px ${currentTheme.glow}`
                     : found
                     ? "0 0 8px rgba(126, 200, 160, 0.4)"
                     : "none",
@@ -644,7 +666,11 @@ function CalmWordFind({ onBack }: { onBack: () => void }) {
               setSelectedCells([]);
             }}
             className="px-6 py-2.5 rounded-full text-xs font-bold text-white transition-all active:scale-95 shadow-lg cursor-pointer"
-            style={{ background: "linear-gradient(135deg, #a855f7, #6366f1)" }}
+            style={{
+              background: currentTheme.navActiveGradient,
+              border: `1px solid ${currentTheme.borderStrong}`,
+              boxShadow: `0 4px 18px ${currentTheme.glow}`,
+            }}
           >
             Play Again
           </button>
@@ -667,6 +693,7 @@ const MEMORY_PADS = [
 ];
 
 function PatternMemory({ onBack }: { onBack: () => void }) {
+  const { currentTheme } = useAccessibility();
   const [level, setLevel] = useState(1);
   const [sequence, setSequence] = useState<number[]>([]);
   const [userStep, setUserStep] = useState(0);
@@ -839,8 +866,9 @@ function PatternMemory({ onBack }: { onBack: () => void }) {
           }}
           className="mt-3 px-8 py-3 rounded-full text-xs font-bold text-white transition-all active:scale-95 cursor-pointer shadow-xl flex items-center gap-1.5"
           style={{
-            background: "linear-gradient(135deg, #a855f7, #6366f1)",
-            boxShadow: "0 4px 20px rgba(147, 51, 234, 0.45)",
+            background: currentTheme.navActiveGradient,
+            border: `1px solid ${currentTheme.borderStrong}`,
+            boxShadow: `0 4px 20px ${currentTheme.glow}`,
           }}
         >
           <span>▶</span>
@@ -854,8 +882,9 @@ function PatternMemory({ onBack }: { onBack: () => void }) {
           }}
           className="mt-3 px-8 py-3 rounded-full text-xs font-bold text-white transition-all active:scale-95 cursor-pointer shadow-xl flex items-center gap-1.5 animate-in fade-in zoom-in duration-200"
           style={{
-            background: "linear-gradient(135deg, #a855f7, #6366f1)",
-            boxShadow: "0 4px 20px rgba(147, 51, 234, 0.45)",
+            background: currentTheme.navActiveGradient,
+            border: `1px solid ${currentTheme.borderStrong}`,
+            boxShadow: `0 4px 20px ${currentTheme.glow}`,
           }}
         >
           <RotateCcw size={13} />
@@ -883,6 +912,7 @@ function PatternMemory({ onBack }: { onBack: () => void }) {
 // 5. PUZZLE: MINDFUL MAZE (HARD)
 // ==========================================
 function MindfulMaze({ onBack }: { onBack: () => void }) {
+  const { currentTheme } = useAccessibility();
   const mazeGrid = [
     [0, 0, 1, 0, 0, 0],
     [1, 0, 1, 0, 1, 0],
@@ -938,15 +968,19 @@ function MindfulMaze({ onBack }: { onBack: () => void }) {
           onClick={onBack}
           className="text-xs px-3.5 py-1.5 rounded-full transition-all hover:bg-white/10 flex items-center gap-1 cursor-pointer"
           style={{
-            background: "rgba(255, 255, 255, 0.08)",
+            background: currentTheme.cardBg,
             color: "rgba(240, 232, 255, 0.8)",
-            border: "1px solid rgba(180, 120, 255, 0.2)",
+            border: `1px solid ${currentTheme.cardBorder}`,
           }}
         >
           <ChevronLeft size={14} /> Back
         </button>
-        <span className="text-xs font-semibold text-purple-300">
-          🌀 Mindful Maze
+        <span
+          className="text-xs font-semibold flex items-center gap-1"
+          style={{ color: currentTheme.color }}
+        >
+          <span>🌀</span>
+          <span>Mindful Maze</span>
         </span>
       </div>
 
@@ -969,14 +1003,43 @@ function MindfulMaze({ onBack }: { onBack: () => void }) {
         <SparkleDivider />
       </div>
 
+      {/* Mini Legend (Path vs Wall) */}
+      <div className="flex items-center justify-center gap-5 text-[11px] mb-2.5 font-medium">
+        <div className="flex items-center gap-1.5">
+          <span
+            className="w-3.5 h-3.5 rounded-full inline-block"
+            style={{
+              background: `radial-gradient(circle, ${currentTheme.color}55 0%, ${currentTheme.cardBg} 100%)`,
+              border: `1.5px solid ${currentTheme.borderStrong}`,
+              boxShadow: `0 0 8px ${currentTheme.glow}`,
+            }}
+          />
+          <span style={{ color: "rgba(240, 232, 255, 0.9)" }}>Path</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span
+            className="w-3.5 h-3.5 rounded-full inline-block opacity-45"
+            style={{
+              background: "rgba(8, 5, 16, 0.95)",
+              border: "1.5px solid rgba(255, 255, 255, 0.15)",
+              boxShadow: "inset 0 2px 4px rgba(0,0,0,0.8)",
+            }}
+          />
+          <span style={{ color: "rgba(240, 232, 255, 0.45)" }}>Wall (Blocked)</span>
+        </div>
+      </div>
+
       {/* Grid */}
       <div
-        className="grid grid-cols-6 grid-rows-6 gap-1.5 p-2.5 rounded-3xl w-full max-w-[250px] aspect-square mb-3 select-none shadow-2xl overflow-hidden"
+        className="grid grid-cols-6 grid-rows-6 gap-1.5 p-2.5 rounded-3xl w-full max-w-[260px] aspect-square mb-3.5 select-none shadow-2xl overflow-hidden"
         style={{
-          background: "rgba(18, 10, 40, 0.75)",
+          background: currentTheme.cardBg,
           border: isWon
-            ? "1.5px solid rgba(250, 204, 21, 0.5)"
-            : "1.5px solid rgba(168, 85, 247, 0.3)",
+            ? "2px solid #facc15"
+            : `1.5px solid ${currentTheme.borderStrong}`,
+          boxShadow: isWon
+            ? "0 0 32px rgba(250, 204, 21, 0.4), 0 8px 30px rgba(0, 0, 0, 0.6)"
+            : `0 8px 30px rgba(0, 0, 0, 0.6), 0 0 20px ${currentTheme.glow}`,
         }}
       >
         {mazeGrid.map((row, r) =>
@@ -990,23 +1053,50 @@ function MindfulMaze({ onBack }: { onBack: () => void }) {
                 key={`${r}-${c}`}
                 className="w-full h-full rounded-full flex items-center justify-center relative transition-all min-w-0 min-h-0 aspect-square overflow-hidden"
                 style={{
-                  background: isWall ? "rgba(10, 5, 24, 0.95)" : "rgba(35, 18, 65, 0.6)",
+                  background: isWall
+                    ? "rgba(8, 5, 16, 0.95)"
+                    : `radial-gradient(circle, ${currentTheme.color}35 0%, ${currentTheme.cardBg} 100%)`,
                   border: isWall
-                    ? "1px solid rgba(168, 85, 247, 0.12)"
-                    : "1px solid rgba(168, 85, 247, 0.3)",
+                    ? "1.5px solid rgba(255, 255, 255, 0.08)"
+                    : `1.5px solid ${currentTheme.borderStrong}`,
+                  boxShadow: isWall
+                    ? "inset 0 3px 6px rgba(0, 0, 0, 0.85)"
+                    : `0 0 10px ${currentTheme.glow}, inset 0 0 6px ${currentTheme.color}25`,
+                  opacity: isWall ? 0.35 : 1,
                 }}
               >
-                {isPlayer ? (
+                {isWall ? (
+                  <span className="w-1.5 h-1.5 rounded-full bg-white/10" />
+                ) : isPlayer ? (
                   <div
-                    className="w-4 h-4 rounded-full flex-shrink-0"
+                    className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 animate-in zoom-in relative z-20"
                     style={{
-                      background: "radial-gradient(circle at 35% 35%, #f472b6, #c084fc 70%, #9333ea)",
-                      boxShadow: "0 0 14px #d946ef",
+                      background: `radial-gradient(circle at 35% 35%, #ffffff 0%, ${currentTheme.color} 60%, ${currentTheme.borderStrong} 100%)`,
+                      boxShadow: `0 0 18px ${currentTheme.color}, 0 0 6px #ffffff`,
+                      border: "2px solid #ffffff",
+                    }}
+                  >
+                    <div className="w-1.5 h-1.5 rounded-full bg-white animate-ping opacity-75" />
+                  </div>
+                ) : isGoal ? (
+                  <span
+                    className="text-lg select-none leading-none flex items-center justify-center animate-pulse"
+                    style={{
+                      filter: "drop-shadow(0 0 10px #facc15) drop-shadow(0 0 4px #ffffff)",
+                    }}
+                  >
+                    ⭐
+                  </span>
+                ) : (
+                  <div
+                    className="w-1.5 h-1.5 rounded-full"
+                    style={{
+                      background: currentTheme.color,
+                      opacity: 0.45,
+                      boxShadow: `0 0 4px ${currentTheme.glow}`,
                     }}
                   />
-                ) : isGoal ? (
-                  <span className="text-base select-none leading-none flex items-center justify-center">⭐</span>
-                ) : null}
+                )}
               </div>
             );
           })
@@ -1014,78 +1104,106 @@ function MindfulMaze({ onBack }: { onBack: () => void }) {
       </div>
 
       {isWon ? (
-        <div className="flex flex-col items-center text-center w-full max-w-[260px] p-4 rounded-3xl bg-[#160b33]/90 border border-amber-400/40 shadow-xl">
+        <div
+          className="flex flex-col items-center text-center w-full max-w-[260px] p-4 rounded-3xl shadow-2xl"
+          style={{
+            background: currentTheme.cardBg,
+            border: `1.5px solid ${currentTheme.borderStrong}`,
+            boxShadow: `0 8px 32px rgba(0,0,0,0.6), 0 0 24px ${currentTheme.glow}`,
+          }}
+        >
           <span className="text-2xl mb-1 block animate-bounce">🌟</span>
-          <p className="text-sm font-bold text-emerald-300 mb-1">
+          <p className="text-sm font-bold mb-1" style={{ color: currentTheme.color }}>
             Exit reached in {moves} moves!
           </p>
           <button
             onClick={resetMaze}
             className="mt-2 py-2 px-5 rounded-full text-xs font-bold text-white shadow-lg cursor-pointer"
-            style={{ background: "linear-gradient(135deg, #a855f7, #6366f1)" }}
+            style={{
+              background: currentTheme.navActiveGradient,
+              border: `1px solid ${currentTheme.borderStrong}`,
+              boxShadow: `0 4px 20px ${currentTheme.glow}`,
+            }}
           >
             Play Again
           </button>
         </div>
       ) : (
-        /* D-Pad Controller */
-        <div className="grid grid-cols-3 grid-rows-3 gap-1.5 w-auto max-w-[180px] items-center justify-items-center select-none my-1">
+        /* D-Pad 3x3 Controller Grid */
+        <div className="grid grid-cols-3 grid-rows-3 gap-2 w-auto max-w-[190px] sm:max-w-[220px] items-center justify-items-center select-none my-1">
+          {/* Row 1: Up Arrow */}
           <div />
           <button
             onClick={() => move(-1, 0)}
-            className="w-11 h-11 rounded-2xl flex items-center justify-center text-pink-300 font-bold transition-all active:scale-90 cursor-pointer shadow-md"
+            aria-label="Move Up"
+            className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-lg active:shadow-sm"
             style={{
-              background: "linear-gradient(145deg, rgba(95, 25, 142, 0.95), rgba(58, 14, 92, 0.98))",
-              border: "1.5px solid rgba(168, 85, 247, 0.45)",
+              background: currentTheme.cardBg,
+              color: currentTheme.color,
+              border: `1.5px solid ${currentTheme.borderStrong}`,
+              boxShadow: `0 4px 14px ${currentTheme.glow}`,
             }}
           >
-            <ArrowUp size={20} className="stroke-[2.5]" />
+            <ArrowUp size={22} className="stroke-[2.5]" />
           </button>
           <div />
 
+          {/* Row 2: Left Arrow, Reset, Right Arrow */}
           <button
             onClick={() => move(0, -1)}
-            className="w-11 h-11 rounded-2xl flex items-center justify-center text-pink-300 font-bold transition-all active:scale-90 cursor-pointer shadow-md"
+            aria-label="Move Left"
+            className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-lg active:shadow-sm"
             style={{
-              background: "linear-gradient(145deg, rgba(95, 25, 142, 0.95), rgba(58, 14, 92, 0.98))",
-              border: "1.5px solid rgba(168, 85, 247, 0.45)",
+              background: currentTheme.cardBg,
+              color: currentTheme.color,
+              border: `1.5px solid ${currentTheme.borderStrong}`,
+              boxShadow: `0 4px 14px ${currentTheme.glow}`,
             }}
           >
-            <ArrowLeft size={20} className="stroke-[2.5]" />
+            <ArrowLeft size={22} className="stroke-[2.5]" />
           </button>
 
           <button
             onClick={resetMaze}
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-purple-200 font-semibold transition-all active:scale-90 cursor-pointer"
+            aria-label="Reset Maze"
+            className="w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-90 cursor-pointer hover:bg-white/10"
             style={{
-              background: "rgba(255, 255, 255, 0.08)",
-              border: "1px solid rgba(180, 120, 255, 0.25)",
+              background: currentTheme.cardBg,
+              color: "rgba(240, 232, 255, 0.8)",
+              border: `1px solid ${currentTheme.cardBorder}`,
             }}
           >
-            <RotateCcw size={15} />
+            <RotateCcw size={16} />
           </button>
 
           <button
             onClick={() => move(0, 1)}
-            className="w-11 h-11 rounded-2xl flex items-center justify-center text-pink-300 font-bold transition-all active:scale-90 cursor-pointer shadow-md"
+            aria-label="Move Right"
+            className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-lg active:shadow-sm"
             style={{
-              background: "linear-gradient(145deg, rgba(95, 25, 142, 0.95), rgba(58, 14, 92, 0.98))",
-              border: "1.5px solid rgba(168, 85, 247, 0.45)",
+              background: currentTheme.cardBg,
+              color: currentTheme.color,
+              border: `1.5px solid ${currentTheme.borderStrong}`,
+              boxShadow: `0 4px 14px ${currentTheme.glow}`,
             }}
           >
-            <ArrowRight size={20} className="stroke-[2.5]" />
+            <ArrowRight size={22} className="stroke-[2.5]" />
           </button>
 
+          {/* Row 3: Down Arrow */}
           <div />
           <button
             onClick={() => move(1, 0)}
-            className="w-11 h-11 rounded-2xl flex items-center justify-center text-pink-300 font-bold transition-all active:scale-90 cursor-pointer shadow-md"
+            aria-label="Move Down"
+            className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-lg active:shadow-sm"
             style={{
-              background: "linear-gradient(145deg, rgba(95, 25, 142, 0.95), rgba(58, 14, 92, 0.98))",
-              border: "1.5px solid rgba(168, 85, 247, 0.45)",
+              background: currentTheme.cardBg,
+              color: currentTheme.color,
+              border: `1.5px solid ${currentTheme.borderStrong}`,
+              boxShadow: `0 4px 14px ${currentTheme.glow}`,
             }}
           >
-            <ArrowDown size={20} className="stroke-[2.5]" />
+            <ArrowDown size={22} className="stroke-[2.5]" />
           </button>
           <div />
         </div>
@@ -1330,6 +1448,7 @@ function MandalaBuilder({ onBack }: { onBack: () => void }) {
 // MAIN PUZZLES DASHBOARD (EXACT FIGMA 6 PUZZLES & FILTERS)
 // ==========================================
 export const PuzzlesScreen: React.FC = () => {
+  const { currentTheme } = useAccessibility();
   const [activePuzzle, setActivePuzzle] = useState<number | null>(null);
   const [filter, setFilter] = useState<"All" | "Easy" | "Medium" | "Hard">("All");
 
@@ -1342,8 +1461,8 @@ export const PuzzlesScreen: React.FC = () => {
         <div
           className="w-10 h-10 rounded-full shadow-lg shrink-0"
           style={{
-            background: "radial-gradient(circle at 35% 30%, #93c5fd 0%, #3b82f6 50%, #1d4ed8 85%, #1e1b4b 100%)",
-            boxShadow: "0 0 16px rgba(59, 130, 246, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.5)",
+            background: `radial-gradient(circle at 35% 30%, ${currentTheme.color} 0%, ${currentTheme.borderStrong} 65%, #0d0a1e 100%)`,
+            boxShadow: `0 0 16px ${currentTheme.glow}, inset 0 2px 4px rgba(255, 255, 255, 0.5)`,
           }}
         />
       ),
@@ -1478,7 +1597,7 @@ export const PuzzlesScreen: React.FC = () => {
         <SparkleDivider />
       </div>
 
-      {/* Filter Tabs: All, Easy, Medium, Hard (Exact Figma Match) */}
+      {/* Filter Tabs: All, Easy, Medium, Hard */}
       <div className="flex items-center justify-center gap-2 mb-5 w-full">
         {(["All", "Easy", "Medium", "Hard"] as const).map((tab) => {
           const isActive = filter === tab;
@@ -1486,11 +1605,14 @@ export const PuzzlesScreen: React.FC = () => {
             <button
               key={tab}
               onClick={() => setFilter(tab)}
-              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-                isActive
-                  ? "bg-[#a855f7] text-white shadow-[0_2px_12px_rgba(168,85,247,0.5)] scale-105"
-                  : "bg-white/[0.06] text-purple-200/70 border border-purple-400/20 hover:bg-white/10 hover:text-white"
-              }`}
+              className="px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer"
+              style={{
+                background: isActive ? currentTheme.toggleGradient : currentTheme.cardBg,
+                color: isActive ? "#ffffff" : "rgba(240, 232, 255, 0.75)",
+                border: `1px solid ${isActive ? currentTheme.borderStrong : currentTheme.border}`,
+                boxShadow: isActive ? `0 2px 12px ${currentTheme.glow}` : "none",
+                transform: isActive ? "scale(1.05)" : "scale(1)",
+              }}
             >
               {tab}
             </button>
@@ -1498,7 +1620,7 @@ export const PuzzlesScreen: React.FC = () => {
         })}
       </div>
 
-      {/* 1-Column List of Puzzle Cards (Exact Figma Match) */}
+      {/* 1-Column List of Puzzle Cards */}
       <div className="flex flex-col gap-3 w-full">
         {filteredPuzzles.map((puzzle) => (
           <div
@@ -1506,21 +1628,24 @@ export const PuzzlesScreen: React.FC = () => {
             onClick={() => setActivePuzzle(puzzle.id)}
             className="w-full rounded-3xl p-4 flex items-center justify-between transition-all select-none cursor-pointer group hover:scale-[1.01]"
             style={{
-              background: "rgba(22, 11, 48, 0.75)",
-              border: "1.5px solid rgba(168, 85, 247, 0.25)",
-              boxShadow: "0 8px 24px rgba(0, 0, 0, 0.4)",
+              background: currentTheme.cardBg,
+              border: `1.5px solid ${currentTheme.cardBorder}`,
+              boxShadow: `0 8px 24px rgba(0, 0, 0, 0.4), 0 0 16px ${currentTheme.glow}`,
             }}
           >
-            {/* Left: Standalone Floating Icon & Details (Exact Figma Match) */}
+            {/* Left: Standalone Floating Icon & Details */}
             <div className="flex items-center gap-3.5 text-left">
               <div className="shrink-0 transition-transform group-hover:scale-110 duration-200">
                 {puzzle.icon}
               </div>
               <div>
-                <h3 className="text-sm font-bold text-white tracking-wide group-hover:text-[#f5d76e] transition-colors">
+                <h3
+                  className="text-sm font-bold text-white tracking-wide transition-colors"
+                  style={{ textShadow: `0 0 12px ${currentTheme.glow}` }}
+                >
                   {puzzle.title}
                 </h3>
-                <p className="text-[11px] text-purple-200/70 mt-0.5 leading-snug">
+                <p className="text-[11px] text-white/70 mt-0.5 leading-snug">
                   {puzzle.desc}
                 </p>
               </div>
@@ -1546,9 +1671,9 @@ export const PuzzlesScreen: React.FC = () => {
                 }}
                 className="px-3.5 py-1.5 rounded-full text-xs font-bold text-white transition-all active:scale-95 flex items-center gap-1 shadow-md cursor-pointer"
                 style={{
-                  background: "linear-gradient(135deg, #7c3aed, #581c87)",
-                  border: "1px solid rgba(168, 85, 247, 0.4)",
-                  boxShadow: "0 2px 10px rgba(124, 58, 237, 0.3)",
+                  background: currentTheme.navActiveGradient,
+                  border: `1px solid ${currentTheme.borderStrong}`,
+                  boxShadow: `0 2px 10px ${currentTheme.glow}`,
                 }}
               >
                 <span>▶</span>

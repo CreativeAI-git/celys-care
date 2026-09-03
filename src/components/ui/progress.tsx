@@ -17,13 +17,20 @@ export function Progress({
   return (
     <div
       className={cn(
-        "relative h-2 w-full overflow-hidden rounded-full bg-white/10 border border-purple-400/20",
+        "relative h-2 w-full overflow-hidden rounded-full bg-white/10",
         className
       )}
+      style={{
+        border: "1px solid var(--calming-card-border, rgba(180,120,255,0.2))",
+      }}
     >
       <div
-        className="h-full bg-gradient-to-r from-[#c96ccc] to-[#7c3aed] transition-all duration-300 ease-in-out"
-        style={{ width: `${percentage}%` }}
+        className="h-full transition-all duration-300 ease-in-out"
+        style={{
+          width: `${percentage}%`,
+          background: "var(--calming-toggle-gradient, linear-gradient(to right, #c96ccc, #7c3aed))",
+          boxShadow: "0 0 12px var(--calming-accent-glow, rgba(201,108,204,0.4))",
+        }}
       />
     </div>
   );

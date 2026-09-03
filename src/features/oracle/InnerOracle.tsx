@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { CelysLogo } from "@/components/branding/CelysLogo";
 import { SparkleDivider } from "@/components/branding/SparkleDivider";
+import { useAccessibility } from "@/context/AccessibilityContext";
 import { audioSynth } from "@/lib/audio-synth";
 
 const ORACLE_CARDS = [
@@ -57,6 +58,7 @@ const ORACLE_CARDS = [
 ];
 
 export const InnerOracle: React.FC = () => {
+  const { currentTheme } = useAccessibility();
   const [card, setCard] = useState<(typeof ORACLE_CARDS)[0] | null>(null);
   const [flipped, setFlipped] = useState(false);
   const [revealing, setRevealing] = useState(false);
@@ -272,8 +274,9 @@ export const InnerOracle: React.FC = () => {
         onClick={pull}
         className="w-full rounded-full py-4 font-bold text-white transition-all active:scale-[0.98] cursor-pointer mt-3 text-sm shadow-xl flex items-center justify-center gap-1.5"
         style={{
-          background: "linear-gradient(135deg, #c084fc 0%, #7c3aed 100%)",
-          boxShadow: "0 6px 25px rgba(168, 85, 247, 0.4)",
+          background: currentTheme.navActiveGradient,
+          border: `1px solid ${currentTheme.borderStrong}`,
+          boxShadow: `0 6px 25px ${currentTheme.glow}`,
         }}
       >
         <span>✦</span>
@@ -306,7 +309,7 @@ export const InnerOracle: React.FC = () => {
                     : "rgba(255, 255, 255, 0.04)",
                   border: isSelected
                     ? "1.5px solid rgba(245, 215, 110, 0.65)"
-                    : "1px solid rgba(168, 85, 247, 0.2)",
+                    : `1px solid ${currentTheme.cardBorder}`,
                   boxShadow: isSelected
                     ? "0 0 16px rgba(245, 215, 110, 0.25)"
                     : "none",

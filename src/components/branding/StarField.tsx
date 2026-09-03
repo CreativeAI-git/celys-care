@@ -1,6 +1,11 @@
+"use client";
+
 import React, { useMemo } from "react";
+import { useAccessibility } from "@/context/AccessibilityContext";
 
 export const StarField: React.FC<{ count?: number }> = ({ count = 50 }) => {
+  const { reducedMotion } = useAccessibility();
+
   const stars = useMemo(() => {
     return Array.from({ length: count }, (_, i) => ({
       id: i,
@@ -18,15 +23,15 @@ export const StarField: React.FC<{ count?: number }> = ({ count = 50 }) => {
       {stars.map((s) => (
         <div
           key={s.id}
-          className="absolute rounded-full bg-white animate-pulse"
+          className={`absolute rounded-full bg-white ${reducedMotion ? "" : "animate-pulse"}`}
           style={{
             top: `${s.top}%`,
             left: `${s.left}%`,
             width: `${s.size}px`,
             height: `${s.size}px`,
-            opacity: parseFloat(s.opacity),
-            animationDelay: `${s.delay}s`,
-            animationDuration: `${s.duration}s`,
+            opacity: reducedMotion ? 0.28 : parseFloat(s.opacity),
+            animationDelay: reducedMotion ? undefined : `${s.delay}s`,
+            animationDuration: reducedMotion ? undefined : `${s.duration}s`,
           }}
         />
       ))}

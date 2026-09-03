@@ -3,14 +3,16 @@
 import React, { useState, useEffect, useRef } from "react";
 import { CelysLogo } from "@/components/branding/CelysLogo";
 import { SparkleDivider } from "@/components/branding/SparkleDivider";
+import { useAccessibility } from "@/context/AccessibilityContext";
 import { audioSynth } from "@/lib/audio-synth";
-import confetti from "canvas-confetti";
+import { triggerConfetti as confetti } from "@/lib/confetti";
 import { Sparkles, Star, ChevronLeft, RotateCcw, ArrowUp, ArrowDown, ArrowLeft, ArrowRight } from "lucide-react";
 
 // ==========================================
 // 1. GAME: BUBBLE POP
 // ==========================================
 function GameBubblePop({ onBack }: { onBack: () => void }) {
+  const { currentTheme } = useAccessibility();
   const COLORS = ["#c96ccc", "#7c3aed", "#60a5fa", "#a78bfa", "#f5d76e", "#7ec8a0", "#f87171", "#fb923c"];
   const make = () =>
     Array.from({ length: 12 }, (_, i) => ({
@@ -88,8 +90,12 @@ function GameBubblePop({ onBack }: { onBack: () => void }) {
               setScore(0);
               confetti({ particleCount: 30, spread: 60 });
             }}
-            className="py-2.5 px-6 rounded-full text-xs font-semibold text-white transition-all active:scale-95"
-            style={{ background: "linear-gradient(135deg, #c96ccc, #7c3aed)" }}
+            className="py-2.5 px-6 rounded-full text-xs font-semibold text-white transition-all active:scale-95 cursor-pointer"
+            style={{
+              background: currentTheme.navActiveGradient,
+              border: `1px solid ${currentTheme.borderStrong}`,
+              boxShadow: `0 4px 16px ${currentTheme.glow}`,
+            }}
           >
             Play Again
           </button>
@@ -107,6 +113,7 @@ function GameBubblePop({ onBack }: { onBack: () => void }) {
 // 2. GAME: CALM COLOR SORT
 // ==========================================
 function GameColorSort({ onBack }: { onBack: () => void }) {
+  const { currentTheme } = useAccessibility();
   const BINS = [
     { color: "#f472b6", label: "Pink" },
     { color: "#60a5fa", label: "Blue" },
@@ -146,16 +153,16 @@ function GameColorSort({ onBack }: { onBack: () => void }) {
       <div className="flex items-center justify-between w-full mb-3 px-1">
         <button
           onClick={onBack}
-          className="text-xs px-3 py-1.5 rounded-full transition-all hover:bg-white/10 flex items-center gap-1"
+          className="text-xs px-3 py-1.5 rounded-full transition-all hover:bg-white/10 flex items-center gap-1 cursor-pointer"
           style={{
-            background: "rgba(255,255,255,0.08)",
+            background: currentTheme.cardBg,
             color: "rgba(240,232,255,0.8)",
-            border: "1px solid rgba(180,120,255,0.2)",
+            border: `1px solid ${currentTheme.cardBorder}`,
           }}
         >
           <ChevronLeft size={14} /> Back
         </button>
-        <p className="text-xs font-semibold" style={{ color: "#f5d76e" }}>
+        <p className="text-xs font-semibold" style={{ color: currentTheme.color }}>
           🎨 {score} sorted
         </p>
       </div>
@@ -163,7 +170,7 @@ function GameColorSort({ onBack }: { onBack: () => void }) {
       <p className="text-xs mb-3 text-center text-purple-200/60">
         Tap a circle, then tap its matching color bin
       </p>
-      <div className="flex gap-3 flex-wrap justify-center mb-4 min-h-[60px] p-4 rounded-3xl bg-white/[0.03] border border-pink-500/20 w-full">
+      <div className="flex gap-3 flex-wrap justify-center mb-4 min-h-[60px] p-4 rounded-3xl bg-white/[0.03] border w-full" style={{ borderColor: currentTheme.border }}>
         {unsorted.map((item) => (
           <button
             key={item.id}
@@ -205,10 +212,14 @@ function GameColorSort({ onBack }: { onBack: () => void }) {
               setScore(0);
               confetti({ particleCount: 30, spread: 60 });
             }}
-            className="py-2.5 px-6 rounded-full text-xs font-semibold text-white"
-            style={{ background: "linear-gradient(135deg, #f472b6, #c084fc)" }}
+            className="py-2.5 px-6 rounded-full text-xs font-semibold text-white transition-all active:scale-95 cursor-pointer"
+            style={{
+              background: currentTheme.navActiveGradient,
+              border: `1px solid ${currentTheme.borderStrong}`,
+              boxShadow: `0 4px 16px ${currentTheme.glow}`,
+            }}
           >
-            Play Again
+            Next Colors
           </button>
         </div>
       )}
@@ -220,7 +231,7 @@ function GameColorSort({ onBack }: { onBack: () => void }) {
 // 3. GAME: GROUNDING MATCH (FIGMA 4x4 EXACT MATCH)
 // ==========================================
 function GameGroundingMatch({ onBack }: { onBack: () => void }) {
-  // 8 Pairs = 16 Cards (Exact Figma Icons)
+  const { currentTheme } = useAccessibility();
   const PAIRS = ["🌸", "🌙", "🌊", "🌿", "💜", "🦋", "⭐", "🌺"];
   const makeDeck = () =>
     [...PAIRS, ...PAIRS]
@@ -302,15 +313,20 @@ function GameGroundingMatch({ onBack }: { onBack: () => void }) {
             className="aspect-square rounded-2xl flex items-center justify-center text-2xl transition-all cursor-pointer select-none active:scale-95 shadow-sm"
             style={{
               background: c.matched
-                ? "rgba(52, 211, 153, 0.15)"
+                ? `radial-gradient(circle, rgba(52, 211, 153, 0.25) 0%, ${currentTheme.cardBg} 100%)`
                 : c.flipped
-                  ? "rgba(124, 58, 237, 0.35)"
-                  : "rgba(255, 255, 255, 0.05)",
+                  ? `radial-gradient(circle, ${currentTheme.color}35 0%, ${currentTheme.cardBg} 100%)`
+                  : currentTheme.cardBg,
               border: c.matched
-                ? "1.5px solid rgba(52, 211, 153, 0.55)"
+                ? "1.5px solid rgba(52, 211, 153, 0.65)"
                 : c.flipped
-                  ? "1.5px solid rgba(180, 120, 255, 0.5)"
-                  : "1px solid rgba(180, 120, 255, 0.2)",
+                  ? `2px solid ${currentTheme.borderStrong}`
+                  : `1px solid ${currentTheme.cardBorder}`,
+              boxShadow: c.matched
+                ? "0 0 16px rgba(52, 211, 153, 0.4)"
+                : c.flipped
+                  ? `0 0 20px ${currentTheme.glow}, 0 4px 12px rgba(0,0,0,0.3)`
+                  : "none",
             }}
           >
             {c.flipped || c.matched ? c.emoji : ""}
@@ -336,8 +352,9 @@ function GameGroundingMatch({ onBack }: { onBack: () => void }) {
             }}
             className="w-full max-w-[280px] py-3.5 px-6 rounded-full text-sm font-bold text-white transition-all active:scale-95 cursor-pointer shadow-lg"
             style={{
-              background: "linear-gradient(135deg, #a855f7, #6366f1)",
-              boxShadow: "0 8px 30px rgba(147, 51, 234, 0.4)",
+              background: currentTheme.navActiveGradient,
+              border: `1px solid ${currentTheme.borderStrong}`,
+              boxShadow: `0 8px 30px ${currentTheme.glow}`,
             }}
           >
             Play Again
@@ -352,6 +369,7 @@ function GameGroundingMatch({ onBack }: { onBack: () => void }) {
 // 4. GAME: GRATITUDE SPINNER (FIGMA EXACT 8 PARTITIONS)
 // ==========================================
 function GameGratitudeSpinner({ onBack }: { onBack: () => void }) {
+  const { currentTheme } = useAccessibility();
   const SPINNER_SECTORS = [
     { label: "A Loving Person", prompt: "Who brings immense warmth, joy, or safety to your life?", color: "#b366be", emoji: "💜" },
     { label: "Inner Wisdom", prompt: "What past difficulty taught you inner strength and wisdom?", color: "#7c3aed", emoji: "🌱" },
@@ -396,14 +414,17 @@ function GameGratitudeSpinner({ onBack }: { onBack: () => void }) {
           onClick={onBack}
           className="text-xs px-3.5 py-1.5 rounded-full transition-all hover:bg-white/10 flex items-center gap-1 cursor-pointer"
           style={{
-            background: "rgba(255, 255, 255, 0.08)",
+            background: currentTheme.cardBg,
             color: "rgba(240, 232, 255, 0.8)",
-            border: "1px solid rgba(180, 120, 255, 0.2)",
+            border: `1px solid ${currentTheme.cardBorder}`,
           }}
         >
           ← Back
         </button>
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-[#a78bfa]">
+        <div
+          className="flex items-center gap-1.5 text-xs font-semibold"
+          style={{ color: currentTheme.color }}
+        >
           <span>🌀</span>
           <span>Gratitude Spinner</span>
         </div>
@@ -483,8 +504,9 @@ function GameGratitudeSpinner({ onBack }: { onBack: () => void }) {
         disabled={spinning}
         className="w-full max-w-[280px] rounded-full py-3.5 px-6 font-bold text-white text-sm transition-all active:scale-95 my-4 cursor-pointer shadow-xl disabled:opacity-75"
         style={{
-          background: "linear-gradient(90deg, #b062db, #8750e6)",
-          boxShadow: "0 6px 24px rgba(168, 85, 247, 0.45)",
+          background: currentTheme.navActiveGradient,
+          border: `1px solid ${currentTheme.borderStrong}`,
+          boxShadow: `0 6px 24px ${currentTheme.glow}`,
         }}
       >
         {spinning ? "✦ Spinning..." : "✦ Spin"}
@@ -495,9 +517,9 @@ function GameGratitudeSpinner({ onBack }: { onBack: () => void }) {
         <div
           className="w-full rounded-3xl p-4 text-center animate-in fade-in zoom-in duration-300 max-w-xs shadow-xl"
           style={{
-            background: "rgba(22, 11, 51, 0.9)",
+            background: currentTheme.cardBg,
             border: `1.5px solid ${selectedSector.color}88`,
-            boxShadow: `0 8px 30px rgba(0, 0, 0, 0.5), 0 0 20px ${selectedSector.color}33`,
+            boxShadow: `0 8px 30px rgba(0, 0, 0, 0.5), 0 0 20px ${currentTheme.glow}`,
           }}
         >
           <div className="flex items-center justify-center gap-1.5 mb-1.5">
@@ -534,6 +556,7 @@ interface FallingStar {
 }
 
 function GameStarCatch({ onBack }: { onBack: () => void }) {
+  const { currentTheme } = useAccessibility();
   const [stars, setStars] = useState<FallingStar[]>([]);
   const [caughtWords, setCaughtWords] = useState<string[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -673,9 +696,9 @@ function GameStarCatch({ onBack }: { onBack: () => void }) {
         className="relative w-full rounded-3xl overflow-hidden mb-3 select-none touch-none"
         style={{
           height: 230,
-          background: "radial-gradient(ellipse at 50% 0%, #1e1045 0%, #0d0a1e 80%)",
-          border: "1.5px solid rgba(251,191,36,0.3)",
-          boxShadow: "0 8px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(251, 191, 36, 0.12)",
+          background: `radial-gradient(ellipse at 50% 0%, ${currentTheme.color}25 0%, ${currentTheme.cardBg} 85%)`,
+          border: `1.5px solid ${currentTheme.borderStrong}`,
+          boxShadow: `0 8px 30px rgba(0, 0, 0, 0.5), 0 0 20px ${currentTheme.glow}`,
         }}
       >
         {!isPlaying && !isGameOver && (
@@ -774,10 +797,10 @@ function GameStarCatch({ onBack }: { onBack: () => void }) {
           style={{
             background: isPlaying
               ? "rgba(248, 113, 113, 0.25)"
-              : "linear-gradient(135deg, #fbbf24, #d97706)",
-            border: `1px solid ${isPlaying ? "#f87171" : "rgba(251, 191, 36, 0.4)"}`,
+              : currentTheme.navActiveGradient,
+            border: `1px solid ${isPlaying ? "#f87171" : currentTheme.borderStrong}`,
             color: isPlaying ? "#fca5a5" : "#fff",
-            boxShadow: isPlaying ? "none" : "0 4px 18px rgba(251, 191, 36, 0.35)",
+            boxShadow: isPlaying ? "none" : `0 4px 18px ${currentTheme.glow}`,
           }}
         >
           {isPlaying ? "⏸ Pause Catching" : timeLeft < 30 ? "▶ Resume Catching" : "▶ Start 30s Star Catch"}
@@ -810,6 +833,7 @@ function GameStarCatch({ onBack }: { onBack: () => void }) {
 // 6. GAME: PEACEFUL MAZE (FIGMA EXACT 6x6 GRID & D-PAD)
 // ==========================================
 function GamePeacefulMaze({ onBack }: { onBack: () => void }) {
+  const { currentTheme } = useAccessibility();
   // Levels: 0 = Path, 1 = Wall
   const MAZES = [
     {
@@ -957,17 +981,43 @@ function GamePeacefulMaze({ onBack }: { onBack: () => void }) {
         Guide the dot to ⭐ using the arrows below
       </p>
 
+      {/* Mini Legend (Path vs Wall) so the player clearly understands */}
+      <div className="flex items-center justify-center gap-5 text-[11px] mb-2 font-medium">
+        <div className="flex items-center gap-1.5">
+          <span
+            className="w-3 h-3 rounded-full inline-block"
+            style={{
+              background: `radial-gradient(circle, ${currentTheme.color}45 0%, ${currentTheme.cardBg} 100%)`,
+              border: `1.5px solid ${currentTheme.borderStrong}`,
+              boxShadow: `0 0 8px ${currentTheme.glow}`,
+            }}
+          />
+          <span style={{ color: "rgba(240, 232, 255, 0.9)" }}>Path</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span
+            className="w-3 h-3 rounded-full inline-block opacity-45"
+            style={{
+              background: "rgba(8, 5, 16, 0.95)",
+              border: "1.5px solid rgba(255, 255, 255, 0.15)",
+              boxShadow: "inset 0 2px 4px rgba(0,0,0,0.8)",
+            }}
+          />
+          <span style={{ color: "rgba(240, 232, 255, 0.45)" }}>Wall (Blocked)</span>
+        </div>
+      </div>
+
       {/* 6x6 Maze Grid Stage */}
       <div
         className="grid grid-cols-6 grid-rows-6 gap-1.5 p-2.5 rounded-3xl w-full max-w-[260px] aspect-square mb-3.5 select-none shadow-2xl transition-all overflow-hidden"
         style={{
-          background: "rgba(18, 10, 40, 0.75)",
+          background: currentTheme.cardBg,
           border: isWon
-            ? "1.5px solid rgba(250, 204, 21, 0.5)"
-            : "1.5px solid rgba(168, 85, 247, 0.3)",
+            ? "2px solid #facc15"
+            : `1.5px solid ${currentTheme.borderStrong}`,
           boxShadow: isWon
-            ? "0 0 30px rgba(250, 204, 21, 0.25), 0 8px 30px rgba(0, 0, 0, 0.6)"
-            : "0 8px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(168, 85, 247, 0.15)",
+            ? "0 0 32px rgba(250, 204, 21, 0.4), 0 8px 30px rgba(0, 0, 0, 0.6)"
+            : `0 8px 30px rgba(0, 0, 0, 0.6), 0 0 20px ${currentTheme.glow}`,
         }}
       >
         {currentMaze.grid.map((row, r) =>
@@ -983,20 +1033,28 @@ function GamePeacefulMaze({ onBack }: { onBack: () => void }) {
                 className="w-full h-full rounded-full flex items-center justify-center relative transition-all duration-200 min-w-0 min-h-0 aspect-square overflow-hidden"
                 style={{
                   background: isPlayerAtGoal
-                    ? "radial-gradient(circle, rgba(250, 204, 21, 0.35) 0%, rgba(168, 85, 247, 0.4) 100%)"
+                    ? "radial-gradient(circle, rgba(250, 204, 21, 0.4) 0%, rgba(250, 204, 21, 0.1) 100%)"
                     : isWall
-                    ? "rgba(10, 5, 24, 0.95)"
-                    : "rgba(35, 18, 65, 0.6)",
+                    ? "rgba(8, 5, 16, 0.95)"
+                    : `radial-gradient(circle, ${currentTheme.color}35 0%, ${currentTheme.cardBg} 100%)`,
                   border: isPlayerAtGoal
                     ? "2px solid #facc15"
                     : isWall
-                    ? "1px solid rgba(168, 85, 247, 0.12)"
-                    : "1px solid rgba(168, 85, 247, 0.35)",
+                    ? "1.5px solid rgba(255, 255, 255, 0.08)"
+                    : `1.5px solid ${currentTheme.borderStrong}`,
                   boxShadow: isPlayerAtGoal
                     ? "0 0 20px rgba(250, 204, 21, 0.7), inset 0 0 10px rgba(250, 204, 21, 0.4)"
-                    : "none",
+                    : isWall
+                    ? "inset 0 3px 6px rgba(0, 0, 0, 0.85)"
+                    : `0 0 10px ${currentTheme.glow}, inset 0 0 6px ${currentTheme.color}25`,
+                  opacity: isWall ? 0.35 : 1,
                 }}
               >
+                {/* Wall inner subtle barrier indicator */}
+                {isWall ? (
+                  <span className="w-1.5 h-1.5 rounded-full bg-white/10" />
+                ) : null}
+
                 {/* Goal & Player Rendering */}
                 {isPlayerAtGoal ? (
                   <div className="relative flex items-center justify-center animate-in zoom-in duration-300">
@@ -1014,17 +1072,18 @@ function GamePeacefulMaze({ onBack }: { onBack: () => void }) {
                   <span
                     className="text-base sm:text-lg animate-pulse select-none"
                     style={{
-                      filter: "drop-shadow(0 0 8px rgba(250, 204, 21, 0.7))",
+                      filter: "drop-shadow(0 0 10px #facc15) drop-shadow(0 0 4px #ffffff)",
                     }}
                   >
                     ⭐
                   </span>
                 ) : isPlayer ? (
                   <div
-                    className="w-4 h-4 sm:w-5 sm:h-5 rounded-full transition-transform animate-in zoom-in flex-shrink-0"
+                    className="w-4.5 h-4.5 sm:w-5 sm:h-5 rounded-full transition-transform animate-in zoom-in flex-shrink-0"
                     style={{
-                      background: "radial-gradient(circle at 35% 35%, #f472b6, #c084fc 70%, #9333ea)",
-                      boxShadow: "0 0 14px #d946ef, 0 0 4px #ffffff",
+                      background: `radial-gradient(circle at 35% 35%, #ffffff 0%, ${currentTheme.color} 60%, ${currentTheme.borderStrong} 100%)`,
+                      boxShadow: `0 0 18px ${currentTheme.color}, 0 0 6px #ffffff`,
+                      border: "2px solid #ffffff",
                     }}
                   />
                 ) : null}
@@ -1036,18 +1095,30 @@ function GamePeacefulMaze({ onBack }: { onBack: () => void }) {
 
       {/* If won: Show Victory Card; Else show D-Pad controls */}
       {isWon ? (
-        <div className="flex flex-col items-center text-center animate-in fade-in zoom-in duration-300 w-full max-w-[280px] p-4 rounded-3xl bg-[#160b33]/90 border border-amber-400/40 shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+        <div
+          className="flex flex-col items-center text-center animate-in fade-in zoom-in duration-300 w-full max-w-[280px] p-4 rounded-3xl shadow-2xl"
+          style={{
+            background: currentTheme.cardBg,
+            border: `1.5px solid ${currentTheme.borderStrong}`,
+            boxShadow: `0 8px 32px rgba(0,0,0,0.6), 0 0 24px ${currentTheme.glow}`,
+          }}
+        >
           <span className="text-3xl mb-1.5 block animate-bounce">🌟</span>
-          <p className="text-sm font-bold text-emerald-300 mb-1">
+          <p className="text-sm font-bold mb-1" style={{ color: currentTheme.color }}>
             ✨ You reached the exit in {moves} moves!
           </p>
-          <p className="text-[11px] text-purple-200/60 mb-3">
+          <p className="text-[11px] text-white/70 mb-3">
             Mind is clear, centered, and peaceful.
           </p>
           <div className="flex gap-2 w-full justify-center">
             <button
               onClick={resetMaze}
-              className="py-2.5 px-4 rounded-full text-xs font-semibold text-purple-200 bg-white/[0.08] hover:bg-white/15 border border-purple-400/30 transition-all active:scale-95 cursor-pointer"
+              className="py-2.5 px-4 rounded-full text-xs font-semibold transition-all active:scale-95 cursor-pointer"
+              style={{
+                background: currentTheme.cardBg,
+                border: `1px solid ${currentTheme.cardBorder}`,
+                color: "rgba(240, 232, 255, 0.9)",
+              }}
             >
               ↺ Replay
             </button>
@@ -1058,12 +1129,13 @@ function GamePeacefulMaze({ onBack }: { onBack: () => void }) {
                 setPlayer(nextMaze.start);
                 setIsWon(false);
                 setMoves(0);
-                confetti({ particleCount: 35, spread: 65 });
+                audioSynth?.playPopSound(600);
               }}
-              className="py-2.5 px-5 rounded-full text-xs font-bold text-white transition-all active:scale-95 cursor-pointer shadow-lg flex-1"
+              className="py-2.5 px-4 rounded-full text-xs font-bold text-white transition-all active:scale-95 shadow-lg cursor-pointer"
               style={{
-                background: "linear-gradient(135deg, #a855f7, #6366f1)",
-                boxShadow: "0 4px 20px rgba(147, 51, 234, 0.4)",
+                background: currentTheme.navActiveGradient,
+                border: `1px solid ${currentTheme.borderStrong}`,
+                boxShadow: `0 4px 16px ${currentTheme.glow}`,
               }}
             >
               Play Next Maze →
@@ -1083,10 +1155,10 @@ function GamePeacefulMaze({ onBack }: { onBack: () => void }) {
             aria-label="Move Up"
             className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-lg active:shadow-sm"
             style={{
-              background: "linear-gradient(145deg, rgba(95, 25, 142, 0.95), rgba(58, 14, 92, 0.98))",
-              color: "#f472b6",
-              border: "1.5px solid rgba(168, 85, 247, 0.45)",
-              boxShadow: "0 4px 14px rgba(0, 0, 0, 0.4)",
+              background: currentTheme.cardBg,
+              color: currentTheme.color,
+              border: `1.5px solid ${currentTheme.borderStrong}`,
+              boxShadow: `0 4px 14px ${currentTheme.glow}`,
             }}
           >
             <ArrowUp size={22} className="stroke-[2.5]" />
@@ -1102,10 +1174,10 @@ function GamePeacefulMaze({ onBack }: { onBack: () => void }) {
             aria-label="Move Left"
             className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-lg active:shadow-sm"
             style={{
-              background: "linear-gradient(145deg, rgba(95, 25, 142, 0.95), rgba(58, 14, 92, 0.98))",
-              color: "#f472b6",
-              border: "1.5px solid rgba(168, 85, 247, 0.45)",
-              boxShadow: "0 4px 14px rgba(0, 0, 0, 0.4)",
+              background: currentTheme.cardBg,
+              color: currentTheme.color,
+              border: `1.5px solid ${currentTheme.borderStrong}`,
+              boxShadow: `0 4px 14px ${currentTheme.glow}`,
             }}
           >
             <ArrowLeft size={22} className="stroke-[2.5]" />
@@ -1121,9 +1193,9 @@ function GamePeacefulMaze({ onBack }: { onBack: () => void }) {
             aria-label="Reset Position"
             className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center transition-all active:scale-90 cursor-pointer"
             style={{
-              background: "rgba(255, 255, 255, 0.08)",
-              color: "rgba(240, 232, 255, 0.7)",
-              border: "1px solid rgba(180, 120, 255, 0.25)",
+              background: currentTheme.cardBg,
+              color: "rgba(240, 232, 255, 0.8)",
+              border: `1px solid ${currentTheme.cardBorder}`,
             }}
           >
             <RotateCcw size={16} />
@@ -1137,10 +1209,10 @@ function GamePeacefulMaze({ onBack }: { onBack: () => void }) {
             aria-label="Move Right"
             className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-lg active:shadow-sm"
             style={{
-              background: "linear-gradient(145deg, rgba(95, 25, 142, 0.95), rgba(58, 14, 92, 0.98))",
-              color: "#f472b6",
-              border: "1.5px solid rgba(168, 85, 247, 0.45)",
-              boxShadow: "0 4px 14px rgba(0, 0, 0, 0.4)",
+              background: currentTheme.cardBg,
+              color: currentTheme.color,
+              border: `1.5px solid ${currentTheme.borderStrong}`,
+              boxShadow: `0 4px 14px ${currentTheme.glow}`,
             }}
           >
             <ArrowRight size={22} className="stroke-[2.5]" />
@@ -1156,10 +1228,10 @@ function GamePeacefulMaze({ onBack }: { onBack: () => void }) {
             aria-label="Move Down"
             className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-lg active:shadow-sm"
             style={{
-              background: "linear-gradient(145deg, rgba(95, 25, 142, 0.95), rgba(58, 14, 92, 0.98))",
-              color: "#f472b6",
-              border: "1.5px solid rgba(168, 85, 247, 0.45)",
-              boxShadow: "0 4px 14px rgba(0, 0, 0, 0.4)",
+              background: currentTheme.cardBg,
+              color: currentTheme.color,
+              border: `1.5px solid ${currentTheme.borderStrong}`,
+              boxShadow: `0 4px 14px ${currentTheme.glow}`,
             }}
           >
             <ArrowDown size={22} className="stroke-[2.5]" />
@@ -1175,6 +1247,7 @@ function GamePeacefulMaze({ onBack }: { onBack: () => void }) {
 // MAIN COPING GAMES COMPONENT (FIGMA EXACT MATCH)
 // ==========================================
 export const CopingGames: React.FC = () => {
+  const { currentTheme } = useAccessibility();
   const [activeGame, setActiveGame] = useState<number | null>(null);
 
   // 6 Figma Coping Games with exact styling & color schemes matching Figma Screenshot 1
@@ -1288,11 +1361,11 @@ export const CopingGames: React.FC = () => {
               setActiveGame(g.id);
               audioSynth?.playPopSound(500 + g.id * 40);
             }}
-            className={`rounded-[22px] p-4 sm:p-5 flex flex-col justify-between items-start text-left transition-all active:scale-[0.97] cursor-pointer min-h-[195px] sm:min-h-[205px] ${g.hoverBorder}`}
+            className="rounded-[22px] p-4 sm:p-5 flex flex-col justify-between items-start text-left transition-all active:scale-[0.97] cursor-pointer min-h-[195px] sm:min-h-[205px]"
             style={{
-              background: "linear-gradient(145deg, rgba(28, 16, 56, 0.75), rgba(16, 10, 35, 0.85))",
-              border: `1px solid ${g.borderColor}`,
-              boxShadow: g.shadow,
+              background: currentTheme.cardBg,
+              border: `1.5px solid ${currentTheme.cardBorder}`,
+              boxShadow: `0 4px 20px rgba(0,0,0,0.3), 0 0 14px ${currentTheme.glow}`,
             }}
           >
             {/* Top Icon, Title, Description */}
@@ -1300,11 +1373,11 @@ export const CopingGames: React.FC = () => {
               <span className="text-[28px] leading-none block mb-3">{g.emoji}</span>
               <h3
                 className="text-xs sm:text-[13px] font-bold leading-snug mb-1.5"
-                style={{ color: g.color }}
+                style={{ color: currentTheme.color }}
               >
                 {g.title}
               </h3>
-              <p className="text-[10.5px] text-purple-200/60 line-clamp-3 leading-relaxed">
+              <p className="text-[10.5px] text-white/70 line-clamp-3 leading-relaxed">
                 {g.desc}
               </p>
             </div>
@@ -1312,7 +1385,12 @@ export const CopingGames: React.FC = () => {
             {/* Play Pill Button */}
             <div className="mt-auto pt-3 w-full">
               <span
-                className={`inline-flex items-center gap-1 text-[11px] font-bold px-3.5 py-1 rounded-full border transition-all ${g.btnBg}`}
+                className="inline-flex items-center gap-1 text-[11px] font-bold px-3.5 py-1 rounded-full border transition-all text-white shadow-md"
+                style={{
+                  background: currentTheme.navActiveGradient,
+                  border: `1px solid ${currentTheme.borderStrong}`,
+                  boxShadow: `0 2px 8px ${currentTheme.glow}`,
+                }}
               >
                 ▶ Play
               </span>

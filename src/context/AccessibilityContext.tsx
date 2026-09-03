@@ -11,6 +11,112 @@ export const CALMING_COLORS = [
   "#f87171", // Sunset Coral
 ];
 
+export interface CalmingThemeConfig {
+  id: string;
+  name: string;
+  color: string;
+  glow: string;
+  border: string;
+  borderStrong: string;
+  bgGradient: string;
+  toggleGradient: string;
+  cardBg: string;
+  cardBorder: string;
+  navBg: string;
+  navFade: string;
+  navActiveGradient: string;
+  scrollbarThumb: string;
+  scrollbarTrack: string;
+}
+
+export const CALMING_THEMES: CalmingThemeConfig[] = [
+  {
+    id: "lotus-purple",
+    name: "Lotus Purple",
+    color: "#c96ccc",
+    glow: "rgba(201, 108, 204, 0.4)",
+    border: "rgba(201, 108, 204, 0.22)",
+    borderStrong: "rgba(201, 108, 204, 0.55)",
+    bgGradient: "radial-gradient(ellipse at 50% 15%, #2a0d5e 0%, #0d0a1e 55%, #15082e 100%)",
+    toggleGradient: "linear-gradient(135deg, #c96ccc, #7c3aed)",
+    cardBg: "rgba(26, 16, 52, 0.65)",
+    cardBorder: "rgba(201, 108, 204, 0.2)",
+    navBg: "rgba(20, 12, 38, 0.94)",
+    navFade: "linear-gradient(to top, rgba(13, 10, 30, 0.98) 75%, transparent 100%)",
+    navActiveGradient: "linear-gradient(135deg, #7c3aed 0%, #c96ccc 100%)",
+    scrollbarThumb: "rgba(201, 108, 204, 0.4)",
+    scrollbarTrack: "rgba(13, 10, 30, 0.6)",
+  },
+  {
+    id: "healing-emerald",
+    name: "Healing Emerald",
+    color: "#7ec8a0",
+    glow: "rgba(126, 200, 160, 0.4)",
+    border: "rgba(126, 200, 160, 0.22)",
+    borderStrong: "rgba(126, 200, 160, 0.55)",
+    bgGradient: "radial-gradient(ellipse at 50% 15%, #0f3d26 0%, #04140d 55%, #08261a 100%)",
+    toggleGradient: "linear-gradient(135deg, #7ec8a0, #059669)",
+    cardBg: "rgba(8, 30, 20, 0.65)",
+    cardBorder: "rgba(126, 200, 160, 0.2)",
+    navBg: "rgba(5, 22, 15, 0.94)",
+    navFade: "linear-gradient(to top, rgba(4, 18, 12, 0.98) 75%, transparent 100%)",
+    navActiveGradient: "linear-gradient(135deg, #059669 0%, #7ec8a0 100%)",
+    scrollbarThumb: "rgba(126, 200, 160, 0.4)",
+    scrollbarTrack: "rgba(4, 18, 12, 0.6)",
+  },
+  {
+    id: "celestial-azure",
+    name: "Celestial Azure",
+    color: "#60a5fa",
+    glow: "rgba(96, 165, 250, 0.4)",
+    border: "rgba(96, 165, 250, 0.22)",
+    borderStrong: "rgba(96, 165, 250, 0.55)",
+    bgGradient: "radial-gradient(ellipse at 50% 15%, #0c2e5e 0%, #030e1d 55%, #061e3d 100%)",
+    toggleGradient: "linear-gradient(135deg, #60a5fa, #2563eb)",
+    cardBg: "rgba(8, 26, 52, 0.65)",
+    cardBorder: "rgba(96, 165, 250, 0.2)",
+    navBg: "rgba(4, 16, 34, 0.94)",
+    navFade: "linear-gradient(to top, rgba(3, 13, 28, 0.98) 75%, transparent 100%)",
+    navActiveGradient: "linear-gradient(135deg, #2563eb 0%, #60a5fa 100%)",
+    scrollbarThumb: "rgba(96, 165, 250, 0.4)",
+    scrollbarTrack: "rgba(3, 13, 28, 0.6)",
+  },
+  {
+    id: "radiant-gold",
+    name: "Radiant Gold",
+    color: "#f5d76e",
+    glow: "rgba(245, 215, 110, 0.4)",
+    border: "rgba(245, 215, 110, 0.22)",
+    borderStrong: "rgba(245, 215, 110, 0.55)",
+    bgGradient: "radial-gradient(ellipse at 50% 15%, #3c2a08 0%, #130d03 55%, #261906 100%)",
+    toggleGradient: "linear-gradient(135deg, #f5d76e, #d97706)",
+    cardBg: "rgba(36, 26, 7, 0.65)",
+    cardBorder: "rgba(245, 215, 110, 0.2)",
+    navBg: "rgba(24, 17, 5, 0.94)",
+    navFade: "linear-gradient(to top, rgba(19, 13, 3, 0.98) 75%, transparent 100%)",
+    navActiveGradient: "linear-gradient(135deg, #d97706 0%, #f5d76e 100%)",
+    scrollbarThumb: "rgba(245, 215, 110, 0.4)",
+    scrollbarTrack: "rgba(19, 13, 3, 0.6)",
+  },
+  {
+    id: "sunset-coral",
+    name: "Sunset Coral",
+    color: "#f87171",
+    glow: "rgba(248, 113, 113, 0.4)",
+    border: "rgba(248, 113, 113, 0.22)",
+    borderStrong: "rgba(248, 113, 113, 0.55)",
+    bgGradient: "radial-gradient(ellipse at 50% 15%, #46111a 0%, #170509 55%, #2e0c14 100%)",
+    toggleGradient: "linear-gradient(135deg, #f87171, #e11d48)",
+    cardBg: "rgba(38, 10, 17, 0.65)",
+    cardBorder: "rgba(248, 113, 113, 0.2)",
+    navBg: "rgba(28, 7, 13, 0.94)",
+    navFade: "linear-gradient(to top, rgba(23, 5, 10, 0.98) 75%, transparent 100%)",
+    navActiveGradient: "linear-gradient(135deg, #e11d48 0%, #f87171 100%)",
+    scrollbarThumb: "rgba(248, 113, 113, 0.4)",
+    scrollbarTrack: "rgba(23, 5, 10, 0.6)",
+  },
+];
+
 export const CALMING_SCENES = [
   "🌊 Ocean",
   "🌿 Forest",
@@ -32,6 +138,7 @@ export interface AccessibilityContextType {
   activeColor: number;
   setActiveColor: (index: number) => void;
   calmingColor: string;
+  currentTheme: CalmingThemeConfig;
   scene: number;
   setScene: (index: number) => void;
   calmingScene: string;
@@ -65,7 +172,20 @@ export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({
     root.classList.toggle("high-contrast", hc);
     root.classList.toggle("large-text", lt);
     root.classList.toggle("reduce-motion", rm);
-    root.style.setProperty("--calming-accent-color", CALMING_COLORS[ac] || CALMING_COLORS[0]);
+
+    const theme = CALMING_THEMES[ac] || CALMING_THEMES[0];
+    root.style.setProperty("--calming-accent-color", theme.color);
+    root.style.setProperty("--calming-accent-glow", theme.glow);
+    root.style.setProperty("--calming-border-color", theme.border);
+    root.style.setProperty("--calming-border-strong", theme.borderStrong);
+    root.style.setProperty("--calming-bg-gradient", theme.bgGradient);
+    root.style.setProperty("--calming-toggle-gradient", theme.toggleGradient);
+    root.style.setProperty("--calming-nav-gradient", theme.navActiveGradient);
+    root.style.setProperty("--calming-nav-bg", theme.navBg);
+    root.style.setProperty("--calming-card-bg", theme.cardBg);
+    root.style.setProperty("--calming-card-border", theme.cardBorder);
+    root.style.setProperty("--calming-scrollbar-thumb", theme.scrollbarThumb);
+    root.style.setProperty("--calming-scrollbar-track", theme.scrollbarTrack);
   };
 
   // 1. Initial Mount: Load cached preferences from localStorage
@@ -190,6 +310,7 @@ export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const calmingColor = CALMING_COLORS[activeColor] || CALMING_COLORS[0];
   const calmingScene = CALMING_SCENES[scene] || CALMING_SCENES[0];
+  const currentTheme = CALMING_THEMES[activeColor] || CALMING_THEMES[0];
 
   return (
     <AccessibilityContext.Provider
@@ -206,6 +327,7 @@ export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({
         activeColor,
         setActiveColor,
         calmingColor,
+        currentTheme,
         scene,
         setScene,
         calmingScene,

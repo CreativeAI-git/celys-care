@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from "react";
 import { CelysLogo } from "@/components/branding/CelysLogo";
 import { SparkleDivider } from "@/components/branding/SparkleDivider";
+import { useAccessibility } from "@/context/AccessibilityContext";
 import { audioSynth } from "@/lib/audio-synth";
-import confetti from "canvas-confetti";
+import { triggerConfetti as confetti } from "@/lib/confetti";
 import { ChevronLeft, Play, Pause } from "lucide-react";
 
 // ==========================================
@@ -217,6 +218,7 @@ function GratitudePracticeFlow({
   onBack: () => void;
   onComplete: () => void;
 }) {
+  const { currentTheme } = useAccessibility();
   const [seconds, setSeconds] = useState(300); // 5:00
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [g1, setG1] = useState("");
@@ -288,8 +290,8 @@ function GratitudePracticeFlow({
           <div
             className="h-full rounded-full w-full"
             style={{
-              background: "linear-gradient(to right, #67e8f9 0%, #818cf8 60%, #a855f7 100%)",
-              boxShadow: "0 0 10px rgba(103, 232, 249, 0.6)",
+              background: currentTheme.toggleGradient,
+              boxShadow: `0 0 10px ${currentTheme.glow}`,
             }}
           />
         </div>
@@ -311,8 +313,9 @@ function GratitudePracticeFlow({
           onClick={onBack}
           className="w-full py-4 mt-4 rounded-full text-white font-bold text-sm tracking-wide transition-all active:scale-[0.98] cursor-pointer shadow-xl"
           style={{
-            background: "linear-gradient(135deg, #c084fc 0%, #7c3aed 100%)",
-            boxShadow: "0 6px 25px rgba(168, 85, 247, 0.4)",
+            background: currentTheme.navActiveGradient,
+            border: `1px solid ${currentTheme.borderStrong}`,
+            boxShadow: `0 6px 25px ${currentTheme.glow}`,
           }}
         >
           ← Back to Activities
@@ -445,8 +448,9 @@ function GratitudePracticeFlow({
         onClick={handleFinish}
         className="w-full py-4 rounded-full text-white font-bold text-sm tracking-wide transition-all active:scale-[0.98] cursor-pointer shadow-xl flex items-center justify-center gap-1.5"
         style={{
-          background: "linear-gradient(135deg, #c084fc 0%, #7c3aed 100%)",
-          boxShadow: "0 6px 25px rgba(168, 85, 247, 0.4)",
+          background: currentTheme.navActiveGradient,
+          border: `1px solid ${currentTheme.borderStrong}`,
+          boxShadow: `0 6px 25px ${currentTheme.glow}`,
         }}
       >
         <span>✦</span>
@@ -518,6 +522,7 @@ function Grounding54321Flow({
   onBack: () => void;
   onComplete: () => void;
 }) {
+  const { currentTheme } = useAccessibility();
   const [stageIdx, setStageIdx] = useState(0);
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [isCompleted, setIsCompleted] = useState(false);
@@ -590,8 +595,8 @@ function Grounding54321Flow({
           <div
             className="h-full rounded-full w-full"
             style={{
-              background: "linear-gradient(to right, #67e8f9 0%, #818cf8 60%, #a855f7 100%)",
-              boxShadow: "0 0 10px rgba(103, 232, 249, 0.6)",
+              background: currentTheme.toggleGradient,
+              boxShadow: `0 0 10px ${currentTheme.glow}`,
             }}
           />
         </div>
@@ -746,8 +751,9 @@ function Grounding54321Flow({
           onClick={handleNext}
           className="flex-1 min-w-0 h-12 rounded-full text-white font-bold text-sm tracking-wide transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center shadow-xl px-4"
           style={{
-            background: "linear-gradient(135deg, #c084fc 0%, #7c3aed 100%)",
-            boxShadow: "0 6px 25px rgba(168, 85, 247, 0.4)",
+            background: currentTheme.navActiveGradient,
+            border: `1px solid ${currentTheme.borderStrong}`,
+            boxShadow: `0 6px 25px ${currentTheme.glow}`,
           }}
         >
           <span className="truncate">{stage.nextLabel}</span>
@@ -769,6 +775,7 @@ function ActivityDetailFlow({
   onBack: () => void;
   onComplete: () => void;
 }) {
+  const { currentTheme } = useAccessibility();
   const [currentStep, setCurrentStep] = useState(0);
   const [seconds, setSeconds] = useState(activity.durationSec);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
@@ -866,8 +873,8 @@ function ActivityDetailFlow({
           <div
             className="h-full rounded-full w-full"
             style={{
-              background: "linear-gradient(to right, #67e8f9 0%, #818cf8 60%, #a855f7 100%)",
-              boxShadow: "0 0 10px rgba(103, 232, 249, 0.6)",
+              background: currentTheme.toggleGradient,
+              boxShadow: `0 0 10px ${currentTheme.glow}`,
             }}
           />
         </div>
@@ -890,8 +897,9 @@ function ActivityDetailFlow({
           onClick={onBack}
           className="w-full py-4 mt-4 rounded-full text-white font-bold text-sm tracking-wide transition-all active:scale-[0.98] cursor-pointer shadow-xl"
           style={{
-            background: "linear-gradient(135deg, #c084fc 0%, #7c3aed 100%)",
-            boxShadow: "0 6px 25px rgba(168, 85, 247, 0.4)",
+            background: currentTheme.navActiveGradient,
+            border: `1px solid ${currentTheme.borderStrong}`,
+            boxShadow: `0 6px 25px ${currentTheme.glow}`,
           }}
         >
           ← Back to Activities
@@ -973,8 +981,8 @@ function ActivityDetailFlow({
           className="h-full rounded-full transition-all duration-300"
           style={{
             width: `${((currentStep + 1) / totalSteps) * 100}%`,
-            background: "linear-gradient(to right, #67e8f9 0%, #818cf8 60%, #a855f7 100%)",
-            boxShadow: "0 0 10px rgba(103, 232, 249, 0.6)",
+            background: currentTheme.toggleGradient,
+            boxShadow: `0 0 10px ${currentTheme.glow}`,
           }}
         />
       </div>
@@ -1020,8 +1028,9 @@ function ActivityDetailFlow({
           onClick={handleNextStep}
           className="flex-1 min-w-0 h-12 rounded-full text-white font-bold text-sm tracking-wide transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center shadow-xl px-4"
           style={{
-            background: "linear-gradient(135deg, #c084fc 0%, #7c3aed 100%)",
-            boxShadow: "0 6px 25px rgba(168, 85, 247, 0.4)",
+            background: currentTheme.navActiveGradient,
+            border: `1px solid ${currentTheme.borderStrong}`,
+            boxShadow: `0 6px 25px ${currentTheme.glow}`,
           }}
         >
           <span className="truncate">{currentStep < totalSteps - 1 ? "Next Step →" : "Complete ✦"}</span>
@@ -1035,6 +1044,7 @@ function ActivityDetailFlow({
 // MAIN ACTIVITIES SCREEN (EXACT FIGMA 8 ACTIVITIES)
 // ==========================================
 export const ActivitiesScreen: React.FC = () => {
+  const { currentTheme } = useAccessibility();
   const [done, setDone] = useState<string[]>(["mindful-walking", "connect-someone"]);
   const [activeActivity, setActiveActivity] = useState<ActivityItem | null>(null);
   const [filter, setFilter] = useState("All");
@@ -1130,13 +1140,13 @@ export const ActivitiesScreen: React.FC = () => {
       <div
         className="w-full rounded-3xl p-4 mb-5 flex flex-col gap-2.5 select-none"
         style={{
-          background: "rgba(22, 11, 48, 0.75)",
-          border: "1.5px solid rgba(168, 85, 247, 0.25)",
-          boxShadow: "0 8px 24px rgba(0, 0, 0, 0.4)",
+          background: currentTheme.cardBg,
+          border: `1.5px solid ${currentTheme.cardBorder}`,
+          boxShadow: `0 8px 24px rgba(0, 0, 0, 0.4), 0 0 16px ${currentTheme.glow}`,
         }}
       >
         <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-purple-200/80">
+          <span className="text-xs font-medium text-white/80">
             Today&apos;s progress
           </span>
           <span className="text-xs font-bold" style={{ color: "#f5d76e" }}>
@@ -1148,10 +1158,11 @@ export const ActivitiesScreen: React.FC = () => {
           style={{ background: "rgba(255, 255, 255, 0.08)" }}
         >
           <div
-            className="h-2 rounded-full transition-all duration-500 shadow-[0_0_10px_#67e8f9]"
+            className="h-2 rounded-full transition-all duration-500"
             style={{
               width: `${(done.length / ACTIVITIES_LIST.length) * 100}%`,
-              background: "linear-gradient(to right, #67e8f9 0%, #818cf8 60%, #a855f7 100%)",
+              background: currentTheme.toggleGradient,
+              boxShadow: `0 0 12px ${currentTheme.glow}`,
             }}
           />
         </div>
@@ -1167,10 +1178,14 @@ export const ActivitiesScreen: React.FC = () => {
                 <button
                   key={t}
                   onClick={() => setFilter(t)}
-                  className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${isSelected
-                    ? "bg-[#a855f7] text-white shadow-[0_2px_12px_rgba(168,85,247,0.5)] scale-105"
-                    : "bg-white/[0.06] text-purple-200/70 border border-purple-400/20 hover:bg-white/10 hover:text-white"
-                    }`}
+                  className="px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer"
+                  style={{
+                    background: isSelected ? currentTheme.toggleGradient : currentTheme.cardBg,
+                    color: isSelected ? "#ffffff" : "rgba(240, 232, 255, 0.75)",
+                    border: `1px solid ${isSelected ? currentTheme.borderStrong : currentTheme.border}`,
+                    boxShadow: isSelected ? `0 2px 12px ${currentTheme.glow}` : "none",
+                    transform: isSelected ? "scale(1.05)" : "scale(1)",
+                  }}
                 >
                   {t}
                 </button>
@@ -1191,13 +1206,13 @@ export const ActivitiesScreen: React.FC = () => {
               onClick={() => setActiveActivity(a)}
               className="w-full rounded-3xl p-4 flex items-center justify-between transition-all select-none cursor-pointer group hover:scale-[1.01]"
               style={{
-                background: isDone ? "rgba(22, 11, 48, 0.85)" : "rgba(22, 11, 48, 0.75)",
+                background: currentTheme.cardBg,
                 border: isDone
                   ? "1.5px solid rgba(52, 211, 153, 0.45)"
-                  : "1.5px solid rgba(168, 85, 247, 0.25)",
+                  : `1.5px solid ${currentTheme.cardBorder}`,
                 boxShadow: isDone
                   ? "0 8px 24px rgba(0, 0, 0, 0.4), 0 0 15px rgba(52, 211, 153, 0.15)"
-                  : "0 8px 24px rgba(0, 0, 0, 0.4)",
+                  : `0 8px 24px rgba(0, 0, 0, 0.4), 0 0 16px ${currentTheme.glow}`,
               }}
             >
               {/* Left: Standalone Floating Icon & Details */}

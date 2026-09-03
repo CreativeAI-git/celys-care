@@ -5,6 +5,7 @@ import { Play, Pause, RefreshCw } from "lucide-react";
 import { CelysLogo } from "@/components/branding/CelysLogo";
 import { SparkleDivider } from "@/components/branding/SparkleDivider";
 import { useAuth } from "@/app/providers";
+import { useAccessibility } from "@/context/AccessibilityContext";
 
 const MED_SESSIONS = [
   { title: "Morning Calm", duration: "5 min", emoji: "🌅", desc: "Start your day with gentle awareness" },
@@ -16,6 +17,7 @@ const MED_SESSIONS = [
 
 export const MeditationScreen: React.FC = () => {
   const { user } = useAuth();
+  const { currentTheme } = useAccessibility();
   const [active, setActive] = useState<number | null>(null);
   const [playing, setPlaying] = useState(false);
   const [seconds, setSeconds] = useState(0);
@@ -114,10 +116,11 @@ export const MeditationScreen: React.FC = () => {
       {/* Active Timer Card */}
       {active !== null && (
         <div
-          className="w-full rounded-3xl p-5 mb-4 text-center"
+          className="w-full rounded-3xl p-6 text-center mb-4 transition-all duration-500 shadow-2xl"
           style={{
-            background: "rgba(255,255,255,0.06)",
-            border: "1px solid rgba(180,120,255,0.2)",
+            background: currentTheme.cardBg,
+            border: `1.5px solid ${currentTheme.cardBorder}`,
+            boxShadow: `0 8px 32px rgba(0, 0, 0, 0.45), 0 0 24px ${currentTheme.glow}`,
           }}
         >
           <p className="text-2xl mb-1">{MED_SESSIONS[active].emoji}</p>
@@ -125,10 +128,11 @@ export const MeditationScreen: React.FC = () => {
             {MED_SESSIONS[active].title}
           </p>
           <p
-            className="text-3xl font-bold mb-3"
+            className="text-3xl font-bold mb-3 tracking-wider"
             style={{
-              color: "#c9a227",
+              color: currentTheme.color,
               fontFamily: "'Cormorant Garamond', serif",
+              textShadow: `0 0 16px ${currentTheme.glow}`,
             }}
           >
             {fmt(seconds)}
@@ -136,20 +140,23 @@ export const MeditationScreen: React.FC = () => {
           <div className="flex gap-3 justify-center items-center">
             <button
               onClick={() => setPlaying(!playing)}
-              className="w-10 h-10 rounded-full flex items-center justify-center transition-transform active:scale-95"
-              style={{ background: "linear-gradient(135deg, #c96ccc, #7c3aed)" }}
+              className="w-11 h-11 rounded-full flex items-center justify-center transition-transform active:scale-95 cursor-pointer"
+              style={{
+                background: currentTheme.navActiveGradient,
+                boxShadow: `0 0 16px ${currentTheme.glow}`,
+              }}
             >
-              {playing ? <Pause size={16} color="white" /> : <Play size={16} color="white" />}
+              {playing ? <Pause size={18} color="white" /> : <Play size={18} color="white" />}
             </button>
             <button
               onClick={finishSession}
-              className="w-10 h-10 rounded-full flex items-center justify-center transition-all hover:bg-white/10"
+              className="w-11 h-11 rounded-full flex items-center justify-center transition-all hover:bg-white/10 cursor-pointer"
               style={{
-                background: "rgba(255,255,255,0.08)",
-                border: "1px solid rgba(180,120,255,0.2)",
+                background: currentTheme.cardBg,
+                border: `1px solid ${currentTheme.border}`,
               }}
             >
-              <RefreshCw size={14} style={{ color: "#c96ccc" }} />
+              <RefreshCw size={15} style={{ color: currentTheme.color }} />
             </button>
           </div>
           <p className="text-[10px] mt-2 text-purple-200/35">
@@ -168,13 +175,14 @@ export const MeditationScreen: React.FC = () => {
             style={{
               background:
                 active === i
-                  ? "rgba(124,58,237,0.25)"
-                  : "rgba(255,255,255,0.06)",
+                  ? currentTheme.navActiveGradient
+                  : currentTheme.cardBg,
               border: `1px solid ${
                 active === i
-                  ? "rgba(201,108,204,0.5)"
-                  : "rgba(180,120,255,0.18)"
+                  ? currentTheme.borderStrong
+                  : currentTheme.cardBorder
               }`,
+              boxShadow: active === i ? `0 0 16px ${currentTheme.glow}` : "none",
             }}
           >
             <span style={{ fontSize: 22 }}>{s.emoji}</span>

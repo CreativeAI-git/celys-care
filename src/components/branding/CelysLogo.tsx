@@ -14,7 +14,7 @@ export const CelysLogo: React.FC<CelysLogoProps> = ({
   className = "",
   showText = false,
 }) => {
-  const [imgSrc, setImgSrc] = useState("/images/profile.jpg");
+  const [imgSrc, setImgSrc] = useState("/images/profile.jpg?v=7");
 
   return (
     <div

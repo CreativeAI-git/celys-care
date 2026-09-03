@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { CelysLogo } from "@/components/branding/CelysLogo";
 import { SparkleDivider } from "@/components/branding/SparkleDivider";
+import { useAccessibility } from "@/context/AccessibilityContext";
 
 type Phase = "inhale" | "hold" | "exhale" | "rest";
 
@@ -17,6 +18,7 @@ const PHASE_CONFIG: Record<
 };
 
 export const BreathingScreen: React.FC = () => {
+  const { currentTheme, reducedMotion } = useAccessibility();
   const [phase, setPhase] = useState<Phase>("inhale");
   const [count, setCount] = useState(4);
   const [running, setRunning] = useState(false);
@@ -36,6 +38,7 @@ export const BreathingScreen: React.FC = () => {
   }, [running, count, phase]);
 
   const cfg = PHASE_CONFIG[phase];
+  const activeColor = running ? cfg.color : currentTheme.color;
 
   return (
     <div className="flex flex-col items-center px-5 pt-4 pb-6 text-center w-full max-w-sm mx-auto">
@@ -55,7 +58,7 @@ export const BreathingScreen: React.FC = () => {
       >
         Breathing Exercise
       </h2>
-      <p className="text-xs text-purple-200/60 mt-0.5">
+      <p className="text-xs text-white/70 mt-1">
         Box breathing for calm and focus
       </p>
       <SparkleDivider className="my-2" />
@@ -71,7 +74,7 @@ export const BreathingScreen: React.FC = () => {
           style={{
             width: 190,
             height: 190,
-            border: "1px solid rgba(180,120,255,0.2)",
+            border: `1px solid ${currentTheme.border}`,
           }}
         />
 
@@ -81,18 +84,18 @@ export const BreathingScreen: React.FC = () => {
           style={{
             width: 110,
             height: 110,
-            transform: `scale(${running ? cfg.scale : 1})`,
-            transitionDuration: `${cfg.dur * 0.9}s`,
+            transform: reducedMotion ? "none" : `scale(${running ? cfg.scale : 1})`,
+            transitionDuration: reducedMotion ? "0s" : `${cfg.dur * 0.9}s`,
             transitionTimingFunction: "ease-in-out",
-            background: `radial-gradient(circle, ${cfg.color}55 0%, ${cfg.color}22 60%, transparent 100%)`,
-            border: `2px solid ${cfg.color}88`,
-            boxShadow: `0 0 30px ${cfg.color}44`,
+            background: `radial-gradient(circle, ${activeColor}55 0%, ${activeColor}22 60%, transparent 100%)`,
+            border: `2px solid ${activeColor}99`,
+            boxShadow: `0 0 30px ${running ? activeColor + "44" : currentTheme.glow}`,
           }}
         >
           <p
             className="text-2xl font-bold"
             style={{
-              color: cfg.color,
+              color: activeColor,
               fontFamily: "'Cormorant Garamond', serif",
             }}
           >
@@ -113,13 +116,13 @@ export const BreathingScreen: React.FC = () => {
       <p
         className="text-lg font-semibold mb-0.5"
         style={{
-          color: cfg.color,
+          color: activeColor,
           fontFamily: "'Cormorant Garamond', serif",
         }}
       >
         {running ? cfg.text : "Ready to breathe?"}
       </p>
-      <p className="text-xs mb-5 text-purple-200/50">
+      <p className="text-xs mb-5 text-white/65">
         {running ? cfg.sub : "Box breathing helps calm your nervous system"}
       </p>
 
@@ -133,10 +136,11 @@ export const BreathingScreen: React.FC = () => {
               setCount(4);
             }
           }}
-          className="flex-1 py-3 rounded-full font-semibold text-white text-xs transition-all hover:opacity-95 active:scale-[0.98]"
+          className="flex-1 py-3 rounded-full font-semibold text-white text-xs transition-all hover:opacity-95 active:scale-[0.98] cursor-pointer"
           style={{
-            background: "linear-gradient(135deg, #c96ccc, #7c3aed)",
-            boxShadow: "0 4px 16px rgba(201,108,204,0.35)",
+            background: currentTheme.navActiveGradient,
+            boxShadow: `0 4px 16px ${currentTheme.glow}`,
+            border: `1px solid ${currentTheme.borderStrong}`,
           }}
         >
           {running ? "⏸ Pause" : "▶ Begin"}
@@ -148,11 +152,11 @@ export const BreathingScreen: React.FC = () => {
             setCount(4);
             setCycles(0);
           }}
-          className="py-3 px-5 rounded-full text-xs font-medium transition-all hover:bg-white/10"
+          className="py-3 px-5 rounded-full text-xs font-medium transition-all hover:bg-white/10 cursor-pointer"
           style={{
-            background: "rgba(255,255,255,0.07)",
-            border: "1px solid rgba(180,120,255,0.22)",
-            color: "rgba(240,232,255,0.6)",
+            background: currentTheme.cardBg,
+            border: `1px solid ${currentTheme.cardBorder}`,
+            color: "rgba(240,232,255,0.8)",
           }}
         >
           Reset

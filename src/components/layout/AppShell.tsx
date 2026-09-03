@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner";
 
 import { useAuth } from "@/app/providers";
+import { useAccessibility } from "@/context/AccessibilityContext";
 import { StarField } from "@/components/branding/StarField";
 import { LotusCorners } from "@/components/branding/LotusCorners";
 import { CelysLogo } from "@/components/branding/CelysLogo";
@@ -290,6 +291,7 @@ interface AppShellProps {
 
 export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) => {
   const { user, logout, deleteAccount, isLoading } = useAuth();
+  const { currentTheme } = useAccessibility();
   const [activeScreenId, setActiveScreenId] = useState(initialScreen);
   const [showDirectory, setShowDirectory] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -446,8 +448,8 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
       <div
         className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden"
         style={{
-          background:
-            "radial-gradient(ellipse at 30% 20%, #2a0d5e 0%, #0d0a1e 45%, #1a0838 100%)",
+          background: currentTheme.bgGradient,
+          transition: "background 0.6s cubic-bezier(0.4, 0, 0.2, 1)",
         }}
       >
         <StarField count={30} />
@@ -470,8 +472,8 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
         <div
           className="relative min-h-[100dvh] w-full flex flex-col items-center justify-between overflow-y-auto"
           style={{
-            background:
-              "radial-gradient(ellipse at 30% 20%, #2a0d5e 0%, #0d0a1e 45%, #1a0838 100%)",
+            background: currentTheme.bgGradient,
+            transition: "background 0.6s cubic-bezier(0.4, 0, 0.2, 1)",
             fontFamily: "'Inter', sans-serif",
           }}
         >
@@ -512,8 +514,8 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
       <div
         className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden px-4 py-8"
         style={{
-          background:
-            "radial-gradient(ellipse at 30% 20%, #2a0d5e 0%, #0d0a1e 45%, #1a0838 100%)",
+          background: currentTheme.bgGradient,
+          transition: "background 0.6s cubic-bezier(0.4, 0, 0.2, 1)",
           fontFamily: "'Inter', sans-serif",
         }}
       >
@@ -541,8 +543,8 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
     <div
       className="relative h-[100dvh] max-h-[100dvh] w-full flex flex-col items-center justify-between overflow-hidden"
       style={{
-        background:
-          "radial-gradient(ellipse at 30% 20%, #2a0d5e 0%, #0d0a1e 45%, #1a0838 100%)",
+        background: currentTheme.bgGradient,
+        transition: "background 0.6s cubic-bezier(0.4, 0, 0.2, 1)",
         fontFamily: "'Inter', sans-serif",
       }}
     >
@@ -570,9 +572,9 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
           className="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:bg-white/15 active:scale-95"
           style={{
             background: showDirectory
-              ? "rgba(124, 58, 237, 0.4)"
+              ? currentTheme.glow
               : "rgba(255, 255, 255, 0.08)",
-            border: "1px solid rgba(180, 120, 255, 0.22)",
+            border: `1px solid ${currentTheme.border}`,
             color: "#f0e8ff",
           }}
           title="Sanctuary Directory Menu"
@@ -596,17 +598,17 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
       <nav
         className="fixed bottom-0 left-0 right-0 z-30 flex justify-center px-3 pb-3 pt-2 safe-area-bottom"
         style={{
-          background: "linear-gradient(to top, rgba(10, 6, 24, 0.96) 80%, transparent 100%)",
+          background: currentTheme.navFade,
           backdropFilter: "blur(16px)",
           WebkitBackdropFilter: "blur(16px)",
         }}
       >
         <div
-          className="w-full max-w-md rounded-3xl py-1.5 px-1.5 sm:px-2 flex items-center justify-between gap-1 shadow-2xl"
+          className="w-full max-w-md rounded-3xl py-1.5 px-1.5 sm:px-2 flex items-center justify-between gap-1 shadow-2xl transition-all duration-500"
           style={{
-            background: "rgba(26, 16, 52, 0.88)",
-            border: "1px solid rgba(180, 120, 255, 0.22)",
-            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.5), 0 0 16px rgba(124, 58, 237, 0.15)",
+            background: currentTheme.navBg,
+            border: `1px solid ${currentTheme.borderStrong}`,
+            boxShadow: `0 8px 32px rgba(0, 0, 0, 0.6), 0 0 22px ${currentTheme.glow}`,
           }}
         >
           {PRIMARY_BOTTOM_NAV.map((item) => {
@@ -620,11 +622,11 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
                 className="flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 px-0.5 rounded-2xl transition-all duration-200 cursor-pointer"
                 style={{
                   color: isActive ? "#ffffff" : "rgba(240, 232, 255, 0.55)",
-                  background: isActive ? "rgba(124, 58, 237, 0.35)" : "transparent",
+                  background: isActive ? currentTheme.navActiveGradient : "transparent",
                   border: isActive
-                    ? "1px solid rgba(201, 108, 204, 0.55)"
+                    ? `1px solid ${currentTheme.border}`
                     : "1px solid transparent",
-                  boxShadow: isActive ? "0 0 12px rgba(124, 58, 237, 0.25)" : "none",
+                  boxShadow: isActive ? `0 0 14px ${currentTheme.glow}` : "none",
                 }}
               >
                 <IconComponent
@@ -649,12 +651,13 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
       {showDirectory && (
         <div
           className="fixed inset-0 z-50 flex flex-col animate-in fade-in duration-200"
-          style={{ background: "rgba(10, 6, 24, 0.97)", backdropFilter: "blur(16px)" }}
+          style={{ background: currentTheme.navBg, backdropFilter: "blur(24px)" }}
         >
           {/* Header */}
           <div
-            className="flex items-center justify-between px-4 sm:px-6 pb-3 border-b border-purple-400/15 max-w-4xl mx-auto w-full flex-shrink-0"
+            className="flex items-center justify-between px-4 sm:px-6 pb-3 border-b max-w-4xl mx-auto w-full flex-shrink-0"
             style={{
+              borderColor: currentTheme.border,
               paddingTop: "calc(env(safe-area-inset-top, 0px) + 14px)",
             }}
           >
@@ -665,7 +668,7 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
             </div>
             <button
               onClick={() => setShowDirectory(false)}
-              className="w-8 h-8 rounded-full flex items-center justify-center text-purple-200/70 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+              className="w-8 h-8 rounded-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
             >
               <X size={18} />
             </button>
@@ -682,7 +685,13 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
 
                 return (
                   <div key={category} className="mb-6">
-                    <h3 className="text-xs font-semibold uppercase tracking-widest text-[#f5d76e] mb-2.5 px-2">
+                    <h3
+                      className="text-xs font-semibold uppercase tracking-widest mb-2.5 px-2 transition-colors"
+                      style={{
+                        color: currentTheme.color,
+                        textShadow: `0 0 10px ${currentTheme.glow}`,
+                      }}
+                    >
                       {category === "Rituals" && "✦ Daily Mindful Rituals"}
                       {category === "Sanctuary" && "✦ Sanctuary & Sound"}
                       {category === "Wisdom" && "✦ AI & Intuitive Wisdom"}
@@ -701,14 +710,14 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
                             className="flex items-start gap-3 p-3.5 rounded-2xl text-left transition-all hover:brightness-110 active:scale-[0.99] cursor-pointer"
                             style={{
                               background: isActive
-                                ? "rgba(124, 58, 237, 0.35)"
-                                : "rgba(255, 255, 255, 0.05)",
+                                ? currentTheme.navActiveGradient
+                                : currentTheme.cardBg,
                               border: isActive
-                                ? "1.5px solid rgba(201, 108, 204, 0.7)"
-                                : "1px solid rgba(180, 120, 255, 0.15)",
+                                ? `1.5px solid ${currentTheme.borderStrong}`
+                                : `1px solid ${currentTheme.cardBorder}`,
                               boxShadow: isActive
-                                ? "0 0 16px rgba(201, 108, 204, 0.25)"
-                                : "none",
+                                ? `0 0 18px ${currentTheme.glow}`
+                                : "0 2px 8px rgba(0,0,0,0.25)",
                             }}
                           >
                             <span className="text-2xl flex-shrink-0 mt-0.5">{f.icon}</span>
@@ -716,12 +725,12 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
                               <h4
                                 className="text-xs font-semibold leading-tight truncate"
                                 style={{
-                                  color: isActive ? "#ffffff" : "rgba(240, 232, 255, 0.9)",
+                                  color: isActive ? "#ffffff" : "rgba(240, 232, 255, 0.95)",
                                 }}
                               >
                                 {f.label}
                               </h4>
-                              <p className="text-[11px] text-purple-200/60 mt-0.5 line-clamp-2 leading-relaxed">
+                              <p className="text-[11px] text-white/70 mt-0.5 line-clamp-2 leading-relaxed">
                                 {f.description}
                               </p>
                             </div>
@@ -735,7 +744,14 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
             )}
 
             {/* Profile Card & Account Management */}
-            <div className="mt-8 p-3.5 sm:p-4 rounded-2xl bg-white/[0.04] border border-purple-400/15 flex flex-col gap-3 w-full">
+            <div
+              className="mt-8 p-3.5 sm:p-4 rounded-2xl flex flex-col gap-3 w-full transition-all duration-300"
+              style={{
+                background: currentTheme.cardBg,
+                border: `1px solid ${currentTheme.cardBorder}`,
+                boxShadow: `0 4px 20px rgba(0,0,0,0.3), 0 0 16px ${currentTheme.glow}`,
+              }}
+            >
               <div className="flex items-center justify-between gap-2.5 w-full">
                 <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
                   {(() => {
@@ -751,14 +767,20 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
 
                     return (
                       <>
-                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-purple-600/30 border border-purple-400/30 flex items-center justify-center text-sm font-bold text-white flex-shrink-0 shadow-inner">
+                        <div
+                          className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0 shadow-inner"
+                          style={{
+                            background: `${currentTheme.color}33`,
+                            border: `1.5px solid ${currentTheme.borderStrong}`,
+                          }}
+                        >
                           {effectiveName.charAt(0).toUpperCase()}
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-xs font-bold text-white truncate">
                             {effectiveName}
                           </p>
-                          <p className="text-[10px] text-purple-200/60 truncate">
+                          <p className="text-[10px] text-white/60 truncate">
                             {user.email}
                           </p>
                         </div>

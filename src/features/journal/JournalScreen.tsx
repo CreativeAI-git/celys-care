@@ -5,6 +5,7 @@ import { RefreshCw } from "lucide-react";
 import { CelysLogo } from "@/components/branding/CelysLogo";
 import { SparkleDivider } from "@/components/branding/SparkleDivider";
 import { useAuth } from "@/app/providers";
+import { useAccessibility } from "@/context/AccessibilityContext";
 import { offlineSync } from "@/lib/offline-sync";
 import { toast } from "sonner";
 
@@ -19,6 +20,7 @@ const PROMPTS = [
 
 export const JournalScreen: React.FC = () => {
   const { user } = useAuth();
+  const { currentTheme } = useAccessibility();
   const [entry, setEntry] = useState("");
   const [promptIdx, setPromptIdx] = useState(0);
   const [saved, setSaved] = useState(false);
@@ -135,9 +137,10 @@ export const JournalScreen: React.FC = () => {
         rows={6}
         className="w-full rounded-2xl p-4 text-xs sm:text-sm outline-none resize-none leading-relaxed mb-3.5"
         style={{
-          background: "rgba(255,255,255,0.06)",
-          border: "1px solid rgba(180,120,255,0.22)",
+          background: currentTheme.cardBg,
+          border: `1px solid ${currentTheme.cardBorder}`,
           color: "#f0e8ff",
+          boxShadow: `0 4px 16px rgba(0,0,0,0.25)`,
         }}
       />
 
@@ -146,11 +149,11 @@ export const JournalScreen: React.FC = () => {
         <button
           type="button"
           onClick={() => setPromptIdx((i) => (i + 1) % PROMPTS.length)}
-          className="flex-1 py-2.5 rounded-full text-xs font-semibold transition-all hover:bg-white/10"
+          className="flex-1 py-2.5 rounded-full text-xs font-semibold transition-all hover:bg-white/10 cursor-pointer"
           style={{
-            background: "rgba(255,255,255,0.07)",
-            border: "1px solid rgba(180,120,255,0.22)",
-            color: "rgba(240,232,255,0.7)",
+            background: currentTheme.cardBg,
+            border: `1px solid ${currentTheme.border}`,
+            color: "rgba(240,232,255,0.85)",
           }}
         >
           New Prompt
@@ -159,12 +162,12 @@ export const JournalScreen: React.FC = () => {
           type="button"
           onClick={saveEntry}
           disabled={!entry.trim()}
-          className="flex-1 py-2.5 rounded-full text-xs font-semibold text-white transition-all disabled:opacity-40"
+          className="flex-1 py-2.5 rounded-full text-xs font-semibold text-white transition-all disabled:opacity-40 cursor-pointer"
           style={{
             background: saved
-              ? "rgba(126,211,120,0.5)"
-              : "linear-gradient(135deg, #c96ccc, #7c3aed)",
-            boxShadow: saved ? "none" : "0 4px 14px rgba(201,108,204,0.3)",
+              ? "rgba(16, 185, 129, 0.6)"
+              : currentTheme.navActiveGradient,
+            boxShadow: saved ? "none" : `0 4px 16px ${currentTheme.glow}`,
           }}
         >
           {saved ? "✓ Saved!" : "Save Entry"}
@@ -182,8 +185,8 @@ export const JournalScreen: React.FC = () => {
         <div className="w-full mt-3 text-left">
           <button
             onClick={() => setShowHistory((h) => !h)}
-            className="text-xs mb-2 font-medium"
-            style={{ color: "#c96ccc" }}
+            className="text-xs mb-2 font-medium cursor-pointer"
+            style={{ color: currentTheme.color }}
           >
             {showHistory ? "▲ Hide" : "▼ Show"} past entries ({pastEntries.length})
           </button>
@@ -192,10 +195,10 @@ export const JournalScreen: React.FC = () => {
               {pastEntries.map((e, i) => (
                 <div
                   key={e.id || i}
-                  className="rounded-2xl p-3"
+                  className="rounded-2xl p-3 transition-all duration-300"
                   style={{
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(180,120,255,0.15)",
+                    background: currentTheme.cardBg,
+                    border: `1px solid ${currentTheme.cardBorder}`,
                   }}
                 >
                   <p

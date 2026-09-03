@@ -45,38 +45,39 @@ body {
   overflow-x: hidden;
 }
 
-/* Custom scrollbars */
+/* Custom dynamic scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(13, 10, 30, 0.5);
+  background: var(--calming-scrollbar-track, rgba(13, 10, 30, 0.5));
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(180, 120, 255, 0.25);
+  background: var(--calming-scrollbar-thumb, rgba(180, 120, 255, 0.25));
   border-radius: 9999px;
+  transition: background 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(201, 108, 204, 0.5);
+  background: var(--calming-accent-color, rgba(201, 108, 204, 0.6));
 }
 
 /* Cosmic glass effects */
 .cosmic-glass {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--calming-card-bg, rgba(255, 255, 255, 0.05));
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(180, 120, 255, 0.18);
+  border: 1px solid var(--calming-border-color, rgba(180, 120, 255, 0.18));
 }
 
 .cosmic-glass-active {
-  background: rgba(124, 58, 237, 0.2);
+  background: var(--calming-accent-glow, rgba(124, 58, 237, 0.2));
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(201, 108, 204, 0.45);
+  border: 1px solid var(--calming-accent-color, rgba(201, 108, 204, 0.45));
 }
 
 .gold-gradient-text {
@@ -85,9 +86,72 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
+/* ==============================================================================
+   Universal Calming Theme Auto-Synchronization for ALL Buttons & Accents
+   ============================================================================== */
+.purple-gradient-btn {
+  background: var(--calming-toggle-gradient, linear-gradient(135deg, #c96ccc, #7c3aed)) !important;
+  border-color: var(--calming-border-strong, rgba(201, 108, 204, 0.4)) !important;
+  box-shadow: 0 4px 16px var(--calming-accent-glow, rgba(124, 58, 237, 0.3)) !important;
+}
+
 .purple-gradient-btn:hover {
-  filter: brightness(1.1);
-  box-shadow: 0 0 25px rgba(201, 108, 204, 0.5);
+  filter: brightness(1.12);
+  box-shadow: 0 0 25px var(--calming-accent-glow, rgba(201, 108, 204, 0.6)) !important;
+}
+
+/* Map inline purple/violet button gradients to active theme */
+[style*="linear-gradient(135deg, #c96ccc"],
+[style*="linear-gradient(135deg,#c96ccc"],
+[style*="linear-gradient(135deg, #7c3aed"],
+[style*="linear-gradient(135deg,#7c3aed"],
+[style*="linear-gradient(135deg, #c084fc"],
+[style*="linear-gradient(135deg,#c084fc"],
+[style*="linear-gradient(135deg, #a855f7"],
+[style*="linear-gradient(135deg,#a855f7"],
+[style*="linear-gradient(135deg, #b04be6"],
+[style*="linear-gradient(90deg, #b062db"],
+[style*="linear-gradient(135deg, rgb(201, 108, 204)"],
+[style*="linear-gradient(135deg, rgb(124, 58, 237)"],
+[style*="linear-gradient(135deg, rgb(168, 85, 247)"],
+[style*="linear-gradient(135deg, rgb(192, 132, 252)"],
+[style*="linear-gradient(90deg, rgb(176, 98, 219)"] {
+  background: var(--calming-toggle-gradient) !important;
+  border-color: var(--calming-border-strong) !important;
+  box-shadow: 0 4px 16px var(--calming-accent-glow) !important;
+}
+
+/* Map purple borders across all internal screens */
+[style*="rgba(180,120,255,"],
+[style*="rgba(180, 120, 255,"],
+[style*="rgba(201,108,204,"],
+[style*="rgba(201, 108, 204,"] {
+  border-color: var(--calming-border-color) !important;
+}
+
+/* Map purple text accents to active theme */
+[style*="color: #c96ccc"],
+[style*="color:#c96ccc"],
+[style*="color: rgb(201, 108, 204)"],
+[style*="color: #7c3aed"],
+[style*="color:#7c3aed"],
+[style*="color: rgb(124, 58, 237)"],
+[style*="color: #a855f7"],
+[style*="color:#a855f7"],
+[style*="color: rgb(168, 85, 247)"],
+[style*="color: #c084fc"],
+[style*="color:#c084fc"],
+[style*="color: rgb(192, 132, 252)"] {
+  color: var(--calming-accent-color) !important;
+}
+
+/* Map all progress bar gradients and tracks across all screens to active theme */
+[style*="#67e8f9"],
+[style*="linear-gradient(to right, #67e8f9"],
+[style*="linear-gradient(to right,#67e8f9"],
+[style*="linear-gradient(to right, #c96ccc"] {
+  background: var(--calming-toggle-gradient) !important;
+  box-shadow: 0 0 10px var(--calming-accent-glow) !important;
 }
 
 /* Mobile Safe Area Padding */
@@ -102,10 +166,10 @@ body {
    Platform-Wide Accessibility Modes
    ============================================================================== */
 
-/* 1. High Contrast Mode (Ultra-Crisp Contrast & Edge Definition) */
+/* 1. High Contrast Mode (Ultra-Crisp Contrast & Edge Definition with Active Theme Synchronization) */
 html.high-contrast,
 html.high-contrast body {
-  background-color: #020008 !important;
+  background-color: #030303 !important;
   color: #ffffff !important;
 }
 
@@ -113,27 +177,28 @@ html.high-contrast .cosmic-glass,
 html.high-contrast .cosmic-glass-active,
 html.high-contrast [class*="bg-white/"],
 html.high-contrast [class*="bg-purple-"] {
-  background: rgba(12, 6, 24, 0.98) !important;
-  border-color: rgba(245, 215, 110, 0.8) !important;
-  box-shadow: 0 0 24px rgba(0, 0, 0, 0.95), inset 0 0 0 1px rgba(245, 215, 110, 0.3) !important;
+  background: var(--calming-card-bg, rgba(12, 6, 24, 0.98)) !important;
+  border-color: var(--calming-border-strong, rgba(201, 108, 204, 0.9)) !important;
+  border-width: 1.5px !important;
+  box-shadow: 0 0 24px rgba(0, 0, 0, 0.95), 0 0 14px var(--calming-accent-glow) !important;
 }
 
 html.high-contrast input,
 html.high-contrast textarea,
 html.high-contrast select {
-  background-color: #0d061a !important;
-  border: 1.5px solid #f5d76e !important;
+  background-color: rgba(5, 5, 10, 0.95) !important;
+  border: 1.5px solid var(--calming-border-strong, #c96ccc) !important;
   color: #ffffff !important;
 }
 
 html.high-contrast [class*="text-purple-200/"],
 html.high-contrast [class*="text-white/"],
 html.high-contrast [class*="text-gray-"] {
-  color: rgba(255, 255, 255, 0.9) !important;
+  color: #ffffff !important;
 }
 
 html.high-contrast button:not(nav button) {
-  border-color: rgba(245, 215, 110, 0.7) !important;
+  border-color: var(--calming-border-strong, rgba(201, 108, 204, 0.8)) !important;
 }
 
 /* 2. Larger Text Scaling (Scales typography cleanly without bloating container paddings/margins) */
@@ -227,6 +292,22 @@ html.reduce-motion *::after {
   transition: none !important;
   transition-duration: 0.001ms !important;
   scroll-behavior: auto !important;
+}
+
+html.reduce-motion .animate-pulse,
+html.reduce-motion .animate-spin,
+html.reduce-motion .animate-bounce,
+html.reduce-motion .animate-ping,
+html.reduce-motion [class*="animate-"] {
+  animation: none !important;
+}
+
+/* Freeze particle and confetti canvases when reduce motion is enabled */
+html.reduce-motion canvas[style*="pointer-events: none"],
+html.reduce-motion canvas.confetti-canvas {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 
 /* 4. iOS / WebKit Safe Area & Tap Optimizations for IPA */

@@ -15,8 +15,9 @@ import {
 import { CelysLogo } from "@/components/branding/CelysLogo";
 import { SparkleDivider } from "@/components/branding/SparkleDivider";
 import { useAuth } from "@/app/providers";
+import { useAccessibility } from "@/context/AccessibilityContext";
 import { toast } from "sonner";
-import confetti from "canvas-confetti";
+import { triggerConfetti as confetti } from "@/lib/confetti";
 import {
   getRevenueCatOfferings,
   purchaseRevenueCatPackage,
@@ -36,6 +37,7 @@ const SUB_FEATURES = [
 
 export const SubscriptionScreen: React.FC = () => {
   const { user, refreshUser } = useAuth();
+  const { currentTheme } = useAccessibility();
   const [billing, setBilling] = useState<"monthly" | "annual">("annual");
   const [trialStarted, setTrialStarted] = useState<Date | null>(null);
   const [subscribed, setSubscribed] = useState(false);
@@ -249,9 +251,9 @@ export const SubscriptionScreen: React.FC = () => {
             style={{
               background:
                 billing === b
-                  ? "linear-gradient(135deg, #c96ccc, #7c3aed)"
+                  ? currentTheme.navActiveGradient
                   : "transparent",
-              color: billing === b ? "#fff" : "rgba(240,232,255,0.55)",
+              color: billing === b ? "#fff" : "rgba(240,232,255,0.75)",
             }}
           >
             {b === "monthly" ? "Monthly" : "Annual"}
@@ -307,10 +309,11 @@ export const SubscriptionScreen: React.FC = () => {
       <button
         onClick={handleSubscribe}
         disabled={loading}
-        className="w-full rounded-full py-3 font-semibold text-white transition-all hover:opacity-95 text-xs"
+        className="w-full rounded-full py-3 font-semibold text-white transition-all hover:opacity-95 text-xs cursor-pointer shadow-lg"
         style={{
-          background: "linear-gradient(135deg, #c96ccc, #7c3aed)",
-          boxShadow: "0 4px 16px rgba(201,108,204,0.3)",
+          background: currentTheme.navActiveGradient,
+          border: `1px solid ${currentTheme.borderStrong}`,
+          boxShadow: `0 4px 16px ${currentTheme.glow}`,
         }}
       >
         Subscribe Now — {billing === "annual" ? "$69.99/yr" : "$9.99/mo"}
