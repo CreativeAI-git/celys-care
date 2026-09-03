@@ -157,6 +157,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       if (!res.ok) {
         throw new Error(data.error || "Registration failed");
       }
+      persistUser(data.user);
       return data.user;
     } catch (err: any) {
       // If network/server/database is unreachable, provide local fallback
@@ -174,6 +175,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           displayName: fallbackName,
           role: "USER",
         };
+        persistUser(fallbackUser);
         return fallbackUser;
       }
       throw err;

@@ -99,17 +99,14 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
       if (mode === "signup") {
         const userGreeting = displayName.trim() || fallbackName;
-        await register(
+        const registeredUser = await register(
           trimmedEmail,
           trimmedPassword,
           userGreeting
         );
-        toast.success("Account created successfully! Please enter your password to log in. ✨");
-        // Seamlessly switch to Log In tab with email pre-filled
-        setMode("login");
-        if (onModeChange) onModeChange("login");
-        setPassword("");
-        setError("");
+        const finalName = registeredUser?.displayName || userGreeting || fallbackName;
+        toast.success(`Welcome to Celys Care Sanctuary, ${finalName}! 🌸`);
+        if (onSuccess) onSuccess();
         return;
       } else {
         const loggedInUser = await login(trimmedEmail, trimmedPassword);
