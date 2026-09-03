@@ -16,6 +16,14 @@ export const EnergyRelease: React.FC = () => {
   const [particles, setParticles] = useState<Particle[]>([]);
   const shakeRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const calmPalette = [
+    currentTheme.color,
+    "#f5d76e",
+    "#60a5fa",
+    "#ffffff",
+    `${currentTheme.color}cc`,
+  ];
+
   const startShake = () => {
     setPhase("shaking");
     const pts: Particle[] = Array.from({ length: N_PARTICLES }, (_, i) => ({
@@ -48,7 +56,7 @@ export const EnergyRelease: React.FC = () => {
             ...p,
             x: 50 + Math.cos((i / N_PARTICLES) * Math.PI * 2) * 48,
             y: 50 + Math.sin((i / N_PARTICLES) * Math.PI * 2) * 45,
-            color: CALM_COLORS[i % CALM_COLORS.length],
+            color: calmPalette[i % calmPalette.length],
           }))
         );
         setTimeout(() => setPhase("calm"), 1200);
@@ -87,18 +95,22 @@ export const EnergyRelease: React.FC = () => {
       >
         Energy Release
       </h2>
-      <p className="text-xs text-purple-200/60 mt-0.5">
+      <p
+        className="text-xs mt-0.5 transition-colors"
+        style={{ color: currentTheme.color, opacity: 0.75 }}
+      >
         Shake out what no longer serves you
       </p>
       <SparkleDivider className="my-2" />
 
       {/* Interactive Somatic Particle Silhouette Canvas */}
       <div
-        className="relative w-full rounded-2xl overflow-hidden mt-3"
+        className="relative w-full rounded-2xl overflow-hidden mt-3 transition-all duration-300"
         style={{
           height: 220,
-          background:
-            "radial-gradient(ellipse at 50% 50%, #1a0838 0%, #08060f 80%)",
+          background: `radial-gradient(ellipse at 50% 50%, ${currentTheme.cardBg} 0%, rgba(6,3,14,0.92) 80%)`,
+          border: `1.5px solid ${currentTheme.borderStrong}`,
+          boxShadow: `0 8px 32px ${currentTheme.glow}, inset 0 0 24px ${currentTheme.border}`,
         }}
       >
         <svg
@@ -111,7 +123,7 @@ export const EnergyRelease: React.FC = () => {
             cy="28%"
             rx="12%"
             ry="10%"
-            fill="rgba(240,232,255,0.07)"
+            fill={`${currentTheme.color}15`}
           />
           <rect
             x="40%"
@@ -119,7 +131,7 @@ export const EnergyRelease: React.FC = () => {
             width="20%"
             height="30%"
             rx="6%"
-            fill="rgba(240,232,255,0.07)"
+            fill={`${currentTheme.color}15`}
           />
           {particles.map((p) => (
             <circle
@@ -140,16 +152,18 @@ export const EnergyRelease: React.FC = () => {
               cx="50%"
               cy="50%"
               r="30%"
-              fill="rgba(126,200,160,0.08)"
+              fill={`${currentTheme.color}20`}
             />
           )}
         </svg>
       </div>
 
       <p
-        className="text-xs mt-3 text-center"
+        className="text-xs mt-3 text-center transition-colors"
         style={{
-          color: phase === "calm" ? "#7ec8a0" : "rgba(240,232,255,0.5)",
+          color: phase === "calm" ? currentTheme.color : "rgba(240,232,255,0.6)",
+          textShadow: phase === "calm" ? `0 0 12px ${currentTheme.glow}` : "none",
+          fontWeight: phase === "calm" ? 600 : 400,
         }}
       >
         {labels[phase]}
@@ -162,12 +176,9 @@ export const EnergyRelease: React.FC = () => {
             setParticles([]);
             setTimeout(startShake, 50);
           }}
-          className="mt-4 w-full rounded-full py-3.5 font-semibold text-white text-xs transition-all active:scale-[0.98] cursor-pointer"
+          className="mt-4 w-full rounded-full py-3.5 font-semibold text-white text-xs transition-all hover:opacity-95 active:scale-[0.98] cursor-pointer"
           style={{
-            background:
-              phase === "calm"
-                ? "linear-gradient(135deg, #7ec8a0, #60a5fa)"
-                : currentTheme.navActiveGradient,
+            background: currentTheme.navActiveGradient,
             boxShadow: `0 4px 20px ${currentTheme.glow}`,
           }}
         >

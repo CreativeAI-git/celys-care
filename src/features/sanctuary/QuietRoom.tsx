@@ -87,22 +87,26 @@ export const QuietRoom: React.FC = () => {
       >
         The Quiet Room
       </h2>
-      <p className="text-xs text-purple-200/60 mt-0.5">
+      <p
+        className="text-xs mt-0.5 transition-colors"
+        style={{ color: currentTheme.color, opacity: 0.75 }}
+      >
         A place with no noise, just you
       </p>
       <SparkleDivider className="my-2" />
 
       {/* Description Card */}
       <div
-        className="w-full rounded-2xl p-4 mt-3 flex flex-col items-center gap-3 text-left"
+        className="w-full rounded-2xl p-4 mt-3 flex flex-col items-center gap-3 text-left transition-all duration-300"
         style={{
-          background: "rgba(2,1,8,0.8)",
-          border: "1px solid rgba(180,120,255,0.15)",
+          background: currentTheme.cardBg,
+          border: `1.5px solid ${currentTheme.borderStrong}`,
+          boxShadow: `0 8px 32px ${currentTheme.glow}`,
         }}
       >
         <p
           className="text-xs leading-relaxed text-center"
-          style={{ color: "rgba(240,232,255,0.7)" }}
+          style={{ color: "rgba(240,232,255,0.85)" }}
         >
           When the world is too loud — come here. No text. No prompts. No color.
           Just one breathing dot and one minute of silence.
@@ -118,11 +122,11 @@ export const QuietRoom: React.FC = () => {
             <div key={t} className="flex items-center gap-2">
               <div
                 className="w-1.5 h-1.5 rounded-full"
-                style={{ background: "rgba(180,120,255,0.5)" }}
+                style={{ background: currentTheme.color, boxShadow: `0 0 6px ${currentTheme.glow}` }}
               />
               <span
                 className="text-xs"
-                style={{ color: "rgba(240,232,255,0.55)" }}
+                style={{ color: "rgba(240,232,255,0.65)" }}
               >
                 {t}
               </span>
@@ -133,13 +137,14 @@ export const QuietRoom: React.FC = () => {
 
       {phase === "done" && (
         <div
-          className="w-full rounded-2xl p-3.5 mt-3 text-center"
+          className="w-full rounded-2xl p-3.5 mt-3 text-center transition-all duration-300"
           style={{
-            background: "rgba(126,200,160,0.1)",
-            border: "1px solid rgba(126,200,160,0.3)",
+            background: currentTheme.cardBg,
+            border: `1px solid ${currentTheme.borderStrong}`,
+            boxShadow: `0 4px 16px ${currentTheme.glow}`,
           }}
         >
-          <p className="text-xs font-medium" style={{ color: "#7ec8a0" }}>
+          <p className="text-xs font-semibold" style={{ color: currentTheme.color }}>
             You made it through. Well done. 🌿
           </p>
         </div>

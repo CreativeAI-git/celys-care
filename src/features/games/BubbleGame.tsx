@@ -17,6 +17,15 @@ export const BubbleGame: React.FC = () => {
   >([]);
   const nextId = useRef(0);
 
+  const bubblePalette = [
+    currentTheme.color,
+    "#f5d76e", // Radiant Gold
+    "#60a5fa", // Celestial Azure
+    "#ffffff", // Shimmering White
+    `${currentTheme.color}cc`,
+    "#fcd34d", // Warm Amber
+  ];
+
   useEffect(() => {
     if (gamePhase === "idle") return;
     const durations: Record<string, number> = { inhale: 4, hold: 2, exhale: 5 };
@@ -36,7 +45,7 @@ export const BubbleGame: React.FC = () => {
             const newBubbles = Array.from({ length: 6 }, () => ({
               id: nextId.current++,
               x: 10 + Math.random() * 80,
-              color: BUBBLE_COLORS[Math.floor(Math.random() * BUBBLE_COLORS.length)],
+              color: bubblePalette[Math.floor(Math.random() * bubblePalette.length)],
               size: 24 + Math.random() * 20,
               popped: false,
             }));
@@ -51,7 +60,7 @@ export const BubbleGame: React.FC = () => {
     }, 1000);
 
     return () => clearInterval(t);
-  }, [gamePhase]);
+  }, [gamePhase, currentTheme.color]);
 
   const popBubble = (id: number) => {
     if (gamePhase !== "exhale") return;
@@ -68,10 +77,10 @@ export const BubbleGame: React.FC = () => {
     exhale: "Exhale & Pop the bubbles!",
   };
   const phaseColor: Record<string, string> = {
-    idle: "#c96ccc",
-    inhale: "#7c3aed",
-    hold: "#c9a227",
-    exhale: "#c96ccc",
+    idle: currentTheme.color,
+    inhale: currentTheme.color,
+    hold: "#f5d76e",
+    exhale: currentTheme.color,
   };
 
   return (
@@ -92,19 +101,22 @@ export const BubbleGame: React.FC = () => {
       >
         Bubble Breathing
       </h2>
-      <p className="text-xs text-purple-200/60 mt-0.5">
+      <p
+        className="text-xs mt-0.5 transition-colors"
+        style={{ color: currentTheme.color, opacity: 0.75 }}
+      >
         Inhale… then exhale to pop the bubbles
       </p>
       <SparkleDivider className="my-2 mb-3.5" />
 
       {/* Bubble Tank Viewport */}
       <div
-        className="relative w-full rounded-3xl overflow-hidden mb-4"
+        className="relative w-full rounded-3xl overflow-hidden mb-4 transition-all duration-300"
         style={{
           height: 220,
-          background:
-            "radial-gradient(ellipse at 50% 100%, #1a0d5e 0%, #0d0a1e 100%)",
-          border: "1px solid rgba(180,120,255,0.2)",
+          background: `radial-gradient(ellipse at 50% 100%, ${currentTheme.cardBg} 0%, rgba(4,8,12,0.88) 100%)`,
+          border: `1.5px solid ${currentTheme.borderStrong}`,
+          boxShadow: `0 8px 32px ${currentTheme.glow}, inset 0 0 28px ${currentTheme.border}`,
         }}
       >
         {bubbles
@@ -131,18 +143,22 @@ export const BubbleGame: React.FC = () => {
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
           {gamePhase !== "idle" && (
             <p
-              className="text-4xl font-bold"
+              className="text-4xl font-bold transition-colors"
               style={{
                 color: phaseColor[gamePhase],
                 fontFamily: "'Cormorant Garamond', serif",
+                textShadow: `0 0 20px ${currentTheme.glow}`,
               }}
             >
               {count}
             </p>
           )}
           <p
-            className="text-xs font-medium mt-1 px-4 text-center"
-            style={{ color: phaseColor[gamePhase] }}
+            className="text-xs font-semibold mt-1 px-4 text-center transition-colors"
+            style={{
+              color: phaseColor[gamePhase],
+              textShadow: `0 0 12px ${currentTheme.glow}`,
+            }}
           >
             {phaseText[gamePhase]}
           </p>
@@ -151,7 +167,7 @@ export const BubbleGame: React.FC = () => {
 
       {/* Stats and Reset */}
       <div className="flex items-center justify-between w-full mb-4 px-1">
-        <span className="text-xs" style={{ color: "rgba(240,232,255,0.6)" }}>
+        <span className="text-xs" style={{ color: currentTheme.color, opacity: 0.85 }}>
           Bubbles popped: <strong style={{ color: "#f5d76e" }}>{pops}</strong>
         </span>
         <button
@@ -159,11 +175,12 @@ export const BubbleGame: React.FC = () => {
             setBubbles([]);
             setPops(0);
           }}
-          className="text-[11px] px-3 py-1 rounded-full transition-all hover:bg-white/10"
+          className="text-[11px] px-3.5 py-1 rounded-full transition-all hover:bg-white/10 active:scale-95 cursor-pointer font-medium"
           style={{
-            background: "rgba(255,255,255,0.07)",
-            border: "1px solid rgba(180,120,255,0.2)",
-            color: "rgba(240,232,255,0.5)",
+            background: currentTheme.cardBg,
+            border: `1px solid ${currentTheme.borderStrong}`,
+            color: currentTheme.color,
+            boxShadow: `0 2px 10px ${currentTheme.glow}`,
           }}
         >
           Reset

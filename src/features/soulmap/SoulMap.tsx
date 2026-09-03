@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { CelysLogo } from "@/components/branding/CelysLogo";
 import { SparkleDivider } from "@/components/branding/SparkleDivider";
 import { useAuth } from "@/app/providers";
+import { useAccessibility } from "@/context/AccessibilityContext";
 
 const BG_STARS = Array.from({ length: 28 }, (_, i) => ({
   cx: ((i * 37 + 11) % 97) + 1.5,
@@ -23,6 +24,7 @@ const SOUL_MOODS = [
 
 export const SoulMap: React.FC = () => {
   const { user } = useAuth();
+  const { currentTheme } = useAccessibility();
   const [stars, setStars] = useState([
     { x: 62, y: 28, color: "#f5d76e", emoji: "😊", id: 0 },
     { x: 30, y: 55, color: "#7ec8a0", emoji: "😌", id: 1 },
@@ -54,20 +56,19 @@ export const SoulMap: React.FC = () => {
 
   useEffect(() => {
     fetchStars();
-  }, [user]);
+  }, []);
 
-  const addStar = async (m: (typeof SOUL_MOODS)[0]) => {
-    const seed = Date.now();
+  const addStar = async (mood: (typeof SOUL_MOODS)[0]) => {
     const newStar = {
-      x: 10 + (seed % 80),
-      y: 10 + ((seed >> 4) % 78),
-      color: m.color,
-      emoji: m.emoji,
-      id: seed,
+      x: Math.round(15 + Math.random() * 70),
+      y: Math.round(15 + Math.random() * 70),
+      color: mood.color,
+      emoji: mood.emoji,
+      id: Date.now(),
     };
     setStars((prev) => [...prev, newStar]);
-    setFlash(`✦ ${m.label} star added to your sky`);
-    setTimeout(() => setFlash(""), 2200);
+    setFlash(`+1 ${mood.label} star placed`);
+    setTimeout(() => setFlash(""), 2000);
 
     try {
       await fetch("/api/soul-map", {
@@ -76,9 +77,9 @@ export const SoulMap: React.FC = () => {
         body: JSON.stringify({
           x: newStar.x,
           y: newStar.y,
-          color: m.color,
-          emoji: m.emoji,
-          label: m.label,
+          color: newStar.color,
+          emoji: newStar.emoji,
+          mood: mood.label,
         }),
       });
     } catch {
@@ -106,19 +107,22 @@ export const SoulMap: React.FC = () => {
       >
         Soul Map
       </h2>
-      <p className="text-xs text-purple-200/60 mt-0.5">
+      <p
+        className="text-xs mt-0.5 transition-colors"
+        style={{ color: currentTheme.color, opacity: 0.75 }}
+      >
         Your journey, written in stars
       </p>
       <SparkleDivider className="my-2" />
 
       {/* Star Canvas */}
       <div
-        className="relative w-full rounded-2xl overflow-hidden mt-2 mb-2"
+        className="relative w-full rounded-2xl overflow-hidden mt-2 mb-2 transition-all duration-300"
         style={{
           height: 210,
-          background:
-            "radial-gradient(ellipse at 40% 30%, #1e1045 0%, #08060f 70%)",
-          border: "1px solid rgba(201,162,39,0.22)",
+          background: `radial-gradient(ellipse at 40% 30%, ${currentTheme.cardBg} 0%, rgba(4,8,12,0.88) 75%)`,
+          border: `1.5px solid ${currentTheme.borderStrong}`,
+          boxShadow: `0 8px 32px ${currentTheme.glow}, inset 0 0 28px ${currentTheme.border}`,
         }}
       >
         <svg
@@ -144,9 +148,10 @@ export const SoulMap: React.FC = () => {
                 y1={`${last6[i - 1].y}%`}
                 x2={`${s.x}%`}
                 y2={`${s.y}%`}
-                stroke="rgba(201,162,39,0.35)"
-                strokeWidth="0.9"
+                stroke={currentTheme.color}
+                strokeWidth="1"
                 strokeDasharray="3,5"
+                opacity="0.5"
               />
             )
           )}
@@ -177,21 +182,21 @@ export const SoulMap: React.FC = () => {
           ))}
         </svg>
         <div
-          className="absolute bottom-2 left-3 text-[11px]"
-          style={{ color: "rgba(201,162,39,0.55)" }}
+          className="absolute bottom-2 left-3 text-[11px] font-medium"
+          style={{ color: currentTheme.color, opacity: 0.85 }}
         >
           {stars.length} stars · your constellation
         </div>
       </div>
 
       {flash ? (
-        <p className="text-xs mt-1 text-center font-medium" style={{ color: "#c9a227" }}>
+        <p className="text-xs mt-1 text-center font-medium" style={{ color: "#f5d76e" }}>
           {flash}
         </p>
       ) : (
         <p
-          className="text-xs mt-1 text-center"
-          style={{ color: "rgba(240,232,255,0.38)" }}
+          className="text-xs mt-1 text-center transition-colors"
+          style={{ color: currentTheme.color, opacity: 0.7 }}
         >
           Tap a feeling to plant a star in your personal sky
         </p>
@@ -205,8 +210,9 @@ export const SoulMap: React.FC = () => {
             onClick={() => addStar(m)}
             className="flex flex-col items-center gap-1 py-2.5 rounded-xl transition-all active:scale-95 hover:bg-white/10"
             style={{
-              background: "rgba(255,255,255,0.06)",
-              border: `1px solid ${m.color}44`,
+              background: currentTheme.cardBg,
+              border: `1px solid ${currentTheme.borderStrong}`,
+              boxShadow: `0 2px 10px ${currentTheme.glow}`,
             }}
           >
             <span style={{ fontSize: 22 }}>{m.emoji}</span>

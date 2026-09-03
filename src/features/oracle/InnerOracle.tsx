@@ -164,7 +164,10 @@ export const InnerOracle: React.FC = () => {
       >
         Inner Oracle
       </h1>
-      <p className="text-xs text-purple-200/70 mb-2 mt-0.5">
+      <p
+        className="text-xs mb-2 mt-0.5 transition-colors"
+        style={{ color: currentTheme.color, opacity: 0.75 }}
+      >
         A message from your higher self
       </p>
 
@@ -177,13 +180,12 @@ export const InnerOracle: React.FC = () => {
       <div className="relative mt-3 mb-2" style={{ width: 230, height: 300 }}>
         {/* Back of Card */}
         <div
-          className="absolute inset-0 rounded-3xl flex flex-col items-center justify-center gap-3 cursor-pointer shadow-2xl"
+          className="absolute inset-0 rounded-3xl flex flex-col items-center justify-center gap-3 cursor-pointer shadow-2xl transition-all duration-300"
           onClick={pull}
           style={{
-            background: "linear-gradient(145deg, #1e1045, #0d0a1e)",
-            border: "2px solid rgba(201,162,39,0.4)",
-            boxShadow:
-              "0 0 40px rgba(124,58,237,0.3), inset 0 0 30px rgba(201,162,39,0.05)",
+            background: `radial-gradient(ellipse at 50% 30%, ${currentTheme.cardBg} 0%, rgba(4,2,10,0.96) 100%)`,
+            border: `2px solid ${currentTheme.borderStrong}`,
+            boxShadow: `0 0 40px ${currentTheme.glow}, inset 0 0 30px ${currentTheme.border}`,
             opacity: flipped ? 0 : 1,
             pointerEvents: flipped ? "none" : "auto",
             transition: "opacity 0.4s ease",
@@ -193,13 +195,13 @@ export const InnerOracle: React.FC = () => {
           <div className="text-center px-4">
             <p
               className="text-[11px] font-bold"
-              style={{ color: "rgba(201,162,39,0.7)", letterSpacing: "0.18em" }}
+              style={{ color: currentTheme.color, letterSpacing: "0.18em" }}
             >
               INNER ORACLE
             </p>
             <p
               className="text-[10px] mt-1"
-              style={{ color: "rgba(240,232,255,0.4)" }}
+              style={{ color: "rgba(240,232,255,0.6)" }}
             >
               tap to receive your message
             </p>
@@ -209,7 +211,7 @@ export const InnerOracle: React.FC = () => {
               <div
                 key={pos}
                 className={`absolute ${pos} w-4 h-4 flex items-center justify-center`}
-                style={{ color: "rgba(201,162,39,0.5)", fontSize: 10 }}
+                style={{ color: currentTheme.color, fontSize: 10, opacity: 0.8 }}
               >
                 ✦
               </div>
@@ -220,12 +222,11 @@ export const InnerOracle: React.FC = () => {
         {/* Front of Card */}
         {card && (
           <div
-            className="absolute inset-0 rounded-3xl flex flex-col items-center justify-center gap-3 px-5 shadow-2xl"
+            className="absolute inset-0 rounded-3xl flex flex-col items-center justify-center gap-3 px-5 shadow-2xl transition-all duration-300"
             style={{
-              background: "linear-gradient(145deg, #1e1045, #2d1b5e)",
-              border: "2px solid rgba(245, 215, 110, 0.5)",
-              boxShadow:
-                "0 0 50px rgba(201,162,39,0.25), inset 0 0 30px rgba(124,58,237,0.15)",
+              background: `radial-gradient(ellipse at 50% 30%, ${currentTheme.cardBg} 0%, rgba(6,3,16,0.95) 100%)`,
+              border: `2px solid ${currentTheme.borderStrong}`,
+              boxShadow: `0 0 50px ${currentTheme.glow}, inset 0 0 30px ${currentTheme.border}`,
               opacity: flipped ? 1 : 0,
               pointerEvents: flipped ? "auto" : "none",
               transition: "opacity 0.35s ease",
@@ -234,8 +235,7 @@ export const InnerOracle: React.FC = () => {
             <div
               className="w-full h-px"
               style={{
-                background:
-                  "linear-gradient(to right, transparent, rgba(201,162,39,0.4), transparent)",
+                background: `linear-gradient(to right, transparent, ${currentTheme.color}66, transparent)`,
               }}
             />
             <span style={{ fontSize: 46 }}>{card.symbol}</span>
@@ -251,18 +251,19 @@ export const InnerOracle: React.FC = () => {
             <div
               className="w-full h-px"
               style={{
-                background:
-                  "linear-gradient(to right, transparent, rgba(201,162,39,0.3), transparent)",
+                background: `linear-gradient(to right, transparent, ${currentTheme.color}66, transparent)`,
               }}
             />
-            <p className="text-xs text-center leading-relaxed text-purple-100/90 font-serif">
+            <p
+              className="text-xs text-center leading-relaxed font-serif"
+              style={{ color: "rgba(255, 255, 255, 0.95)" }}
+            >
               {card.wisdom}
             </p>
             <div
               className="w-full h-px"
               style={{
-                background:
-                  "linear-gradient(to right, transparent, rgba(201,162,39,0.3), transparent)",
+                background: `linear-gradient(to right, transparent, ${currentTheme.color}66, transparent)`,
               }}
             />
           </div>
@@ -272,7 +273,7 @@ export const InnerOracle: React.FC = () => {
       {/* Main Action Button (Exact Figma Match) */}
       <button
         onClick={pull}
-        className="w-full rounded-full py-4 font-bold text-white transition-all active:scale-[0.98] cursor-pointer mt-3 text-sm shadow-xl flex items-center justify-center gap-1.5"
+        className="w-full rounded-full py-4 font-bold text-white transition-all hover:opacity-95 active:scale-[0.98] cursor-pointer mt-3 text-sm shadow-xl flex items-center justify-center gap-1.5"
         style={{
           background: currentTheme.navActiveGradient,
           border: `1px solid ${currentTheme.borderStrong}`,
@@ -287,7 +288,8 @@ export const InnerOracle: React.FC = () => {
       {history.length > 0 && (
         <button
           onClick={() => setShowHistory((s) => !s)}
-          className="text-xs mt-3.5 mb-1 transition-colors text-purple-200/60 hover:text-purple-100 cursor-pointer"
+          className="text-xs mt-3.5 mb-1 transition-colors hover:underline cursor-pointer"
+          style={{ color: currentTheme.color, opacity: 0.8 }}
         >
           {showHistory ? "Hide" : "View"} recent cards ({history.length})
         </button>
@@ -306,13 +308,13 @@ export const InnerOracle: React.FC = () => {
                 style={{
                   background: isSelected
                     ? "rgba(201, 162, 39, 0.15)"
-                    : "rgba(255, 255, 255, 0.04)",
+                    : currentTheme.cardBg,
                   border: isSelected
                     ? "1.5px solid rgba(245, 215, 110, 0.65)"
                     : `1px solid ${currentTheme.cardBorder}`,
                   boxShadow: isSelected
                     ? "0 0 16px rgba(245, 215, 110, 0.25)"
-                    : "none",
+                    : `0 2px 8px ${currentTheme.glow}`,
                 }}
               >
                 <div className="flex items-center gap-3">
@@ -327,7 +329,7 @@ export const InnerOracle: React.FC = () => {
                 {isSelected ? (
                   <span className="text-[11px] text-[#f5d76e] font-bold">✦ Active</span>
                 ) : (
-                  <span className="text-purple-300/40 text-xs">→</span>
+                  <span style={{ color: currentTheme.color, opacity: 0.6, fontSize: 12 }}>→</span>
                 )}
               </button>
             );
