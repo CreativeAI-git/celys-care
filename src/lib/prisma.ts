@@ -1,6 +1,7 @@
 // Ensure DATABASE_URL fallback is always set before PrismaClient initialization
+const defaultDbUrl = "postgresql://postgres:postgres@localhost:5432/postgres";
 if (!process.env.DATABASE_URL) {
-  process.env.DATABASE_URL = "file:./dev.db";
+  process.env.DATABASE_URL = defaultDbUrl;
 }
 
 import { PrismaClient } from "@prisma/client";
@@ -14,7 +15,7 @@ export const prisma =
   new PrismaClient({
     datasources: {
       db: {
-        url: process.env.DATABASE_URL || "file:./dev.db",
+        url: process.env.DATABASE_URL || defaultDbUrl,
       },
     },
     log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],

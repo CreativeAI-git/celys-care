@@ -1,9 +1,13 @@
 "use client";
 
 import React from "react";
-import { ShieldCheck, Database, EyeOff, Lock } from "lucide-react";
+import { ShieldCheck, Database, EyeOff, Lock, Trash2 } from "lucide-react";
 
-export const PrivacyPolicyScreen: React.FC = () => {
+interface PrivacyPolicyScreenProps {
+  onNavigate?: (screenId: string) => void;
+}
+
+export const PrivacyPolicyScreen: React.FC<PrivacyPolicyScreenProps> = ({ onNavigate }) => {
   return (
     <div className="flex flex-col items-center px-4 pt-1 pb-8 text-center w-full max-w-md mx-auto select-none">
 

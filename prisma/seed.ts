@@ -1,5 +1,6 @@
+const defaultDbUrl = "postgresql://postgres:postgres@localhost:5432/postgres";
 if (!process.env.DATABASE_URL) {
-  process.env.DATABASE_URL = "file:./dev.db";
+  process.env.DATABASE_URL = defaultDbUrl;
 }
 
 import { PrismaClient } from "@prisma/client";
@@ -8,10 +9,12 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient({
   datasources: {
     db: {
-      url: process.env.DATABASE_URL || "file:./dev.db",
+      url: process.env.DATABASE_URL || defaultDbUrl,
     },
   },
 });
+
+
 
 async function main() {
   console.log("Seeding Celys Care database...");
