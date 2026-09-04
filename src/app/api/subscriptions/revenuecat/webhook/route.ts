@@ -15,10 +15,19 @@ export async function POST(req: NextRequest) {
     const authHeader = req.headers.get("authorization");
     const webhookSecret = process.env.REVENUECAT_WEBHOOK_SECRET;
 
-    // Verify secret if configured
-    if (webhookSecret && authHeader !== `Bearer ${webhookSecret}`) {
-      console.warn("RevenueCat webhook: Unauthorized authorization header.");
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Verify secret if configured (flexible to match with or without 'Bearer ')
+    if (
+      webhookSecret &&
+      webhookSecret.trim() !== "" &&
+      webhookSecret !== "rc_webhook_secret_placeholder"
+    ) {
+      const cleanHeader = (authHeader || "").replace(/^Bearer\s+/i, "").trim();
+      const cleanSecret = webhookSecret.replace(/^Bearer\s+/i, "").trim();
+
+      if (cleanHeader !== cleanSecret) {
+        console.warn("RevenueCat webhook: Unauthorized authorization header.");
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
     }
 
     const payload = await req.json();
@@ -29,6 +38,16 @@ export async function POST(req: NextRequest) {
     }
 
     const { type, app_user_id, entitlement_id, entitlement_ids = [], expiration_at_ms } = event;
+
+    // Handle RevenueCat Dashboard "Test Webhook" action immediately
+    if (type === "TEST") {
+      console.info("RevenueCat test webhook event received successfully!");
+      return NextResponse.json({
+        success: true,
+        message: "RevenueCat test webhook received successfully!",
+        event,
+      });
+    }
     const isCelestial =
       entitlement_id === "celestial_premium" ||
       (Array.isArray(entitlement_ids) && entitlement_ids.includes("celestial_premium"));
