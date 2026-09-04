@@ -143,6 +143,102 @@ export async function purchaseRevenueCatPackage(pkg: PurchasesPackage): Promise<
   }
 }
 
+/**
+ * End-to-end subscription purchase handler
+ * Automatically handles SDK initialization, fetching offerings, finding the target package,
+ * triggering the native Google Play / Apple sheet, and syncing with backend.
+ */
+export async function purchaseRevenueCatPlan(
+  billing: "monthly" | "annual",
+  userId?: string
+): Promise<{
+  success: boolean;
+  isPremium: boolean;
+  isBrowser?: boolean;
+  error?: string;
+}> {
+  // 1. Check if running in browser / non-native
+  if (typeof window !== "undefined" && !Capacitor.isNativePlatform()) {
+    return {
+      success: false,
+      isPremium: false,
+      isBrowser: true,
+      error: "Browser Mode: Google Play Billing dialog only opens inside the native Android App (.apk) on a mobile device.",
+    };
+  }
+
+  // 2. Ensure SDK is initialized
+  try {
+    if (!isInitialized) {
+      const initialized = await initRevenueCat(userId);
+      if (!initialized) {
+        return {
+          success: false,
+          isPremium: false,
+          error: "Failed to connect to Google Play Billing. Please check your internet connection.",
+        };
+      }
+    }
+
+    if (userId) {
+      await Purchases.logIn({ appUserID: userId });
+    }
+
+    // 3. Fetch offerings from Google Play
+    const offerings = await Purchases.getOfferings();
+    if (!offerings.current || !offerings.current.availablePackages || offerings.current.availablePackages.length === 0) {
+      return {
+        success: false,
+        isPremium: false,
+        error: "Google Play returned no active products. Please verify your app is uploaded to Internal Testing on Google Play Console and license tester email is active.",
+      };
+    }
+
+    // 4. Find the matching package
+    const packages = offerings.current.availablePackages;
+    const targetPkg = packages.find((pkg) => {
+      const id = (pkg.identifier || "").toLowerCase();
+      const type = (pkg.packageType || "").toLowerCase();
+      if (billing === "annual") {
+        return id.includes("annual") || id.includes("year") || type === "annual";
+      }
+      return id.includes("monthly") || id.includes("month") || type === "monthly";
+    }) || packages[0];
+
+    if (!targetPkg) {
+      return {
+        success: false,
+        isPremium: false,
+        error: `Could not find a ${billing} plan in Google Play Store packages.`,
+      };
+    }
+
+    // 5. Trigger Native Google Play Billing Dialog!
+    const { customerInfo } = await Purchases.purchasePackage({ aPackage: targetPkg });
+    const isPremium = hasActivePremiumEntitlement(customerInfo);
+
+    if (isPremium) {
+      await syncRevenueCatWithBackend(customerInfo);
+      return { success: true, isPremium: true };
+    }
+
+    return {
+      success: false,
+      isPremium: false,
+      error: "Payment processed, but entitlement was not active. Please tap 'Restore purchase'.",
+    };
+  } catch (error: any) {
+    if (error.userCancelled) {
+      return { success: false, isPremium: false, error: "Payment was cancelled." };
+    }
+    return {
+      success: false,
+      isPremium: false,
+      error: error.message || "Google Play Store payment failed.",
+    };
+  }
+}
+
 export async function restoreRevenueCatPurchases(): Promise<{
   success: boolean;
   isPremium: boolean;

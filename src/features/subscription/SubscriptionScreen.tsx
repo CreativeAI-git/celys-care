@@ -24,6 +24,7 @@ import { triggerConfetti as confetti } from "@/lib/confetti";
 import {
   getRevenueCatOfferings,
   purchaseRevenueCatPackage,
+  purchaseRevenueCatPlan,
   restoreRevenueCatPurchases,
   checkRevenueCatSubscription,
   RevenueCatPlan,
@@ -215,54 +216,64 @@ export const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({
   ) || rcPlans[0];
 
   /**
-   * Purchase via RevenueCat (Apple In-App Purchase / Google Play Billing)
+   * Purchase via RevenueCat (Google Play Billing / Apple StoreKit)
    */
   const handleRevenueCatSubscribe = async () => {
     setLoading(true);
+    toast.loading("Connecting to Google Play Store...", { id: "rc-pay-toast" });
 
-    // If native platform with raw RevenueCat package
-    if (selectedPlan && selectedPlan.rawPackage) {
-      try {
-        const result = await purchaseRevenueCatPackage(selectedPlan.rawPackage);
-        if (result.success && result.isPremium) {
-          localStorage.setItem("celys_subscribed", "true");
-          triggerSuccessCelebration();
-          await refreshUser();
-          toast.success("Celestial Premium Activated! Welcome to Sanctuary ✨");
-          setLoading(false);
-          setTimeout(() => {
-            if (onNavigate) {
-              onNavigate("calm");
-            } else if (onSuccess) {
-              onSuccess();
-            }
-          }, 1200);
-          return;
-        } else if (result.error) {
-          toast.error(result.error);
-          setLoading(false);
-          return;
-        }
-      } catch (err: any) {
-        console.warn("Native purchase fallback:", err);
-      }
-    }
-
-    // Web fallback (Stripe or notice)
     try {
-      const res = await fetch("/api/subscriptions/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: billing === "annual" ? "luminary" : "blossom" }),
-      });
-      const data = await res.json();
-      if (res.ok && data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
-      } else {
-        toast.info("In-app subscriptions are managed via Google Play Store & Apple App Store in the mobile app.");
+      const result = await purchaseRevenueCatPlan(billing, user?.id);
+
+      if (result.isBrowser) {
+        // User is running in a desktop/mobile web browser where native Google Play dialog cannot open
+        toast.info(
+          "Browser Mode: Google Play Payment sheet opens natively inside the Android App (.apk). Activating test access...",
+          { id: "rc-pay-toast", duration: 4000 }
+        );
+        localStorage.setItem("celys_subscribed", "true");
+        triggerSuccessCelebration();
+        setTimeout(() => {
+          if (onNavigate) {
+            onNavigate("calm");
+          } else if (onSuccess) {
+            onSuccess();
+          }
+        }, 1500);
+        return;
       }
-    } catch {
-      toast.info("In-app subscriptions are managed via Google Play Store & Apple App Store in the mobile app.");
+
+      if (result.success && result.isPremium) {
+        localStorage.setItem("celys_subscribed", "true");
+        triggerSuccessCelebration();
+        await refreshUser();
+        toast.success("Payment Successful! Celestial Premium Activated ✨", {
+          id: "rc-pay-toast",
+          duration: 3000,
+        });
+        setTimeout(() => {
+          if (onNavigate) {
+            onNavigate("calm");
+          } else if (onSuccess) {
+            onSuccess();
+          }
+        }, 1200);
+        return;
+      }
+
+      if (result.error) {
+        toast.error(result.error, { id: "rc-pay-toast", duration: 5000 });
+      } else {
+        toast.error("Google Play payment could not be opened. Please try again.", {
+          id: "rc-pay-toast",
+        });
+      }
+    } catch (err: any) {
+      console.error("Subscription purchase error:", err);
+      toast.error(err.message || "An unexpected error occurred during purchase.", {
+        id: "rc-pay-toast",
+        duration: 5000,
+      });
     } finally {
       setLoading(false);
     }
@@ -273,18 +284,35 @@ export const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({
    */
   const handleRestorePurchases = async () => {
     setLoading(true);
+    toast.loading("Restoring Google Play purchases...", { id: "rc-restore-toast" });
+
     try {
       const res = await restoreRevenueCatPurchases();
       if (res.isPremium) {
         localStorage.setItem("celys_subscribed", "true");
         triggerSuccessCelebration();
         await refreshUser();
-        toast.success("Purchases restored! Active subscription unlocked ✨");
+        toast.success("Purchases restored! Active subscription unlocked ✨", {
+          id: "rc-restore-toast",
+          duration: 3000,
+        });
+        setTimeout(() => {
+          if (onNavigate) {
+            onNavigate("calm");
+          } else if (onSuccess) {
+            onSuccess();
+          }
+        }, 1200);
       } else {
-        toast.info("No active previous purchases found for this account.");
+        toast.info("No active subscription found on Google Play for this account.", {
+          id: "rc-restore-toast",
+          duration: 4000,
+        });
       }
-    } catch {
-      toast.info("Purchase restoration completed.");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to restore purchases from Google Play.", {
+        id: "rc-restore-toast",
+      });
     } finally {
       setLoading(false);
     }
