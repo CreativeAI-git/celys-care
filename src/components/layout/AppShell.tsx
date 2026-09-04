@@ -8,7 +8,6 @@ import {
   Music,
   Moon,
   Grid,
-  ChevronLeft,
   LogOut,
   X,
   Menu,
@@ -350,7 +349,46 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
   const [navHistory, setNavHistory] = useState<string[]>([initialScreen || "calm"]);
   const lastBackPressTimeRef = useRef<number>(0);
 
+  // User subscription & 7-day free trial verification
+  const isPaidActive = Boolean(
+    user?.subscription &&
+    user.subscription.status === "active" &&
+    user.subscription.plan !== "free" &&
+    user.subscription.plan !== "celestial_trial" &&
+    (!user.subscription.expiresAt || new Date(user.subscription.expiresAt) > new Date())
+  );
+
+  const isServerTrialActive = Boolean(
+    user?.subscription &&
+    user.subscription.status === "trialing" &&
+    user.subscription.trialEnd &&
+    new Date(user.subscription.trialEnd) > new Date()
+  );
+
+  const localTrialEnd = typeof window !== "undefined" ? localStorage.getItem("celys_trial_end") : null;
+  const isLocalTrialActive = Boolean(localTrialEnd && new Date(localTrialEnd) > new Date());
+
+  // Strict Gatekeeper Access: User MUST have an active 7-day trial OR an active paid subscription
+  const hasAccess = Boolean(isPaidActive || isServerTrialActive || isLocalTrialActive);
+
   const handleGoBack = (): boolean => {
+    // 0. If user has no active subscription/trial, keep strictly locked on subscription paywall
+    if (user && !hasAccess) {
+      const now = Date.now();
+      if (now - lastBackPressTimeRef.current < 2000) {
+        if (Capacitor.isNativePlatform()) {
+          CapApp.exitApp();
+        }
+      } else {
+        lastBackPressTimeRef.current = now;
+        toast("Press back again to exit Celys Care", {
+          duration: 2000,
+          id: "exit-celys-toast",
+        });
+      }
+      return false;
+    }
+
     // 1. If Delete modal is open, dismiss it
     if (showDeleteModal) {
       setShowDeleteModal(false);
@@ -476,20 +514,42 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
     };
   }, []);
 
-  // When user is authenticated, ensure we immediately redirect to "calm" if activeScreenId is "login" or "signup"
+  // When user is authenticated, enforce strict gatekeeper access
   useEffect(() => {
-    if (user && (activeScreenId === "login" || activeScreenId === "signup")) {
-      setActiveScreenId("calm");
-      setNavHistory(["calm"]);
-      if (typeof window !== "undefined") {
-        try {
-          window.history.replaceState({ screenId: "calm" }, "", "/");
-        } catch { }
+    if (user) {
+      if (!hasAccess) {
+        // User has NO active trial or subscription -> Strictly locked on subscription paywall!
+        if (activeScreenId !== "subscription") {
+          setActiveScreenId("subscription");
+          setNavHistory(["subscription"]);
+          if (typeof window !== "undefined") {
+            try {
+              window.history.replaceState({ screenId: "subscription" }, "", "/subscription");
+            } catch { }
+          }
+        }
+      } else {
+        // User has active trial or subscription
+        if (activeScreenId === "login" || activeScreenId === "signup") {
+          setActiveScreenId("calm");
+          setNavHistory(["calm"]);
+          if (typeof window !== "undefined") {
+            try {
+              window.history.replaceState({ screenId: "calm" }, "", "/");
+            } catch { }
+          }
+        }
       }
     }
-  }, [user, activeScreenId]);
+  }, [user, hasAccess, activeScreenId]);
 
   const handleNavigate = (screenId: string) => {
+    // Strictly block navigation if user has no active trial or subscription
+    if (user && !hasAccess && screenId !== "subscription") {
+      toast.error("Please activate your 7-day free trial or choose a plan to enter Sanctuary.");
+      setActiveScreenId("subscription");
+      return;
+    }
     if (screenId === "signup") {
       if (user) {
         setActiveScreenId("calm");
@@ -623,7 +683,34 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
           <LoginScreen
             initialMode={authMode}
             onModeChange={handleSetAuthMode}
-            onSuccess={() => handleNavigate("calm")}
+            onSuccess={(authType, authUser) => {
+              if (authType === "signup") {
+                handleNavigate("subscription");
+              } else {
+                // Check if logging in user has active trial or paid subscription
+                const isPaid = Boolean(
+                  authUser?.subscription &&
+                  authUser.subscription.status === "active" &&
+                  authUser.subscription.plan !== "free" &&
+                  authUser.subscription.plan !== "celestial_trial" &&
+                  (!authUser.subscription.expiresAt || new Date(authUser.subscription.expiresAt) > new Date())
+                );
+                const isServerTrial = Boolean(
+                  authUser?.subscription &&
+                  authUser.subscription.status === "trialing" &&
+                  authUser.subscription.trialEnd &&
+                  new Date(authUser.subscription.trialEnd) > new Date()
+                );
+                const localTrial = typeof window !== "undefined" ? localStorage.getItem("celys_trial_end") : null;
+                const isLocalTrial = Boolean(localTrial && new Date(localTrial) > new Date());
+
+                if (isPaid || isServerTrial || isLocalTrial) {
+                  handleNavigate("calm");
+                } else {
+                  handleNavigate("subscription");
+                }
+              }
+            }}
             onNavigate={handleNavigate}
           />
         </div>
@@ -632,10 +719,11 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
   }
 
   // 3. Authenticated Flow: Real Production Application
+  const effectiveScreenId = (user && !hasAccess) ? "subscription" : activeScreenId;
   const currentFeature =
-    FEATURES_REGISTRY.find((f) => f.id === activeScreenId) || FEATURES_REGISTRY[0];
+    FEATURES_REGISTRY.find((f) => f.id === effectiveScreenId) || FEATURES_REGISTRY[0];
   const CurrentFeatureComponent = currentFeature.component;
-  const isHomeScreen = activeScreenId === "calm";
+  const isHomeScreen = effectiveScreenId === "calm";
 
   return (
     <div
@@ -656,112 +744,126 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
           paddingTop: "calc(env(safe-area-inset-top, 0px) + 4px)",
         }}
       >
-        {/* Left: Back Arrow (on secondary screens) + Screen Icon & Title */}
-        <div className="flex items-center gap-2">
-          {!isHomeScreen && (
+        {!hasAccess ? (
+          <>
+            {/* Locked on Paywall: Clean Logo & Log Out Button */}
+            <div className="flex items-center gap-2">
+              <CelysLogo size={28} />
+              <span className="text-sm font-semibold text-[#f0e8ff] tracking-wide font-serif">
+                Celys Care Premium
+              </span>
+            </div>
             <button
-              onClick={handleGoBack}
-              className="w-8 h-8 rounded-full flex items-center justify-center transition-all hover:bg-white/15 active:scale-90 cursor-pointer"
-              style={{
-                background: "rgba(255, 255, 255, 0.08)",
-                border: `1px solid ${currentTheme.border}`,
-                color: "#f5d76e",
-              }}
-              title="Go Back"
-              aria-label="Go Back"
+              onClick={logout}
+              className="text-xs text-purple-200/75 hover:text-white flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/15 border border-purple-300/20 transition-all cursor-pointer"
+              title="Log Out"
             >
-              <ChevronLeft size={18} />
+              <LogOut size={13} />
+              <span>Log out</span>
             </button>
-          )}
-          <span className="text-base select-none">{currentFeature.icon}</span>
-          <span className="text-sm font-semibold text-[#f0e8ff] tracking-wide">
-            {currentFeature.label}
-          </span>
-        </div>
+          </>
+        ) : (
+          <>
+            {/* Left: Screen Icon & Title */}
+            <div className="flex items-center gap-2">
+              <span className="text-base select-none">{currentFeature.icon}</span>
+              <span className="text-sm font-semibold text-[#f0e8ff] tracking-wide">
+                {currentFeature.label}
+              </span>
+            </div>
 
-        {/* Right: Clean Circular Hamburger Menu Button */}
-        <button
-          onClick={() => setShowDirectory(true)}
-          className="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:bg-white/15 active:scale-95"
-          style={{
-            background: showDirectory
-              ? currentTheme.glow
-              : "rgba(255, 255, 255, 0.08)",
-            border: `1px solid ${currentTheme.border}`,
-            color: "#f0e8ff",
-          }}
-          title="Sanctuary Directory Menu"
-        >
-          <Menu size={18} />
-        </button>
+            {/* Right: Clean Circular Hamburger Menu Button */}
+            <button
+              onClick={() => setShowDirectory(true)}
+              className="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:bg-white/15 active:scale-95 cursor-pointer"
+              style={{
+                background: showDirectory
+                  ? currentTheme.glow
+                  : "rgba(255, 255, 255, 0.08)",
+                border: `1px solid ${currentTheme.border}`,
+                color: "#f0e8ff",
+              }}
+              title="Sanctuary Directory Menu"
+            >
+              <Menu size={18} />
+            </button>
+          </>
+        )}
       </header>
 
       {/* Main Viewport Content Area */}
       <main
-        className={`relative z-10 w-full max-w-md flex-1 min-h-0 px-2 pt-2 pb-20 ${activeScreenId === "chat" ? "overflow-hidden" : "overflow-y-auto"
-          }`}
+        className={`relative z-10 w-full max-w-md flex-1 min-h-0 px-2 pt-2 ${
+          !hasAccess
+            ? "pb-6 overflow-y-auto"
+            : activeScreenId === "chat"
+            ? "overflow-hidden pb-20"
+            : "overflow-y-auto pb-20"
+        }`}
       >
         <CurrentFeatureComponent
-          onSuccess={() => handleNavigate("mood")}
+          onSuccess={() => handleNavigate("calm")}
           onNavigate={handleNavigate}
         />
       </main>
 
-      {/* Real Application Bottom Navigation Bar */}
-      <nav
-        className="fixed bottom-0 left-0 right-0 z-30 flex justify-center px-3 pb-3 pt-2 safe-area-bottom"
-        style={{
-          background: currentTheme.navFade,
-          backdropFilter: "blur(16px)",
-          WebkitBackdropFilter: "blur(16px)",
-        }}
-      >
-        <div
-          className="w-full max-w-md rounded-3xl py-1.5 px-1.5 sm:px-2 flex items-center justify-between gap-1 shadow-2xl transition-all duration-500"
+      {/* Real Application Bottom Navigation Bar (ONLY shown when user has active trial or subscription!) */}
+      {hasAccess && (
+        <nav
+          className="fixed bottom-0 left-0 right-0 z-30 flex justify-center px-3 pb-3 pt-2 safe-area-bottom"
           style={{
-            background: currentTheme.navBg,
-            border: `1px solid ${currentTheme.borderStrong}`,
-            boxShadow: `0 8px 32px rgba(0, 0, 0, 0.6), 0 0 22px ${currentTheme.glow}`,
+            background: currentTheme.navFade,
+            backdropFilter: "blur(16px)",
+            WebkitBackdropFilter: "blur(16px)",
           }}
         >
-          {PRIMARY_BOTTOM_NAV.map((item) => {
-            const isActive = activeScreenId === item.id;
-            const IconComponent = item.icon;
+          <div
+            className="w-full max-w-md rounded-3xl py-1.5 px-1.5 sm:px-2 flex items-center justify-between gap-1 shadow-2xl transition-all duration-500"
+            style={{
+              background: currentTheme.navBg,
+              border: `1px solid ${currentTheme.borderStrong}`,
+              boxShadow: `0 8px 32px rgba(0, 0, 0, 0.6), 0 0 22px ${currentTheme.glow}`,
+            }}
+          >
+            {PRIMARY_BOTTOM_NAV.map((item) => {
+              const isActive = activeScreenId === item.id;
+              const IconComponent = item.icon;
 
-            return (
-              <button
-                key={item.id}
-                onClick={() => handleNavigate(item.id)}
-                className="flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 px-0.5 rounded-2xl transition-all duration-200 cursor-pointer"
-                style={{
-                  color: isActive ? "#ffffff" : "rgba(240, 232, 255, 0.55)",
-                  background: isActive ? currentTheme.navActiveGradient : "transparent",
-                  border: isActive
-                    ? `1px solid ${currentTheme.border}`
-                    : "1px solid transparent",
-                  boxShadow: isActive ? `0 0 14px ${currentTheme.glow}` : "none",
-                }}
-              >
-                <IconComponent
-                  size={17}
-                  className={isActive ? "text-[#f5d76e] drop-shadow-[0_0_6px_rgba(245,215,110,0.6)]" : ""}
-                />
-                <span
-                  className="text-[10px] font-medium mt-0.5 truncate max-w-full text-center leading-tight select-none"
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleNavigate(item.id)}
+                  className="flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 px-0.5 rounded-2xl transition-all duration-200 cursor-pointer"
                   style={{
-                    fontWeight: isActive ? 600 : 500,
+                    color: isActive ? "#ffffff" : "rgba(240, 232, 255, 0.55)",
+                    background: isActive ? currentTheme.navActiveGradient : "transparent",
+                    border: isActive
+                      ? `1px solid ${currentTheme.border}`
+                      : "1px solid transparent",
+                    boxShadow: isActive ? `0 0 14px ${currentTheme.glow}` : "none",
                   }}
                 >
-                  {item.label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </nav>
+                  <IconComponent
+                    size={17}
+                    className={isActive ? "text-[#f5d76e] drop-shadow-[0_0_6px_rgba(245,215,110,0.6)]" : ""}
+                  />
+                  <span
+                    className="text-[10px] font-medium mt-0.5 truncate max-w-full text-center leading-tight select-none"
+                    style={{
+                      fontWeight: isActive ? 600 : 500,
+                    }}
+                  >
+                    {item.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+      )}
 
       {/* Feature Directory Drawer (Sanctuary Directory with Updated Figma Names) */}
-      {showDirectory && (
+      {hasAccess && showDirectory && (
         <div
           className="fixed inset-0 z-50 flex flex-col animate-in fade-in duration-200"
           style={{ background: currentTheme.navBg, backdropFilter: "blur(24px)" }}

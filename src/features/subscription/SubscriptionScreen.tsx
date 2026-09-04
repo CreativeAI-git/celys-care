@@ -39,7 +39,15 @@ const SUB_FEATURES = [
   { icon: Shield, label: "Private, Secure & Ad-Free" },
 ];
 
-export const SubscriptionScreen: React.FC = () => {
+interface SubscriptionScreenProps {
+  onNavigate?: (screenId: string) => void;
+  onSuccess?: () => void;
+}
+
+export const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({
+  onNavigate,
+  onSuccess,
+}) => {
   const { user, refreshUser } = useAuth();
   const { currentTheme } = useAccessibility();
   const [billing, setBilling] = useState<"monthly" | "annual">("annual");
@@ -162,6 +170,13 @@ export const SubscriptionScreen: React.FC = () => {
       triggerSuccessCelebration();
       await refreshUser();
       toast.success("7-Day Free Trial Activated! Enjoy full sanctuary access ✨");
+      setTimeout(() => {
+        if (onNavigate) {
+          onNavigate("calm");
+        } else if (onSuccess) {
+          onSuccess();
+        }
+      }, 1200);
     } catch (err: any) {
       // Local offline fallback
       const now = new Date();
@@ -178,6 +193,13 @@ export const SubscriptionScreen: React.FC = () => {
 
       triggerSuccessCelebration();
       toast.success("7-Day Free Trial Activated! Enjoy sanctuary access ✨");
+      setTimeout(() => {
+        if (onNavigate) {
+          onNavigate("calm");
+        } else if (onSuccess) {
+          onSuccess();
+        }
+      }, 1200);
     } finally {
       setLoading(false);
     }
@@ -208,6 +230,13 @@ export const SubscriptionScreen: React.FC = () => {
           await refreshUser();
           toast.success("Celestial Premium Activated! Welcome to Sanctuary ✨");
           setLoading(false);
+          setTimeout(() => {
+            if (onNavigate) {
+              onNavigate("calm");
+            } else if (onSuccess) {
+              onSuccess();
+            }
+          }, 1200);
           return;
         } else if (result.error) {
           toast.error(result.error);

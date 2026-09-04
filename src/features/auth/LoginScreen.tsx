@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { CelysLogo } from "@/components/branding/CelysLogo";
 
 interface LoginScreenProps {
-  onSuccess?: () => void;
+  onSuccess?: (authType?: "login" | "signup", authUser?: any) => void;
   onNavigate?: (screenId: string) => void;
   initialMode?: "login" | "signup";
   onModeChange?: (mode: "login" | "signup") => void;
@@ -105,14 +105,17 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
           userGreeting
         );
         const finalName = registeredUser?.displayName || userGreeting || fallbackName;
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem("celys_just_registered", "true");
+        }
         toast.success(`Welcome to Celys Care Sanctuary, ${finalName}! 🌸`);
-        if (onSuccess) onSuccess();
+        if (onSuccess) onSuccess("signup", registeredUser);
         return;
       } else {
         const loggedInUser = await login(trimmedEmail, trimmedPassword);
         const finalName = loggedInUser?.displayName || fallbackName;
         toast.success(`Welcome to Celys Care Sanctuary, ${finalName}! 🌸`);
-        if (onSuccess) onSuccess();
+        if (onSuccess) onSuccess("login", loggedInUser);
       }
     } catch (err: any) {
       setError(err.message || "Authentication failed. Please check your credentials.");
