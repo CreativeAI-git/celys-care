@@ -11,7 +11,10 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const { rcAppUserId, activeEntitlements = [] } = body;
-    const isPremium = activeEntitlements.includes("celestial_premium") || activeEntitlements.length > 0;
+    const isPremium =
+      activeEntitlements.includes("celys_care_pro") ||
+      activeEntitlements.includes("celestial_premium") ||
+      activeEntitlements.length > 0;
 
     if (isPremium) {
       const subscription = await prisma.subscription.upsert({
@@ -36,7 +39,11 @@ export async function POST(req: NextRequest) {
       });
     } else {
       const currentSub = await prisma.subscription.findUnique({ where: { userId: user.id } });
-      if (currentSub && currentSub.plan === "celestial_premium" && currentSub.status === "active") {
+      if (
+        currentSub &&
+        (currentSub.plan === "celestial_premium" || currentSub.plan === "celys_care_pro") &&
+        currentSub.status === "active"
+      ) {
         const updated = await prisma.subscription.update({
           where: { userId: user.id },
           data: { status: "canceled" },

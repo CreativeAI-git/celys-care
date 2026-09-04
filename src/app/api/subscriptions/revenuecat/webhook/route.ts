@@ -49,8 +49,11 @@ export async function POST(req: NextRequest) {
       });
     }
     const isCelestial =
+      entitlement_id === "celys_care_pro" ||
       entitlement_id === "celestial_premium" ||
-      (Array.isArray(entitlement_ids) && entitlement_ids.includes("celestial_premium"));
+      (Array.isArray(entitlement_ids) &&
+        (entitlement_ids.includes("celys_care_pro") ||
+          entitlement_ids.includes("celestial_premium")));
 
     // Find the user associated with this app_user_id (which is the database user.id or rc_...)
     let user = await prisma.user.findUnique({

@@ -1,7 +1,16 @@
 import { Capacitor } from "@capacitor/core";
 import { Purchases, LOG_LEVEL, PurchasesPackage, CustomerInfo } from "@revenuecat/purchases-capacitor";
 
-export const REVENUECAT_ENTITLEMENT_ID = "celestial_premium";
+export const REVENUECAT_ENTITLEMENT_ID = "celys_care_pro";
+export const REVENUECAT_ENTITLEMENT_IDS = ["celys_care_pro", "celestial_premium"];
+
+export function hasActivePremiumEntitlement(customerInfo?: CustomerInfo): boolean {
+  if (!customerInfo?.entitlements?.active) return false;
+  return (
+    REVENUECAT_ENTITLEMENT_IDS.some((id) => Boolean(customerInfo.entitlements.active[id])) ||
+    Object.keys(customerInfo.entitlements.active).length > 0
+  );
+}
 
 export interface RevenueCatPlan {
   id: string;
@@ -121,7 +130,7 @@ export async function purchaseRevenueCatPackage(pkg: PurchasesPackage): Promise<
 
   try {
     const { customerInfo } = await Purchases.purchasePackage({ aPackage: pkg });
-    const isPremium = Boolean(customerInfo.entitlements.active[REVENUECAT_ENTITLEMENT_ID]);
+    const isPremium = hasActivePremiumEntitlement(customerInfo);
     if (isPremium) {
       await syncRevenueCatWithBackend(customerInfo);
     }
@@ -145,7 +154,7 @@ export async function restoreRevenueCatPurchases(): Promise<{
 
   try {
     const { customerInfo } = await Purchases.restorePurchases();
-    const isPremium = Boolean(customerInfo.entitlements.active[REVENUECAT_ENTITLEMENT_ID]);
+    const isPremium = hasActivePremiumEntitlement(customerInfo);
     if (isPremium) {
       await syncRevenueCatWithBackend(customerInfo);
     }
@@ -159,7 +168,7 @@ export async function checkRevenueCatSubscription(): Promise<boolean> {
   if (!Capacitor.isNativePlatform() || !isInitialized) return false;
   try {
     const { customerInfo } = await Purchases.getCustomerInfo();
-    const isPremium = Boolean(customerInfo.entitlements.active[REVENUECAT_ENTITLEMENT_ID]);
+    const isPremium = hasActivePremiumEntitlement(customerInfo);
     await syncRevenueCatWithBackend(customerInfo);
     return isPremium;
   } catch (error) {
