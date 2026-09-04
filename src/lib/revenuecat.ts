@@ -29,13 +29,16 @@ export function getRevenueCatApiKey(): string {
   if (platform === "ios") {
     return process.env.NEXT_PUBLIC_REVENUECAT_APPLE_API_KEY || "appl_placeholder_revenuecat_api_key";
   }
-  return process.env.NEXT_PUBLIC_REVENUECAT_GOOGLE_API_KEY || "goog_placeholder_revenuecat_api_key";
+  return (
+    process.env.NEXT_PUBLIC_REVENUECAT_GOOGLE_API_KEY ||
+    "goog_DEUtIgJyvcqSNqIjDGFzTRzDgQS"
+  );
 }
 
 export async function initRevenueCat(userId?: string): Promise<boolean> {
   if (typeof window === "undefined") return false;
   if (!Capacitor.isNativePlatform()) {
-    console.info("RevenueCat: Running on Web/Browser. Native In-App purchases will be simulated.");
+    console.info("RevenueCat: Running on Web/Browser. Google Play Billing is only available in native Android APK.");
     return false;
   }
 
@@ -125,7 +128,11 @@ export async function purchaseRevenueCatPackage(pkg: PurchasesPackage): Promise<
   error?: string;
 }> {
   if (!Capacitor.isNativePlatform() || !isInitialized) {
-    return { success: true, isPremium: true };
+    return {
+      success: false,
+      isPremium: false,
+      error: "Google Play In-App purchases can only be made inside the installed Android APK.",
+    };
   }
 
   try {
@@ -245,7 +252,7 @@ export async function restoreRevenueCatPurchases(): Promise<{
   customerInfo?: CustomerInfo;
 }> {
   if (!Capacitor.isNativePlatform() || !isInitialized) {
-    return { success: true, isPremium: true };
+    return { success: false, isPremium: false };
   }
 
   try {

@@ -226,20 +226,11 @@ export const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({
       const result = await purchaseRevenueCatPlan(billing, user?.id);
 
       if (result.isBrowser) {
-        // User is running in a desktop/mobile web browser where native Google Play dialog cannot open
-        toast.info(
-          "Browser Mode: Google Play Payment sheet opens natively inside the Android App (.apk). Activating test access...",
-          { id: "rc-pay-toast", duration: 4000 }
+        // Running in a desktop/mobile web browser where native Google Play dialog cannot open
+        toast.error(
+          "Google Play payment dialog only opens inside the installed Android APK (.apk), not in a web browser.",
+          { id: "rc-pay-toast", duration: 5000 }
         );
-        localStorage.setItem("celys_subscribed", "true");
-        triggerSuccessCelebration();
-        setTimeout(() => {
-          if (onNavigate) {
-            onNavigate("calm");
-          } else if (onSuccess) {
-            onSuccess();
-          }
-        }, 1500);
         return;
       }
 

@@ -7,8 +7,7 @@ const config: CapacitorConfig = {
   backgroundColor: "#0d0a1e",
   server: {
     // Local IP running Next.js dev server:
-   // url: process.env.CAPACITOR_SERVER_URL || "http://192.168.1.11:3000",
-    url: process.env.CAPACITOR_SERVER_URL || "https://celys-care.vercel.app",
+    url: process.env.CAPACITOR_SERVER_URL || "http://192.168.1.5:3000",
     cleartext: true,
     androidScheme: "http",
   },
