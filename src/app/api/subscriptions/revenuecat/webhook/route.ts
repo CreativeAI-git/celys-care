@@ -78,6 +78,10 @@ export async function POST(req: NextRequest) {
 
     const expiresAt = expiration_at_ms ? new Date(expiration_at_ms) : null;
 
+    const productId = (event.product_id || "").toLowerCase();
+    const isAnnual = productId.includes("annual") || productId.includes("year");
+    const planName = isAnnual ? "annual" : "monthly";
+
     switch (type) {
       case "INITIAL_PURCHASE":
       case "RENEWAL":
@@ -87,16 +91,16 @@ export async function POST(req: NextRequest) {
           where: { userId: user.id },
           create: {
             userId: user.id,
-            plan: isCelestial ? "celestial_premium" : "blossom",
+            plan: planName,
             status: "active",
-            stripeSubId: `rc_${app_user_id}`,
+            stripeSubId: `rc_${app_user_id}_${planName}`,
             startedAt: new Date(),
             expiresAt,
           },
           update: {
-            plan: isCelestial ? "celestial_premium" : "blossom",
+            plan: planName,
             status: "active",
-            stripeSubId: `rc_${app_user_id}`,
+            stripeSubId: `rc_${app_user_id}_${planName}`,
             expiresAt,
           },
         });

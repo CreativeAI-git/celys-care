@@ -282,13 +282,28 @@ export async function checkRevenueCatSubscription(): Promise<boolean> {
 
 async function syncRevenueCatWithBackend(customerInfo: CustomerInfo): Promise<void> {
   try {
+    const activeKeys = Object.keys(customerInfo.entitlements?.active || {});
+    const firstKey = activeKeys[0];
+    const activeEntitlement = firstKey ? customerInfo.entitlements.active[firstKey] : null;
+    const productId = (
+      activeEntitlement?.productIdentifier ||
+      customerInfo.allPurchasedProductIdentifiers?.[0] ||
+      ""
+    ).toLowerCase();
+    const isAnnual = productId.includes("annual") || productId.includes("year");
+    const planPeriod = isAnnual ? "annual" : "monthly";
+    const expiresAt = activeEntitlement?.expirationDate || null;
+
     await fetch("/api/subscriptions/revenuecat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         rcAppUserId: customerInfo.originalAppUserId,
-        activeEntitlements: Object.keys(customerInfo.entitlements.active),
+        activeEntitlements: activeKeys,
         allPurchasedProductIdentifiers: customerInfo.allPurchasedProductIdentifiers,
+        productId,
+        planPeriod,
+        expiresAt,
       }),
     });
   } catch { }

@@ -10,25 +10,30 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { rcAppUserId, activeEntitlements = [] } = body;
+    const { rcAppUserId, activeEntitlements = [], planPeriod = "annual", expiresAt } = body;
     const isPremium =
       activeEntitlements.includes("celys_care_pro") ||
       activeEntitlements.includes("celestial_premium") ||
       activeEntitlements.length > 0;
+
+    const plan = planPeriod === "monthly" ? "monthly" : "annual";
+    const expirationDate = expiresAt ? new Date(expiresAt) : null;
 
     if (isPremium) {
       const subscription = await prisma.subscription.upsert({
         where: { userId: user.id },
         create: {
           userId: user.id,
-          plan: "celestial_premium",
+          plan,
           status: "active",
-          stripeSubId: `rc_${rcAppUserId || user.id}`,
+          stripeSubId: `rc_${rcAppUserId || user.id}_${plan}`,
+          expiresAt: expirationDate,
         },
         update: {
-          plan: "celestial_premium",
+          plan,
           status: "active",
-          stripeSubId: `rc_${rcAppUserId || user.id}`,
+          stripeSubId: `rc_${rcAppUserId || user.id}_${plan}`,
+          expiresAt: expirationDate,
         },
       });
 

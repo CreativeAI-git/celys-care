@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Brain,
   Gamepad2,
@@ -70,6 +70,27 @@ export const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({
     user?.subscription?.plan !== "free" &&
     user?.subscription?.plan !== "celestial_trial"
   );
+
+  // Determine whether the active plan is Annual or Monthly
+  const activePlanType = useMemo<"annual" | "monthly" | null>(() => {
+    if (!isPaidSubscriber || !user?.subscription) return null;
+    const plan = (user.subscription.plan || "").toLowerCase();
+    const subId = (user.subscription.stripeSubId || "").toLowerCase();
+    if (plan.includes("annual") || plan === "luminary" || subId.includes("annual")) {
+      return "annual";
+    }
+    if (plan.includes("monthly") || plan.includes("month") || plan === "blossom" || subId.includes("monthly")) {
+      return "monthly";
+    }
+    return "annual";
+  }, [isPaidSubscriber, user?.subscription]);
+
+  // When user is an active paid subscriber, auto-select their active plan in billing switcher
+  useEffect(() => {
+    if (activePlanType) {
+      setBilling(activePlanType);
+    }
+  }, [activePlanType]);
 
   // Load trial status & RevenueCat offerings on mount
   useEffect(() => {
@@ -356,12 +377,20 @@ export const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({
           <div className="flex justify-center mb-1.5">
             <Crown size={28} className="text-[#f5d76e]" />
           </div>
-          <p
-            className="text-[10px] font-bold mb-1 tracking-[0.18em]"
-            style={{ color: "#c9a227" }}
+
+          <div
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full mb-1.5"
+            style={{
+              background: "rgba(201,162,39,0.18)",
+              border: "1px solid rgba(201,162,39,0.45)",
+            }}
           >
-            ✦ CELESTIAL MEMBER ✦
-          </p>
+            <Sparkles size={11} className="text-[#f5d76e]" />
+            <span className="text-[10px] font-bold tracking-wider uppercase text-[#f5d76e]">
+              ✦ ACTIVE: {activePlanType === "annual" ? "ANNUAL PLAN (SAVE 42%)" : "MONTHLY PLAN"} ✦
+            </span>
+          </div>
+
           <p
             style={{
               fontFamily: "'Cormorant Garamond', serif",
@@ -376,8 +405,22 @@ export const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({
             Sanctuary Unlocked
           </p>
           <p className="text-xs mt-1 text-purple-100/90">
-            Full lifetime cosmic soundscapes, AI chat & rituals active.
+            {activePlanType === "annual"
+              ? "Full 1-Year cosmic soundscapes, AI chat & rituals active."
+              : "Full monthly cosmic soundscapes, AI chat & rituals active."}
           </p>
+          {user?.subscription?.expiresAt && (
+            <p className="text-[10px] mt-2 text-amber-200/80 bg-black/25 py-1 px-3 rounded-full inline-block">
+              Renews / Valid until:{" "}
+              <span className="font-semibold text-amber-100">
+                {new Date(user.subscription.expiresAt).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </span>
+            </p>
+          )}
         </div>
       ) : trialData.isTrialActive ? (
         <div
@@ -510,33 +553,48 @@ export const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({
           border: "1px solid rgba(180,120,255,0.2)",
         }}
       >
-        {(["monthly", "annual"] as const).map((b) => (
-          <button
-            key={b}
-            onClick={() => setBilling(b)}
-            className="flex-1 py-2 rounded-full text-xs font-semibold transition-all relative cursor-pointer"
-            style={{
-              background:
-                billing === b
-                  ? currentTheme.navActiveGradient
-                  : "transparent",
-              color: billing === b ? "#fff" : "rgba(240,232,255,0.75)",
-            }}
-          >
-            {b === "monthly" ? "Monthly" : "Annual"}
-            {b === "annual" && (
-              <span
-                className="absolute -top-2.5 right-2 text-[9px] px-1.5 py-0.5 rounded-full font-bold shadow-sm"
-                style={{
-                  background: "linear-gradient(135deg, #f5d76e, #c9a227)",
-                  color: "#1a0d3d",
-                }}
-              >
-                SAVE 42%
-              </span>
-            )}
-          </button>
-        ))}
+        {(["monthly", "annual"] as const).map((b) => {
+          const isThisPlanActive = isPaidSubscriber && activePlanType === b;
+          return (
+            <button
+              key={b}
+              onClick={() => setBilling(b)}
+              className="flex-1 py-2 rounded-full text-xs font-semibold transition-all relative cursor-pointer flex items-center justify-center gap-1.5"
+              style={{
+                background:
+                  billing === b
+                    ? currentTheme.navActiveGradient
+                    : "transparent",
+                color: billing === b ? "#fff" : "rgba(240,232,255,0.75)",
+              }}
+            >
+              <span>{b === "monthly" ? "Monthly" : "Annual"}</span>
+              {isThisPlanActive && (
+                <span
+                  className="text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider"
+                  style={{
+                    background: "rgba(34, 197, 94, 0.25)",
+                    border: "1px solid rgba(34, 197, 94, 0.6)",
+                    color: "#86efac",
+                  }}
+                >
+                  Active
+                </span>
+              )}
+              {b === "annual" && !isThisPlanActive && (
+                <span
+                  className="absolute -top-2.5 right-2 text-[9px] px-1.5 py-0.5 rounded-full font-bold shadow-sm"
+                  style={{
+                    background: "linear-gradient(135deg, #f5d76e, #c9a227)",
+                    color: "#1a0d3d",
+                  }}
+                >
+                  SAVE 42%
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {/* Features List */}
@@ -596,7 +654,7 @@ export const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({
       <button
         onClick={handleRevenueCatSubscribe}
         disabled={loading || isPaidSubscriber}
-        className="w-full rounded-full py-3 font-semibold text-white transition-all hover:opacity-95 text-xs cursor-pointer shadow-lg disabled:opacity-60"
+        className="w-full rounded-full py-3 font-semibold text-white transition-all hover:opacity-95 text-xs cursor-pointer shadow-lg disabled:opacity-80"
         style={{
           background: isPaidSubscriber
             ? "rgba(34,197,94,0.2)"
@@ -608,14 +666,16 @@ export const SubscriptionScreen: React.FC<SubscriptionScreenProps> = ({
         }}
       >
         {isPaidSubscriber
-          ? "✓ Celestial Premium Active"
+          ? `✓ Active Plan: ${activePlanType === "annual" ? "Celestial Annual (Yearly)" : "Celestial Monthly"}`
           : loading
           ? "Connecting to Store..."
           : `Subscribe Now — ${selectedPlan?.priceString || (billing === "annual" ? "$69.99/yr" : "$9.99/mo")}`}
       </button>
 
       <p className="text-[10px] mt-2.5 text-purple-200/35">
-        {!trialData.hasUsedTrial
+        {isPaidSubscriber
+          ? "Manage or cancel your subscription anytime in your Google Play Store / Apple account settings."
+          : !trialData.hasUsedTrial
           ? "No credit card needed for 7-day trial · Cancel anytime"
           : "Secure in-app purchase processed via Google Play / Apple App Store"}
       </p>
