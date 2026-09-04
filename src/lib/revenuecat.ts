@@ -35,35 +35,66 @@ export function getRevenueCatApiKey(): string {
   );
 }
 
-export async function initRevenueCat(userId?: string): Promise<boolean> {
-  if (typeof window === "undefined") return false;
+export async function initRevenueCat(
+  userId?: string
+): Promise<{ success: boolean; error?: string }> {
+  if (typeof window === "undefined") {
+    return { success: false, error: "Window is undefined" };
+  }
   if (!Capacitor.isNativePlatform()) {
-    console.info("RevenueCat: Running on Web/Browser. Google Play Billing is only available in native Android APK.");
-    return false;
+    console.info(
+      "RevenueCat: Running on Web/Browser. Google Play Billing is only available in native Android APK."
+    );
+    return {
+      success: false,
+      error: "Google Play Billing is only available inside the installed Android APK.",
+    };
   }
 
   const apiKey = getRevenueCatApiKey();
+  if (!apiKey || apiKey.includes("placeholder")) {
+    return {
+      success: false,
+      error: "RevenueCat Google API Key is missing or invalid.",
+    };
+  }
+
   try {
     if (!isInitialized) {
-      await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
+      // Safe setLogLevel without blocking or throwing
+      try {
+        await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
+      } catch (logErr) {
+        console.warn("Could not set log level:", logErr);
+      }
+
       await Purchases.configure({
         apiKey,
-        appUserID: userId || undefined,
+        appUserID: userId && userId.trim() ? userId.trim() : undefined,
       });
       isInitialized = true;
-    } else if (userId) {
-      await Purchases.logIn({ appUserID: userId });
+    } else if (userId && userId.trim()) {
+      try {
+        await Purchases.logIn({ appUserID: userId.trim() });
+      } catch (loginErr) {
+        console.warn("Purchases.logIn error:", loginErr);
+      }
     }
-    return true;
-  } catch (error) {
+    return { success: true };
+  } catch (error: any) {
+    const errorMsg =
+      error?.message ||
+      (typeof error === "string" ? error : JSON.stringify(error)) ||
+      "Failed to initialize Google Play Billing SDK";
     console.error("RevenueCat initialization error:", error);
-    return false;
+    return { success: false, error: errorMsg };
   }
 }
 
 export async function identifyRevenueCatUser(userId: string): Promise<void> {
-  if (!Capacitor.isNativePlatform() || !isInitialized) return;
+  if (!Capacitor.isNativePlatform()) return;
   try {
+    if (!isInitialized) await initRevenueCat(userId);
     await Purchases.logIn({ appUserID: userId });
   } catch (error) {
     console.error("RevenueCat logIn error:", error);
@@ -80,28 +111,33 @@ export async function resetRevenueCatUser(): Promise<void> {
 }
 
 export async function getRevenueCatOfferings(): Promise<RevenueCatPlan[]> {
-  if (!Capacitor.isNativePlatform() || !isInitialized) {
-    return [
-      {
-        id: "monthly",
-        identifier: "$rc_monthly",
-        name: "Celestial Monthly",
-        priceString: "$9.99 / mo",
-        period: "Monthly",
-        description: "Full access to all sanctuary soundscapes, AI guidance & rituals.",
-      },
-      {
-        id: "annual",
-        identifier: "$rc_annual",
-        name: "Celestial Annual (Best Value)",
-        priceString: "$59.99 / yr",
-        period: "Yearly ($4.99/mo)",
-        description: "Save 50% + 7-Day Free Trial. Unlimited guidance and cosmic features.",
-      },
-    ];
+  const fallbackPlans: RevenueCatPlan[] = [
+    {
+      id: "monthly",
+      identifier: "$rc_monthly",
+      name: "Celestial Monthly",
+      priceString: "$9.99 / mo",
+      period: "Monthly",
+      description: "Full access to all sanctuary soundscapes, AI guidance & rituals.",
+    },
+    {
+      id: "annual",
+      identifier: "$rc_annual",
+      name: "Celestial Annual (Best Value)",
+      priceString: "$59.99 / yr",
+      period: "Yearly ($4.99/mo)",
+      description: "Save 50% + 7-Day Free Trial. Unlimited guidance and cosmic features.",
+    },
+  ];
+
+  if (!Capacitor.isNativePlatform()) {
+    return fallbackPlans;
   }
 
   try {
+    if (!isInitialized) {
+      await initRevenueCat();
+    }
     const offerings = await Purchases.getOfferings();
     if (offerings.current && offerings.current.availablePackages.length > 0) {
       return offerings.current.availablePackages.map((pkg) => ({
@@ -118,7 +154,7 @@ export async function getRevenueCatOfferings(): Promise<RevenueCatPlan[]> {
     console.error("RevenueCat getOfferings error:", error);
   }
 
-  return [];
+  return fallbackPlans;
 }
 
 export async function purchaseRevenueCatPackage(pkg: PurchasesPackage): Promise<{
@@ -177,12 +213,12 @@ export async function purchaseRevenueCatPlan(
   // 2. Ensure SDK is initialized
   try {
     if (!isInitialized) {
-      const initialized = await initRevenueCat(userId);
-      if (!initialized) {
+      const initResult = await initRevenueCat(userId);
+      if (!initResult.success) {
         return {
           success: false,
           isPremium: false,
-          error: "Failed to connect to Google Play Billing. Please check your internet connection.",
+          error: `Google Play Init Error: ${initResult.error || "Failed to connect to Google Play Store."}`,
         };
       }
     }
@@ -250,26 +286,36 @@ export async function restoreRevenueCatPurchases(): Promise<{
   success: boolean;
   isPremium: boolean;
   customerInfo?: CustomerInfo;
+  error?: string;
 }> {
-  if (!Capacitor.isNativePlatform() || !isInitialized) {
-    return { success: false, isPremium: false };
+  if (!Capacitor.isNativePlatform()) {
+    return { success: false, isPremium: false, error: "Restore is only available in the Android APK." };
   }
 
   try {
+    if (!isInitialized) {
+      const initRes = await initRevenueCat();
+      if (!initRes.success) {
+        return { success: false, isPremium: false, error: initRes.error };
+      }
+    }
     const { customerInfo } = await Purchases.restorePurchases();
     const isPremium = hasActivePremiumEntitlement(customerInfo);
     if (isPremium) {
       await syncRevenueCatWithBackend(customerInfo);
     }
     return { success: true, isPremium, customerInfo };
-  } catch (error) {
-    return { success: false, isPremium: false };
+  } catch (error: any) {
+    return { success: false, isPremium: false, error: error?.message || "Restore failed." };
   }
 }
 
 export async function checkRevenueCatSubscription(): Promise<boolean> {
-  if (!Capacitor.isNativePlatform() || !isInitialized) return false;
+  if (!Capacitor.isNativePlatform()) return false;
   try {
+    if (!isInitialized) {
+      await initRevenueCat();
+    }
     const { customerInfo } = await Purchases.getCustomerInfo();
     const isPremium = hasActivePremiumEntitlement(customerInfo);
     await syncRevenueCatWithBackend(customerInfo);
