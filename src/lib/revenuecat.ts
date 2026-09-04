@@ -155,6 +155,19 @@ export async function restoreRevenueCatPurchases(): Promise<{
   }
 }
 
+export async function checkRevenueCatSubscription(): Promise<boolean> {
+  if (!Capacitor.isNativePlatform() || !isInitialized) return false;
+  try {
+    const { customerInfo } = await Purchases.getCustomerInfo();
+    const isPremium = Boolean(customerInfo.entitlements.active[REVENUECAT_ENTITLEMENT_ID]);
+    await syncRevenueCatWithBackend(customerInfo);
+    return isPremium;
+  } catch (error) {
+    console.error("RevenueCat check subscription error:", error);
+    return false;
+  }
+}
+
 async function syncRevenueCatWithBackend(customerInfo: CustomerInfo): Promise<void> {
   try {
     await fetch("/api/subscriptions/revenuecat", {
@@ -168,3 +181,4 @@ async function syncRevenueCatWithBackend(customerInfo: CustomerInfo): Promise<vo
     });
   } catch { }
 }
+

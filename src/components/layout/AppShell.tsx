@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Sparkles,
   Smile,
@@ -16,6 +16,9 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
+import { App as CapApp } from "@capacitor/app";
+import { SplashScreen } from "@capacitor/splash-screen";
+import { Capacitor } from "@capacitor/core";
 
 import { useAuth } from "@/app/providers";
 import { useAccessibility } from "@/context/AccessibilityContext";
@@ -343,20 +346,109 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
     }
   }, [initialScreen]);
 
+  // Navigation History Stack & Android Hardware Back Management
+  const [navHistory, setNavHistory] = useState<string[]>([initialScreen || "calm"]);
+  const lastBackPressTimeRef = useRef<number>(0);
+
+  const handleGoBack = (): boolean => {
+    // 1. If Delete modal is open, dismiss it
+    if (showDeleteModal) {
+      setShowDeleteModal(false);
+      return true;
+    }
+    // 2. If Directory drawer is open, dismiss it
+    if (showDirectory) {
+      setShowDirectory(false);
+      return true;
+    }
+    // 3. If there is screen history in stack
+    if (navHistory.length > 1) {
+      const nextHistory = [...navHistory];
+      nextHistory.pop(); // Remove current screen
+      const previousScreen = nextHistory[nextHistory.length - 1] || "calm";
+      setNavHistory(nextHistory);
+      setActiveScreenId(previousScreen);
+      if (typeof window !== "undefined") {
+        try {
+          const targetPath = previousScreen === "calm" ? "/" : `/${previousScreen}`;
+          window.history.replaceState({ screenId: previousScreen }, "", targetPath);
+        } catch { }
+      }
+      return true;
+    }
+    // 4. If currently on a non-home screen, return to "calm"
+    if (activeScreenId !== "calm") {
+      setActiveScreenId("calm");
+      setNavHistory(["calm"]);
+      if (typeof window !== "undefined") {
+        try {
+          window.history.replaceState({ screenId: "calm" }, "", "/");
+        } catch { }
+      }
+      return true;
+    }
+    // 5. Already on "calm" (Home screen) -> Double back to exit on Android
+    const now = Date.now();
+    if (now - lastBackPressTimeRef.current < 2000) {
+      if (Capacitor.isNativePlatform()) {
+        CapApp.exitApp();
+      }
+    } else {
+      lastBackPressTimeRef.current = now;
+      toast("Press back again to exit Celys Care", {
+        duration: 2000,
+        id: "exit-celys-toast",
+      });
+    }
+    return false;
+  };
+
+  // Capacitor Android Hardware / Gesture Back Button Listener
+  useEffect(() => {
+    let backListener: any = null;
+
+    if (Capacitor.isNativePlatform()) {
+      CapApp.addListener("backButton", () => {
+        handleGoBack();
+      }).then((listener) => {
+        backListener = listener;
+      });
+    }
+
+    return () => {
+      if (backListener) {
+        backListener.remove();
+      }
+    };
+  }, [navHistory, activeScreenId, showDirectory, showDeleteModal]);
+
+  // Smooth Native Splash Screen Dismissal (Prevents black screen flash)
+  useEffect(() => {
+    if (!isLoading && typeof window !== "undefined") {
+      if (Capacitor.isNativePlatform()) {
+        const timer = setTimeout(() => {
+          SplashScreen.hide({ fadeOutDuration: 400 }).catch(() => {});
+        }, 250);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [isLoading]);
+
   // Deep linking, path routing, and browser history popstate support
   useEffect(() => {
-    const handlePopState = () => {
-      const path = window.location.pathname.replace(/^\//, "");
-      const hash = window.location.hash.replace("#", "");
-      const target = hash || path;
-      if (target === "signup") {
-        handleSetAuthMode("signup");
-        setActiveScreenId("login");
-      } else if (target === "login") {
-        handleSetAuthMode("login");
-        setActiveScreenId("login");
-      } else if (target && FEATURES_REGISTRY.some((f) => f.id === target)) {
-        setActiveScreenId(target);
+    const handlePopState = (e?: Event) => {
+      const popEvent = e as PopStateEvent | undefined;
+      if (popEvent?.state && popEvent.state.screenId && FEATURES_REGISTRY.some((f) => f.id === popEvent.state.screenId)) {
+        setActiveScreenId(popEvent.state.screenId);
+      } else {
+        const path = window.location.pathname.replace(/^\//, "");
+        const hash = window.location.hash.replace("#", "");
+        const target = hash || path;
+        if (target && FEATURES_REGISTRY.some((f) => f.id === target)) {
+          setActiveScreenId(target);
+        } else if (!target || target === "/") {
+          setActiveScreenId("calm");
+        }
       }
     };
 
@@ -388,6 +480,7 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
   useEffect(() => {
     if (user && (activeScreenId === "login" || activeScreenId === "signup")) {
       setActiveScreenId("calm");
+      setNavHistory(["calm"]);
       if (typeof window !== "undefined") {
         try {
           window.history.replaceState({ screenId: "calm" }, "", "/");
@@ -401,6 +494,7 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
       if (user) {
         setActiveScreenId("calm");
         setShowDirectory(false);
+        setNavHistory((prev) => (prev[prev.length - 1] === "calm" ? prev : [...prev, "calm"]));
         if (typeof window !== "undefined") {
           window.history.pushState({ screenId: "calm" }, "", "/");
         }
@@ -418,6 +512,7 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
       if (user) {
         setActiveScreenId("calm");
         setShowDirectory(false);
+        setNavHistory((prev) => (prev[prev.length - 1] === "calm" ? prev : [...prev, "calm"]));
         if (typeof window !== "undefined") {
           window.history.pushState({ screenId: "calm" }, "", "/");
         }
@@ -429,6 +524,9 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
         window.history.pushState({ screenId: "login" }, "", authMode === "signup" ? "/signup" : "/login");
       }
       return;
+    }
+    if (screenId !== activeScreenId) {
+      setNavHistory((prev) => [...prev, screenId]);
     }
     setActiveScreenId(screenId);
     setShowDirectory(false);
@@ -558,8 +656,23 @@ export const AppShell: React.FC<AppShellProps> = ({ initialScreen = "calm" }) =>
           paddingTop: "calc(env(safe-area-inset-top, 0px) + 4px)",
         }}
       >
-        {/* Left: Screen Icon & Title */}
+        {/* Left: Back Arrow (on secondary screens) + Screen Icon & Title */}
         <div className="flex items-center gap-2">
+          {!isHomeScreen && (
+            <button
+              onClick={handleGoBack}
+              className="w-8 h-8 rounded-full flex items-center justify-center transition-all hover:bg-white/15 active:scale-90 cursor-pointer"
+              style={{
+                background: "rgba(255, 255, 255, 0.08)",
+                border: `1px solid ${currentTheme.border}`,
+                color: "#f5d76e",
+              }}
+              title="Go Back"
+              aria-label="Go Back"
+            >
+              <ChevronLeft size={18} />
+            </button>
+          )}
           <span className="text-base select-none">{currentFeature.icon}</span>
           <span className="text-sm font-semibold text-[#f0e8ff] tracking-wide">
             {currentFeature.label}

@@ -34,6 +34,15 @@ export async function POST(req: NextRequest) {
         message: "RevenueCat subscription synced successfully",
         subscription,
       });
+    } else {
+      const currentSub = await prisma.subscription.findUnique({ where: { userId: user.id } });
+      if (currentSub && currentSub.plan === "celestial_premium" && currentSub.status === "active") {
+        const updated = await prisma.subscription.update({
+          where: { userId: user.id },
+          data: { status: "canceled" },
+        });
+        return NextResponse.json({ success: true, message: "Subscription revoked", subscription: updated });
+      }
     }
 
     return NextResponse.json({ success: true });
