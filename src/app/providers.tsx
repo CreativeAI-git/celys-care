@@ -261,7 +261,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         )}
         <AccessibilityProvider>
           {children}
-          <Toaster position="bottom-right" theme="dark" />
+          <Toaster position="top-center" richColors theme="dark" closeButton />
         </AccessibilityProvider>
       </AuthContext.Provider>
     </QueryClientProvider>
